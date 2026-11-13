@@ -21,6 +21,15 @@ def test_published_challenge_hides_hidden_tests_and_lists(client):
     assert "9 9" not in str(detail)
     assert str(challenge_id) == detail["id"]
 
+def test_catalog_filters_and_static_routes_are_reachable(client):
+    make_challenge(client)
+    assert client.get("/api/v1/challenge-categories").status_code == 200
+    filtered=client.get("/api/v1/challenges?language=python&difficulty=beginner").json()
+    assert filtered["total"] == 1
+    assert client.get("/api/v1/challenges/submissions/history").status_code == 401
+    assert client.get("/api/v1/challenges/skills/me").status_code == 401
+    assert client.get("/api/v1/me/challenge-progress").status_code == 401
+
 def test_challenge_submission_rejects_invalid_language(client):
     challenge_id=make_challenge(client)
     response=client.post(f"/api/v1/challenges/{challenge_id}/submit",json={"language":"ruby","source_code":"puts 1"})

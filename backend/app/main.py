@@ -7,8 +7,9 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .config import settings
 from .db import get_db
-from .models import Course, CourseCategory, CourseModule, LearningPath, Lesson, ProgrammingLanguage
+from .models import ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseModule, LearningPath, Lesson, ProgrammingLanguage, StudentChallengeProgress, User
 from .schemas import CategoryOut, CourseDetailOut, ExampleOut, LanguageOut, LessonOut, ModuleOut, PageOut, PathOut
+from .auth import current_user
 from .auth_routes import router as auth_router
 from .student_routes import router as student_router
 from .admin_routes import router as admin_router
@@ -78,6 +79,13 @@ def readiness(db: Session=Depends(get_db)):
     return {"status": "ready", "database": "ok", "service": "codemaster-api"}
 @app.get("/api/v1/languages",response_model=list[LanguageOut])
 def languages(db: Session=Depends(get_db)): return db.scalars(select(ProgrammingLanguage).order_by(ProgrammingLanguage.name)).all()
+@app.get("/api/v1/challenge-categories")
+def challenge_categories(db: Session=Depends(get_db)): return db.scalars(select(ChallengeCategory).where(ChallengeCategory.status=="active").order_by(ChallengeCategory.name)).all()
+@app.get("/api/v1/me/challenge-progress")
+def my_challenge_progress(user: User=Depends(current_user), db: Session=Depends(get_db)):
+    attempts=db.scalar(select(func.count(ChallengeSubmission.id)).where(ChallengeSubmission.user_id==user.id)) or 0
+    solved=db.scalar(select(func.count(StudentChallengeProgress.id)).where(StudentChallengeProgress.user_id==user.id,StudentChallengeProgress.solved.is_(True))) or 0
+    return {"attempts":attempts,"solved":solved,"acceptance_rate":round(solved / attempts * 100, 2) if attempts else 0}
 @app.get("/api/v1/categories",response_model=list[CategoryOut])
 @app.get("/api/v1/course-categories",response_model=list[CategoryOut])
 def categories(db: Session=Depends(get_db)): return db.scalars(select(CourseCategory).where(CourseCategory.status=="active").order_by(CourseCategory.display_order, CourseCategory.name)).all()
