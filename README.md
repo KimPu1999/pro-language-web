@@ -76,6 +76,8 @@ Phase 4 adds the interactive classroom foundation and migration `0004_interactiv
 
 Phase 5 adds migration `0005_challenges_assessments`, the challenge catalog, workspace, challenge submission records, skill dashboard, daily challenge contract, achievements schema, and admin challenge creation. Challenge submissions remain safely unavailable until the Phase 4 isolated runner is deployed.
 
+Phase 6 adds migration `0006_personalized_roadmaps`, career roadmap catalog/detail pages, student learning goals, evidence-based roadmap enrollment/progress, prerequisite validation, deterministic recommendations, and roadmap administration. See [docs/personalized-learning.md](docs/personalized-learning.md), [docs/roadmap-builder.md](docs/roadmap-builder.md), and [docs/recommendation-engine.md](docs/recommendation-engine.md).
+
 ## Troubleshooting
 
 - If the API cannot connect, verify PostgreSQL is running and `DATABASE_URL` points to an existing database.

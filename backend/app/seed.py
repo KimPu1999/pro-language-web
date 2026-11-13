@@ -1,7 +1,8 @@
 from sqlalchemy import select
 from .db import SessionLocal
-from .models import CodeExample, Course, CourseCategory, CourseModule, LearningPath, Lesson, ProgrammingLanguage
+from .models import CareerRoadmap, CodeExample, Course, CourseCategory, CourseModule, LearningPath, Lesson, ProgrammingLanguage, RoadmapStage, RoadmapStep
 DATA=[("Python","python","#3776AB"),("JavaScript","javascript","#F7DF1E"),("TypeScript","typescript","#3178C6"),("Java","java","#ED8B00"),("C++","cpp","#00599C"),("PHP","php","#777BB4"),("HTML","html","#E34F26"),("CSS","css","#1572B6"),("SQL","sql","#22C55E")]
+ROADMAPS=[("Frontend Developer","frontend-developer","Frontend"),("Backend Developer","backend-developer","Backend"),("Full-Stack Developer","full-stack-developer","Web Development"),("Python Developer","python-developer","Python"),("AI Engineer","ai-engineer","Artificial Intelligence"),("Mobile Developer","mobile-developer","Mobile"),("Cybersecurity","cybersecurity","Security"),("DevOps Engineer","devops-engineer","DevOps")]
 def main():
     with SessionLocal() as db:
         category=db.scalar(select(CourseCategory).where(CourseCategory.slug=="programming-fundamentals"))
@@ -18,5 +19,10 @@ def main():
             db.add(CodeExample(lesson_id=lesson.id,title="A small first step",language=slug,code=code))
         path=db.scalar(select(LearningPath).where(LearningPath.slug=="developer-foundations"))
         if not path: db.add(LearningPath(title="Developer Foundations",slug="developer-foundations",description="A guided start for new developers.",published=True))
+        for title,slug,category_name in ROADMAPS:
+            roadmap=db.scalar(select(CareerRoadmap).where(CareerRoadmap.slug==slug))
+            if roadmap: continue
+            roadmap=CareerRoadmap(title=title,slug=slug,career_category=category_name,description_en=f"A practical, free path toward a career as a {title}.",outcomes_en="Build verified skills through courses and practice.",estimated_hours=120,status="published",published=True); db.add(roadmap); db.flush()
+            stage=RoadmapStage(roadmap_id=roadmap.id,title="Foundations",description_en="Build the essential concepts.",level="beginner",position=0); db.add(stage); db.flush(); db.add(RoadmapStep(stage_id=stage.id,title="Start with the fundamentals",instructions_en="Complete the linked courses and practice consistently.",position=0))
         db.commit()
 if __name__=="__main__": main()

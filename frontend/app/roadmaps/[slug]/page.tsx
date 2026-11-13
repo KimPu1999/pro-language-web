@@ -1,0 +1,2 @@
+import { notFound } from "next/navigation"; import { roadmapApi } from "@/lib/roadmap-api"; import { RoadmapDetail } from "@/components/roadmap-detail";
+export default async function RoadmapPage({params}:{params:Promise<{slug:string}>}){const {slug}=await params;try{return <section className="mx-auto max-w-7xl px-5 py-12 lg:px-8"><RoadmapDetail roadmap={await roadmapApi.detail(slug)}/></section>}catch{notFound()}}

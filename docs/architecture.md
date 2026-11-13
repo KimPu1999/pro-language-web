@@ -11,3 +11,5 @@ Phase 3 adds an authenticated CMS boundary under `/api/v1/admin`. Admins and sup
 Phase 4 keeps code execution outside the API process. The API persists execution jobs and uses a Redis queue adapter; a separately deployed hardened worker is responsible for execution when enabled. The browser uses Monaco through a client component and receives bounded job results. No student source is executed during local development.
 
 Phase 5 adds a challenge boundary on top of those execution jobs. Published challenge queries expose only public tests; authenticated submission and history endpoints enforce ownership. Skill and achievement records are server-derived, while the current runner-unavailable state prevents false grading.
+
+Phase 6 adds career roadmaps and student goal preferences. Roadmap steps link to existing courses and challenges by resource type/id. Progress is derived from existing lesson and accepted-submission evidence, while recommendations rank published roadmap records using deterministic goal matching.
