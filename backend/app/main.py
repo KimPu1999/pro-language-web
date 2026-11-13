@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from .config import settings
 from .db import get_db
 from .models import Course, CourseCategory, CourseModule, LearningPath, Lesson, ProgrammingLanguage
-from .schemas import CategoryOut, CourseDetailOut, LanguageOut, ModuleOut, PageOut, PathOut
+from .schemas import CategoryOut, CourseDetailOut, ExampleOut, LanguageOut, LessonOut, ModuleOut, PageOut, PathOut
 from .auth_routes import router as auth_router
 from .student_routes import router as student_router
 from .admin_routes import router as admin_router
@@ -79,7 +79,8 @@ def readiness(db: Session=Depends(get_db)):
 @app.get("/api/v1/languages",response_model=list[LanguageOut])
 def languages(db: Session=Depends(get_db)): return db.scalars(select(ProgrammingLanguage).order_by(ProgrammingLanguage.name)).all()
 @app.get("/api/v1/categories",response_model=list[CategoryOut])
-def categories(db: Session=Depends(get_db)): return db.scalars(select(CourseCategory).order_by(CourseCategory.name)).all()
+@app.get("/api/v1/course-categories",response_model=list[CategoryOut])
+def categories(db: Session=Depends(get_db)): return db.scalars(select(CourseCategory).where(CourseCategory.status=="active").order_by(CourseCategory.display_order, CourseCategory.name)).all()
 def course_query(): return select(Course).options(selectinload(Course.language),selectinload(Course.category)).where(Course.published.is_(True))
 @app.get("/api/v1/courses",response_model=PageOut)
 def courses(search: str|None=None, language: str|None=None, level: str|None=None, category: str|None=None, page: int=Query(1,ge=1), page_size: int=Query(12,ge=1,le=50), db: Session=Depends(get_db)):
@@ -100,9 +101,19 @@ def modules(slug: str, db: Session=Depends(get_db)):
     row=db.scalar(course_query().where(Course.slug==slug).options(selectinload(Course.modules).selectinload(CourseModule.lessons)))
     if not row: raise HTTPException(404,"Published course not found")
     return row.modules
+@app.get("/api/v1/courses/{slug}/lessons",response_model=list[LessonOut])
+def course_lessons(slug: str, db: Session=Depends(get_db)):
+    row=db.scalar(course_query().where(Course.slug==slug))
+    if not row: raise HTTPException(404,"Published course not found")
+    return db.scalars(select(Lesson).join(CourseModule, Lesson.module_id==CourseModule.id).where(CourseModule.course_id==row.id, Lesson.published.is_(True)).options(selectinload(Lesson.code_examples)).order_by(CourseModule.order_index, Lesson.order_index)).all()
+@app.get("/api/v1/lessons/{lesson_id}/examples",response_model=list[ExampleOut])
+def lesson_examples(lesson_id: UUID, db: Session=Depends(get_db)):
+    row=db.scalar(select(Lesson).join(CourseModule, Lesson.module_id==CourseModule.id).join(Course, CourseModule.course_id==Course.id).where(Lesson.id==lesson_id, Lesson.published.is_(True), Course.published.is_(True)).options(selectinload(Lesson.code_examples)))
+    if not row: raise HTTPException(404,"Published lesson not found")
+    return row.code_examples
 @app.get("/api/v1/lessons/{lesson_id}",response_model=dict)
 def lesson(lesson_id: UUID, db: Session=Depends(get_db)):
-    row=db.scalar(select(Lesson).options(selectinload(Lesson.code_examples)).where(Lesson.id==lesson_id,Lesson.published.is_(True)))
+    row=db.scalar(select(Lesson).join(CourseModule, Lesson.module_id==CourseModule.id).join(Course, CourseModule.course_id==Course.id).options(selectinload(Lesson.code_examples)).where(Lesson.id==lesson_id,Lesson.published.is_(True),Course.published.is_(True)))
     if not row: raise HTTPException(404,"Published lesson not found")
     return row
 @app.get("/api/v1/paths",response_model=list[PathOut])

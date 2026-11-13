@@ -12,10 +12,13 @@ class LessonOut(BaseModel):
 class ModuleOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; order_index: int; lessons: list[LessonOut]=Field(default_factory=list)
 class CourseOut(BaseModel):
-    model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; description: str; level: str; duration_minutes: int; outcomes: list[str]=Field(default_factory=list); language: LanguageOut; category: CategoryOut
+    model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; description: str; level: str; duration_minutes: int; outcomes: list[str]=Field(default_factory=list); requirements: list[str]=Field(default_factory=list); language: LanguageOut; category: CategoryOut
     @field_validator("outcomes", mode="before")
     @classmethod
     def split_outcomes(cls, value): return value.split("|") if isinstance(value, str) else value
+    @field_validator("requirements", mode="before")
+    @classmethod
+    def split_requirements(cls, value): return value.split("|") if isinstance(value, str) else value
 class CourseDetailOut(CourseOut):
     modules: list[ModuleOut]=Field(default_factory=list)
 class PageOut(BaseModel):
