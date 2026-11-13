@@ -10,3 +10,6 @@ export type Dashboard = { enrollments: Enrollment[]; completed_lessons: number; 
 export type AdminCourse = Course & { short_description: string; status: string; published: boolean; language_id: string; category_id: string; estimated_duration: number; requirements: string[] };
 export type AdminPage = { items: AdminCourse[]; page: number; page_size: number; total: number; pages: number };
 export type AdminDashboard = { total_courses:number; published_courses:number; draft_courses:number; total_students:number; total_instructors:number; pending_reviews:number; recent_courses: AdminCourse[]; recent_activity: unknown[] };
+export type RunnerResult = { stdout: string; stderr: string; exit_code: number | null; execution_time_ms: number | null; truncated: boolean; error_code: string | null };
+export type RunnerJob = { id: string; status: string; language: string; queued_at: string; started_at?: string | null; finished_at?: string | null; expires_at?: string | null; result?: RunnerResult | null };
+export type RunnerLanguage = { identifier: string; version: string; filename: string };

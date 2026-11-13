@@ -50,7 +50,7 @@ SQLite is used by the backend test suite. Production and local development use P
 cd backend && source .venv/bin/activate
 alembic upgrade head
 python -m app.seed
-pytest
+PYTHONPATH=. pytest
 
 # frontend
 cd frontend
@@ -71,6 +71,8 @@ No secret is required for Phase 1.
 Phase 2 adds student accounts. Run `alembic upgrade head` after updating the environment. Registration creates student accounts only. In production set `COOKIE_SECURE=true`, use HTTPS, configure trusted `CORS_ORIGINS`, and configure an SMTP or transactional mail provider. Sessions are server-side and the browser stores only HttpOnly session cookies plus a CSRF double-submit cookie.
 
 Phase 3 adds the admin control center at `/admin`. Only `admin` and `super_admin` accounts can use platform-wide CMS operations. Instructors may manage assigned or owned courses through server-side ownership checks. Apply migration `0003_course_cms` before using the CMS.
+
+Phase 4 adds the interactive classroom foundation and migration `0004_interactive_classroom`. The Monaco editor, exercise/submission records, Redis queue adapter, and ownership-protected job APIs are included. Code execution is disabled by default (`RUNNER_ENABLED=false`) and must only be enabled with a separately deployed hardened sandbox worker. See [docs/code-execution.md](docs/code-execution.md), [docs/sandbox-security.md](docs/sandbox-security.md), and [docs/runner-deployment.md](docs/runner-deployment.md).
 
 ## Troubleshooting
 

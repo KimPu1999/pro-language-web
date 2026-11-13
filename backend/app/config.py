@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_tls: bool = True
     mail_from: str = "no-reply@codemaster.local"
+    redis_url: str = "redis://localhost:6379/0"
+    runner_enabled: bool = False
+    runner_queue_name: str = "codemaster:execution"
+    max_source_code_bytes: int = 100_000
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     @property
     def cors_origin_list(self) -> list[str]:

@@ -11,11 +11,12 @@ from .schemas import CategoryOut, CourseDetailOut, LanguageOut, ModuleOut, PageO
 from .auth_routes import router as auth_router
 from .student_routes import router as student_router
 from .admin_routes import router as admin_router
+from .runner_routes import router as runner_router
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger=logging.getLogger("codemaster.api")
 app=FastAPI(title="CodeMaster Academy API", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allow_credentials=True, allow_methods=["GET","POST","PATCH","OPTIONS"], allow_headers=["Content-Type","X-CSRF-Token"])
-app.include_router(auth_router); app.include_router(student_router); app.include_router(admin_router)
+app.include_router(auth_router); app.include_router(student_router); app.include_router(admin_router); app.include_router(runner_router)
 @app.get("/api/v1/health")
 def health(db: Session=Depends(get_db)): db.execute(select(1)); return {"status":"ok","service":"codemaster-api"}
 @app.get("/api/v1/languages",response_model=list[LanguageOut])

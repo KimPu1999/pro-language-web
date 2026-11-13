@@ -7,3 +7,5 @@ Migration `0002_auth_student` adds normalized email, account status, role, verif
 Migration `0003_course_cms` extends languages, categories, courses, lessons, and code examples with CMS metadata and adds `course_instructors`, `course_revisions`, `publishing_reviews`, and `admin_audit_logs`. Existing `published` values are backfilled into the workflow status. No enrollment or progress rows are removed.
 
 Run `alembic upgrade head` followed by `python -m app.seed`. The seed is idempotent by slug and creates representative published courses for Python, JavaScript, TypeScript, Java, C++, PHP, HTML, CSS, and SQL.
+
+Migration `0004_interactive_classroom` adds coding exercises, starter code, test cases, execution jobs/results, submissions, submission test results, and per-user editor preferences. Foreign keys and user ownership indexes support isolation. Hidden exercise tests are never returned by public runner endpoints.
