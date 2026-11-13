@@ -47,3 +47,7 @@ Career routes are under `/api/v1/career`: dashboard, published paths, approved m
 ## Collaboration and competitions (Phase 18)
 
 Collaboration routes are under `/api/v1/teams`, `/api/v1/hackathons`, and `/api/v1/competitions`. Team membership and invitation actions are ownership-scoped. Hackathon registration/submission windows and competition registration use server UTC. `/api/v1/platform/collaboration/status` is admin-only and reports whether a CRDT gateway is configured.
+
+## Developer ecosystem (Phase 19)
+
+`GET /api/v1/developers` and `/developers/contributions` are authenticated and ownership-scoped. `GET /api/v1/github/status` reports provider configuration without secrets. Public `GET /api/v1/open-source/projects` and `/open-source/opportunities` return approved/public records only. `GET /api/v1/developers/{username}` returns only opt-in public profiles. `POST /api/v1/github/webhooks` validates GitHub HMAC signatures and delivery IDs; it returns `503` when the provider secret is not configured. Admin integration status is `GET /api/v1/platform/developer-ecosystem/status`.

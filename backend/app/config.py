@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     video_provider: str = "disabled"
     video_enabled: bool = False
     video_token_ttl_seconds: int = 900
+    github_enabled: bool = False
+    github_app_id: str = ""
+    github_client_id: str = ""
+    github_webhook_secret: str = ""
+    github_token_key: str = ""
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     @property
     def cors_origin_list(self) -> list[str]:

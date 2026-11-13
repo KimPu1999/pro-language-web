@@ -1,0 +1,1 @@
+import{PublicDeveloper}from"@/components/ecosystem-pages";export default async function Page({params}:{params:Promise<{username:string}>}){return <PublicDeveloper username={(await params).username}/>}

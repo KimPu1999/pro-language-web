@@ -32,3 +32,5 @@ Learning intelligence is implemented with evidence-based skill snapshots, rule-b
 Phase 17 adds career readiness, approved mentorship, private resume versions, portfolio review requests, timed interview practice, and private job application tracking. Phase 18 can add richer provider-backed scheduling, safe PDF rendering, and deeper interview evaluation.
 
 Phase 18 adds team management, team projects/tasks, hackathon registration/submissions, competition records, and verified leaderboard contracts. Real-time CRDT collaboration and isolated competition execution remain deployment prerequisites when their providers are unavailable.
+
+Phase 19 adds the developer hub, opt-in public developer profiles, approved open-source project/opportunity discovery, server-side GitHub webhook verification, contribution verification records, code review requests, maintainer surfaces, and privacy controls. GitHub OAuth, encrypted token persistence, repository synchronization, and provider-backed actions remain prerequisites for the next phase unless configured and independently tested.

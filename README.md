@@ -125,3 +125,7 @@ Student intelligence pages are available at `/dashboard/intelligence`, `/dashboa
 # Phase 17 career development
 
 Career pages include `/dashboard/career`, `/career/paths`, `/mentorship/mentors`, `/career/resume-builder`, `/career/interviews`, and `/career/applications`. Mentor profiles require administrator approval. Resume and application records are private to the authenticated student.
+
+## Phase 19 developer ecosystem
+
+The developer hub is available at `/developers`; public open-source discovery is available at `/open-source` and `/open-source/opportunities`. GitHub is disabled by default and displays `Not Configured` until a reviewed OAuth/App deployment is configured. Verified contribution records are server-synced and ownership-scoped; user-submitted links never become verified evidence.
