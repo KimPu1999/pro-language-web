@@ -9,3 +9,5 @@ Migration `0003_course_cms` extends languages, categories, courses, lessons, and
 Run `alembic upgrade head` followed by `python -m app.seed`. The seed is idempotent by slug and creates representative published courses for Python, JavaScript, TypeScript, Java, C++, PHP, HTML, CSS, and SQL.
 
 Migration `0004_interactive_classroom` adds coding exercises, starter code, test cases, execution jobs/results, submissions, submission test results, and per-user editor preferences. Foreign keys and user ownership indexes support isolation. Hidden exercise tests are never returned by public runner endpoints.
+
+Migration `0005_challenges_assessments` adds challenge taxonomy, language configs, public/hidden challenge tests, hints, challenge submissions/results, UTC daily assignments, student progress, skill statistics, and unique achievement awards. Existing Phase 4 execution jobs remain the execution source of truth.

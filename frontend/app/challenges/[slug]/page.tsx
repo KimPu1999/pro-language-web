@@ -1,0 +1,2 @@
+import { notFound } from "next/navigation"; import { api } from "@/lib/api"; import { ChallengeWorkspace } from "@/components/challenge-workspace";
+export default async function ChallengePage({params}:{params:Promise<{slug:string}>}){const {slug}=await params;try{return <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8"><ChallengeWorkspace challenge={await api.challenge(slug)}/></section>}catch{notFound()}}

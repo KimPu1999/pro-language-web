@@ -13,3 +13,6 @@ export type AdminDashboard = { total_courses:number; published_courses:number; d
 export type RunnerResult = { stdout: string; stderr: string; exit_code: number | null; execution_time_ms: number | null; truncated: boolean; error_code: string | null };
 export type RunnerJob = { id: string; status: string; language: string; queued_at: string; started_at?: string | null; finished_at?: string | null; expires_at?: string | null; result?: RunnerResult | null };
 export type RunnerLanguage = { identifier: string; version: string; filename: string };
+export type Challenge = { id:string; title:string; slug:string; description_en:string; description_mm?:string|null; examples:{input?:string;output?:string;explanation?:string}[]; constraints:string[]; difficulty:string; languages:{language:string;starter_code:string;time_limit_ms:number;memory_limit_mb:number}[]; topics:{name:string;slug:string}[]; solved?:boolean; hints?:{body_en:string;body_mm?:string|null}[]; public_tests?:{input:string;expected_output:string;points:number}[] };
+export type ChallengePage = { items:Challenge[]; page:number; page_size:number; total:number; pages:number };
+export type SkillDashboard = { attempts:number; solved:number; acceptance_rate:number; difficulty_distribution:unknown[]; topic_progress:unknown[]; recent_submissions:unknown[] };

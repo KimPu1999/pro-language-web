@@ -74,6 +74,8 @@ Phase 3 adds the admin control center at `/admin`. Only `admin` and `super_admin
 
 Phase 4 adds the interactive classroom foundation and migration `0004_interactive_classroom`. The Monaco editor, exercise/submission records, Redis queue adapter, and ownership-protected job APIs are included. Code execution is disabled by default (`RUNNER_ENABLED=false`) and must only be enabled with a separately deployed hardened sandbox worker. See [docs/code-execution.md](docs/code-execution.md), [docs/sandbox-security.md](docs/sandbox-security.md), and [docs/runner-deployment.md](docs/runner-deployment.md).
 
+Phase 5 adds migration `0005_challenges_assessments`, the challenge catalog, workspace, challenge submission records, skill dashboard, daily challenge contract, achievements schema, and admin challenge creation. Challenge submissions remain safely unavailable until the Phase 4 isolated runner is deployed.
+
 ## Troubleshooting
 
 - If the API cannot connect, verify PostgreSQL is running and `DATABASE_URL` points to an existing database.
