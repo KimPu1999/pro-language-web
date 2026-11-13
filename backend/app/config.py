@@ -36,6 +36,18 @@ class Settings(BaseSettings):
     github_client_id: str = ""
     github_webhook_secret: str = ""
     github_token_key: str = ""
+    oidc_enabled: bool = False
+    oidc_issuer: str = ""
+    oidc_client_id: str = ""
+    oidc_client_secret: str = ""
+    saml_enabled: bool = False
+    saml_entity_id: str = ""
+    saml_certificate: str = ""
+    webauthn_enabled: bool = False
+    webauthn_rp_id: str = "localhost"
+    webauthn_origin: str = "http://localhost:3000"
+    scim_enabled: bool = False
+    security_audit_retention_days: int = 365
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     @property
     def cors_origin_list(self) -> list[str]:

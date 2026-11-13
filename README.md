@@ -133,3 +133,7 @@ The developer hub is available at `/developers`; public open-source discovery is
 ## Phase 20 organizations
 
 Organization workspaces are available at `/organizations` and `/organization/[slug]/dashboard`. Organization data is membership-scoped, public learning remains free, and private training/analytics are not available to users outside the organization. PostgreSQL migration `0018_organizations` is additive.
+
+## Phase 21 security
+
+Organization security is available at `/organization/[slug]/security`; account sessions and MFA status are under `/settings/security`. OIDC, SAML, TOTP, passkeys, and SCIM show `Not Configured` until maintained protocol libraries and deployment credentials are installed. The compliance page never claims certification.

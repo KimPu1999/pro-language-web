@@ -1,0 +1,1 @@
+import{SecurityDetail}from"@/components/security-pages";export default async function Page({params}:{params:Promise<{slug:string}>}){return <SecurityDetail slug={(await params).slug} kind="reviews"/>}

@@ -55,3 +55,7 @@ Collaboration routes are under `/api/v1/teams`, `/api/v1/hackathons`, and `/api/
 ## Organizations (Phase 20)
 
 Organization routes are under `/api/v1/organizations` and require an active membership for tenant routes. Creation, member changes, invitations, teams, private course mappings, training, settings and exports use CSRF-protected mutations. `/api/v1/platform/organizations` and platform status changes require global admin roles. Analytics suppresses groups smaller than five active members.
+
+## Enterprise security (Phase 21)
+
+Security status and policy routes are under `/api/v1/organizations/{slug}/security`. Account sessions/MFA are under `/api/v1/settings/security`; privacy requests are under `/api/v1/privacy`. SCIM endpoints are under `/api/v1/scim/v2` and return `503` while SCIM is disabled. Compliance controls are platform-admin-only under `/api/v1/platform/compliance`.
