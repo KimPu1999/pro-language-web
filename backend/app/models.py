@@ -68,6 +68,8 @@ class Enrollment(TimestampMixin, Base):
     __tablename__="enrollments"; __table_args__=(UniqueConstraint("user_id","course_id"),); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); user_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id")); course_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("courses.id"))
 class LessonProgress(TimestampMixin, Base):
     __tablename__="lesson_progress"; __table_args__=(UniqueConstraint("user_id","lesson_id"),); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); user_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id")); lesson_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("lessons.id")); completed: Mapped[bool]=mapped_column(Boolean,default=False); last_visited_at: Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now())
+class LessonBookmark(TimestampMixin, Base):
+    __tablename__="lesson_bookmarks"; __table_args__=(UniqueConstraint("user_id","lesson_id"),Index("ix_lesson_bookmarks_user","user_id")); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); user_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id",ondelete="CASCADE")); lesson_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("lessons.id",ondelete="CASCADE"))
 class LearningPath(TimestampMixin, Base):
     __tablename__="learning_paths"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); title: Mapped[str]=mapped_column(String(180)); slug: Mapped[str]=mapped_column(String(180),unique=True); description: Mapped[str]=mapped_column(Text); published: Mapped[bool]=mapped_column(Boolean,default=False)
 class LearningPathCourse(Base):

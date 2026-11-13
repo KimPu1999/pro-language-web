@@ -3,7 +3,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, current_user, require_csrf, verified_user, hash_token, now
 from .db import get_db
-from .models import AuthSession, Course, CourseModule, Enrollment, Lesson, LessonProgress, User, UserProfile
+from .models import AuthSession, Course, CourseModule, Enrollment, Lesson, LessonBookmark, LessonProgress, User, UserProfile
 from .schemas import DashboardOut, EnrollmentOut, ProfileIn, ProgressIn, UserOut
 router=APIRouter(prefix="/api/v1/me", tags=["student"])
 def course_base(): return select(Course).options(selectinload(Course.language),selectinload(Course.category)).where(Course.published.is_(True))
@@ -34,6 +34,14 @@ def update_progress(lesson_id, payload: ProgressIn, user: User=Depends(verified_
     course_id=db.scalar(select(CourseModule.course_id).where(CourseModule.id==lesson.module_id)); enrollment=db.scalar(select(Enrollment).where(Enrollment.user_id==user.id,Enrollment.course_id==course_id))
     if not enrollment: raise HTTPException(403,"Enroll in this course first")
     progress=db.scalar(select(LessonProgress).where(LessonProgress.user_id==user.id,LessonProgress.lesson_id==lesson_id)) or LessonProgress(user_id=user.id,lesson_id=lesson_id); progress.completed=payload.completed; progress.last_visited_at=now(); db.add(progress); db.commit(); return {"lesson_id":lesson_id,"completed":progress.completed}
+@router.post("/lessons/{lesson_id}/bookmark")
+def toggle_bookmark(lesson_id, user: User=Depends(verified_user), __: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    lesson=db.scalar(select(Lesson).join(CourseModule).join(Course).where(Lesson.id==lesson_id,Lesson.published.is_(True),Course.published.is_(True)))
+    if not lesson: raise HTTPException(404,"Published lesson not found")
+    row=db.scalar(select(LessonBookmark).where(LessonBookmark.user_id==user.id,LessonBookmark.lesson_id==lesson_id))
+    if row: db.delete(row); bookmarked=False
+    else: db.add(LessonBookmark(user_id=user.id,lesson_id=lesson_id)); bookmarked=True
+    db.commit(); return {"lesson_id": lesson_id, "bookmarked": bookmarked}
 @router.post("/sessions/revoke-others")
 def revoke_other_sessions(response: Response, session_token: str|None=Cookie(default=None,alias=SESSION_COOKIE), user: User=Depends(current_user), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
     current_hash=hash_token(session_token) if session_token else ""; db.query(AuthSession).filter(AuthSession.user_id==user.id,AuthSession.token_hash!=current_hash,AuthSession.revoked_at.is_(None)).update({"revoked_at":now()}); db.commit(); return {"status":"revoked"}
