@@ -34,3 +34,5 @@ Community routes are under `/api/v1/community`: public feed, post detail, authen
 Live class routes are under `/api/v1/live-classes`: public catalog/detail, authenticated registration/cancellation, room-token status, presence, chat, Q&A, and instructor/admin class creation and scheduling. Room tokens return an explicit unavailable state while `VIDEO_ENABLED=false`. Registration, attendance, and chat access are membership-scoped.
 
 Operations endpoints include `GET /api/v1/health` for liveness and `GET /api/v1/ready` for database readiness. Platform quality and operations checks require `admin` or `super_admin` and report unconfigured dependencies without fabricating health metrics.
+
+Phase 15 operations include student-owned `POST /api/v1/platform/operations/feedback` and `GET /feedback/mine`; administrator-only incident, incident timeline, feedback inbox, engineering issue, release, health-history, and maintenance endpoints under `/api/v1/platform/operations`. Mutations require CSRF protection.
