@@ -13,3 +13,5 @@ Migration `0004_interactive_classroom` adds coding exercises, starter code, test
 Migration `0005_challenges_assessments` adds challenge taxonomy, language configs, public/hidden challenge tests, hints, challenge submissions/results, UTC daily assignments, student progress, skill statistics, and unique achievement awards. Existing Phase 4 execution jobs remain the execution source of truth.
 
 Migration `0006_personalized_roadmaps` adds career roadmaps, ordered stages and steps, resource links, prerequisite edges, student roadmap enrollments/progress, learning goals, skill assessments/evidence, recommendations, and revision snapshots. Existing course, lesson, challenge, enrollment, and progress rows are preserved.
+
+Migration `0007_projects_portfolio` adds project templates/categories/skills, milestones, student project records, submissions, review/rubric/feedback records, portfolios, portfolio links, verified project skills, and audit logs. Existing student data is preserved; approved evidence is unique by student, skill, and project.

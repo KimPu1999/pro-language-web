@@ -8,3 +8,5 @@ Phase 4 delivers the interactive editor and execution boundary: Monaco, supporte
 Phase 5 adds the challenge catalog, challenge workspace, assessment schema, submission lifecycle, analytics contracts, daily assignments, and achievement persistence. Before production grading, deploy the isolated runner callback/grading service and complete the challenge management editor. Phase 6 can add projects, contests, peer review, and certificates.
 
 Phase 6 adds personalized career roadmaps, learning goals, prerequisite-aware steps, evidence-based progress, and deterministic recommendations. Phase 7 can add social learning, mentor review, richer project assessments, and certificates.
+
+Phase 7 adds real-world project templates, milestones, GitHub metadata submission, instructor review workflow, weighted rubrics, verified project evidence, and private/public portfolios. Phase 8 can add GitHub App private-repository synchronization, secure media storage, mentor assignment, and richer portfolio presentation.

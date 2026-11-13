@@ -13,3 +13,5 @@ Phase 4 keeps code execution outside the API process. The API persists execution
 Phase 5 adds a challenge boundary on top of those execution jobs. Published challenge queries expose only public tests; authenticated submission and history endpoints enforce ownership. Skill and achievement records are server-derived, while the current runner-unavailable state prevents false grading.
 
 Phase 6 adds career roadmaps and student goal preferences. Roadmap steps link to existing courses and challenges by resource type/id. Progress is derived from existing lesson and accepted-submission evidence, while recommendations rank published roadmap records using deterministic goal matching.
+
+Phase 7 adds project templates and a review boundary. GitHub URLs are validated and stored as metadata; repositories are never fetched or executed by FastAPI. Approved reviews create verified project skill evidence and can satisfy roadmap project resources. Portfolio visibility is explicit and defaults to private.

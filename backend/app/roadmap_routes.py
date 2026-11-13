@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf, verified_user
 from .db import get_db
-from .models import (CareerRoadmap, Challenge, ChallengeSubmission, Course, CourseModule, Enrollment, Lesson, LessonProgress, RoadmapPrerequisite, RoadmapRevision, RoadmapStage, RoadmapStep, RoadmapStepResource, StudentLearningGoal, StudentRoadmap, StudentRoadmapProgress, User)
+from .models import (CareerRoadmap, Challenge, ChallengeSubmission, Course, CourseModule, Enrollment, Lesson, LessonProgress, ProjectTemplate, RoadmapPrerequisite, RoadmapRevision, RoadmapStage, RoadmapStep, RoadmapStepResource, StudentLearningGoal, StudentProject, StudentRoadmap, StudentRoadmapProgress, User)
 from .admin_routes import admin_user, full_admin, audit
 
 router=APIRouter(prefix="/api/v1",tags=["roadmaps"])
@@ -28,6 +28,7 @@ def evidence_complete(db,user_id,step_id):
     resources=db.scalars(select(RoadmapStepResource).where(RoadmapStepResource.step_id==step_id)).all()
     for r in resources:
         if r.resource_type=="challenge" and db.scalar(select(ChallengeSubmission.id).where(ChallengeSubmission.user_id==user_id,ChallengeSubmission.challenge_id==r.resource_id,ChallengeSubmission.status=="accepted")): return True
+        if r.resource_type=="project" and db.scalar(select(StudentProject.id).where(StudentProject.user_id==user_id,StudentProject.project_id==r.resource_id,StudentProject.status=="approved")): return True
         if r.resource_type=="course":
             total=db.scalar(select(func.count(Lesson.id)).join(CourseModule).where(CourseModule.course_id==r.resource_id,Lesson.published.is_(True))) or 0; done=db.scalar(select(func.count(LessonProgress.id)).join(Lesson,Lesson.id==LessonProgress.lesson_id).join(CourseModule,CourseModule.id==Lesson.module_id).where(LessonProgress.user_id==user_id,CourseModule.course_id==r.resource_id,Lesson.published.is_(True),LessonProgress.completed.is_(True))) or 0
             if total and total==done: return True

@@ -78,6 +78,8 @@ Phase 5 adds migration `0005_challenges_assessments`, the challenge catalog, wor
 
 Phase 6 adds migration `0006_personalized_roadmaps`, career roadmap catalog/detail pages, student learning goals, evidence-based roadmap enrollment/progress, prerequisite validation, deterministic recommendations, and roadmap administration. See [docs/personalized-learning.md](docs/personalized-learning.md), [docs/roadmap-builder.md](docs/roadmap-builder.md), and [docs/recommendation-engine.md](docs/recommendation-engine.md).
 
+Phase 7 adds migration `0007_projects_portfolio`, project templates, student workspaces, GitHub submission validation, instructor review records, weighted rubrics, verified project skill evidence, and private/public portfolio routes. See [docs/project-based-learning.md](docs/project-based-learning.md), [docs/project-review-workflow.md](docs/project-review-workflow.md), [docs/github-integration.md](docs/github-integration.md), and [docs/portfolio-builder.md](docs/portfolio-builder.md).
+
 ## Troubleshooting
 
 - If the API cannot connect, verify PostgreSQL is running and `DATABASE_URL` points to an existing database.
