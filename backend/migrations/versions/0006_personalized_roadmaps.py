@@ -1,9 +1,10 @@
 """personalized career roadmaps, goals, evidence and recommendations"""
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 revision="0006_personalized_roadmaps"; down_revision="0005_challenges_assessments"; branch_labels=None; depends_on=None
 def upgrade():
-    uuid=sa.String(36); ts=sa.DateTime(timezone=True)
+    uuid=postgresql.UUID(as_uuid=False); ts=sa.DateTime(timezone=True)
     original_create_fk=op.create_foreign_key
     def create_fk(*args,**kwargs):
         if op.get_bind().dialect.name=="sqlite": return

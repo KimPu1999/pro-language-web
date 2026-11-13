@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from app.models import User
 def verified_client(client,email):
-    response=client.post("/api/v1/auth/register",json={"full_name":"Challenge Student","email":email,"password":"strong-pass-123","confirm_password":"strong-pass-123","accept_terms":True}); assert response.status_code==201
+    response=client.post("/api/v1/auth/register",json={"full_name":"Challenge Student","email":email,"password":"strong-pwd12","confirm_password":"strong-pwd12","accept_terms":True}); assert response.status_code==201
     with client.session_factory() as db:
         user=db.scalar(select(User).where(User.email==email)); user.email_verified_at=datetime.now(timezone.utc); db.commit()
     return client.cookies.get("cm_csrf")

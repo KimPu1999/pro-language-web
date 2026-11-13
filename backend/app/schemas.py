@@ -23,7 +23,7 @@ class PageOut(BaseModel):
 class PathOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; description: str
 class RegisterIn(BaseModel):
-    full_name: str = Field(min_length=2, max_length=120); email: str; password: str = Field(min_length=8); confirm_password: str = Field(min_length=8); accept_terms: bool
+    full_name: str = Field(min_length=2, max_length=120); email: str; password: str = Field(min_length=8, max_length=12); confirm_password: str = Field(min_length=8, max_length=12); accept_terms: bool
     @model_validator(mode="after")
     def valid(self):
         if "@" not in self.email: raise ValueError("Valid email required")
@@ -33,13 +33,13 @@ class RegisterIn(BaseModel):
 class LoginIn(BaseModel): email: str; password: str
 class ForgotPasswordIn(BaseModel): email: str
 class ResetPasswordIn(BaseModel):
-    token: str = Field(min_length=20); password: str = Field(min_length=8); confirm_password: str = Field(min_length=8)
+    token: str = Field(min_length=20); password: str = Field(min_length=8, max_length=12); confirm_password: str = Field(min_length=8, max_length=12)
     @model_validator(mode="after")
     def valid(self):
         if self.password != self.confirm_password: raise ValueError("Passwords do not match")
         return self
 class ChangePasswordIn(BaseModel):
-    current_password: str; new_password: str = Field(min_length=8); confirm_password: str = Field(min_length=8)
+    current_password: str; new_password: str = Field(min_length=8, max_length=12); confirm_password: str = Field(min_length=8, max_length=12)
     @model_validator(mode="after")
     def valid(self):
         if self.new_password != self.confirm_password: raise ValueError("Passwords do not match")

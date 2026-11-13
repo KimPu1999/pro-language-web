@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from app.models import User
 def verified(client,email):
-    r=client.post("/api/v1/auth/register",json={"full_name":"Community Student","email":email,"password":"strong-pass-123","confirm_password":"strong-pass-123","accept_terms":True});assert r.status_code==201
+    r=client.post("/api/v1/auth/register",json={"full_name":"Community Student","email":email,"password":"strong-pwd12","confirm_password":"strong-pwd12","accept_terms":True});assert r.status_code==201
     with client.session_factory() as db: u=db.scalar(select(User).where(User.email==email));u.email_verified_at=datetime.now(timezone.utc);db.commit()
     return client.cookies.get("cm_csrf")
 def test_post_answer_accept_and_self_vote_rejected(client):

@@ -35,7 +35,21 @@ Open http://localhost:3000. The frontend expects the API at `http://localhost:80
 
 ## PostgreSQL setup
 
-Create a database and set `DATABASE_URL` in `backend/.env`, for example:
+Start PostgreSQL, then create the database before running migrations. With the
+default local PostgreSQL user, run:
+
+```bash
+createdb -h localhost -U postgres codemaster
+```
+
+If `createdb` is unavailable, use:
+
+```bash
+psql -h localhost -U postgres -d postgres -c "CREATE DATABASE codemaster;"
+```
+
+If the database already exists, PostgreSQL will report that and you can continue.
+Set `DATABASE_URL` in `backend/.env`, for example:
 
 ```text
 DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/codemaster
@@ -91,6 +105,7 @@ Phase 7 adds migration `0007_projects_portfolio`, project templates, student wor
 ## Troubleshooting
 
 - If the API cannot connect, verify PostgreSQL is running and `DATABASE_URL` points to an existing database.
+- If migrations fail with `database "codemaster" does not exist`, create it with the PostgreSQL commands above, then rerun `alembic upgrade head`.
 - If the UI shows an API error, start FastAPI on port 8000 or change `NEXT_PUBLIC_API_BASE_URL`.
 - Run `alembic current` and `alembic upgrade head` to inspect migration state.
 

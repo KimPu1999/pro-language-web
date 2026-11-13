@@ -20,7 +20,7 @@ def check_rate_limit(key: str, limit: int = 10, window_seconds: int = 60) -> Non
     if len(bucket) >= limit: raise HTTPException(429,"Too many requests. Try again later.")
     bucket.append(current); _rate_buckets[key]=bucket
 def validate_password(value: str) -> None:
-    if len(value) < 8: raise HTTPException(422, "Password must be at least 8 characters")
+    if len(value) < 8 or len(value) > 12: raise HTTPException(422, "Password must be between 8 and 12 characters")
 def hash_token(raw: str) -> str: return hashlib.sha256(raw.encode()).hexdigest()
 def new_token() -> str: return secrets.token_urlsafe(32)
 def verify_password(password: str, password_hash: str) -> bool:

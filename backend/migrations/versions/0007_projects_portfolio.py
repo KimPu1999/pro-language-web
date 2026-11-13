@@ -1,9 +1,10 @@
 """project learning, review workflow and portfolios"""
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 revision="0007_projects_portfolio"; down_revision="0006_personalized_roadmaps"; branch_labels=None; depends_on=None
 def upgrade():
-    uuid=sa.String(36); ts=sa.DateTime(timezone=True); original=op.create_foreign_key
+    uuid=postgresql.UUID(as_uuid=False); ts=sa.DateTime(timezone=True); original=op.create_foreign_key
     def fk(*a,**k): return None if op.get_bind().dialect.name=="sqlite" else original(*a,**k)
     op.create_foreign_key=fk
     def table(name,cols,unique=()): op.create_table(name,*[sa.Column(c[0],c[1],**(c[2] if len(c)>2 else {})) for c in cols],*unique,sa.Column("created_at",ts,server_default=sa.func.now()),sa.Column("updated_at",ts,server_default=sa.func.now()))

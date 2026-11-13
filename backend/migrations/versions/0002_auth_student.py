@@ -1,9 +1,10 @@
 """authentication and student learning state"""
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 revision="0002_auth_student"; down_revision="0001_initial"; branch_labels=None; depends_on=None
 def upgrade():
-    uuid=sa.String(36)
+    uuid=postgresql.UUID(as_uuid=False)
     for column, typ in [("email_normalized",sa.String(320)),("role",sa.String(30)),("account_status",sa.String(30)),("email_verified_at",sa.DateTime(timezone=True)),("last_login_at",sa.DateTime(timezone=True)),("password_changed_at",sa.DateTime(timezone=True))]: op.add_column("users",sa.Column(column,typ,nullable=True))
     op.execute("UPDATE users SET email_normalized=lower(trim(email)) WHERE email_normalized IS NULL")
     op.execute("UPDATE users SET role='student' WHERE role IS NULL")

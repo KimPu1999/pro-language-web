@@ -1,6 +1,7 @@
 """challenge catalog, grading records, daily practice and skill analytics"""
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 revision = "0005_challenges_assessments"
 down_revision = "0004_interactive_classroom"
@@ -8,7 +9,7 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    uuid = sa.String(36); ts = sa.DateTime(timezone=True)
+    uuid = postgresql.UUID(as_uuid=False); ts = sa.DateTime(timezone=True)
     op.create_table("challenge_categories", sa.Column("id",uuid,primary_key=True), sa.Column("name",sa.String(100),nullable=False), sa.Column("slug",sa.String(100),unique=True,nullable=False), sa.Column("description",sa.Text,server_default=""), sa.Column("status",sa.String(20),server_default="active",nullable=False), sa.Column("created_at",ts,server_default=sa.func.now()), sa.Column("updated_at",ts,server_default=sa.func.now()))
     op.create_table("challenges", sa.Column("id",uuid,primary_key=True), sa.Column("category_id",uuid,sa.ForeignKey("challenge_categories.id",ondelete="SET NULL")), sa.Column("created_by",uuid,sa.ForeignKey("users.id",ondelete="SET NULL")), sa.Column("title",sa.String(180),nullable=False), sa.Column("slug",sa.String(180),unique=True,nullable=False), sa.Column("description_en",sa.Text,nullable=False), sa.Column("description_mm",sa.Text), sa.Column("examples_json",sa.Text,server_default="[]",nullable=False), sa.Column("constraints_json",sa.Text,server_default="[]",nullable=False), sa.Column("difficulty",sa.String(30),nullable=False), sa.Column("status",sa.String(20),server_default="draft",nullable=False), sa.Column("published",sa.Boolean,server_default=sa.false(),nullable=False), sa.Column("created_at",ts,server_default=sa.func.now()), sa.Column("updated_at",ts,server_default=sa.func.now()))
     op.create_index("ix_challenges_published_difficulty","challenges",["published","difficulty"])
