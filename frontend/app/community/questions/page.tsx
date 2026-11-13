@@ -1,0 +1,1 @@
+import Link from "next/link";export default function Questions(){return <section className="mx-auto max-w-5xl px-5 py-12"><h1 className="text-3xl font-bold">Questions and answers</h1><p className="mt-3 text-slate-400">Browse programming questions from the community.</p><Link href="/community" className="mt-8 inline-block text-primary">View latest discussions →</Link></section>}

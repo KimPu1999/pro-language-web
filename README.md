@@ -82,6 +82,8 @@ Phase 8 adds migration `0008_ai_tutor`, the authenticated AI Tutor conversation 
 
 Phase 9 adds migration `0009_certificates_gamification`, certificate verification/PDF endpoints, achievements summary, XP balance and event ledgers, streak records, and opt-in leaderboard APIs. See the certificate and gamification documentation for issuance and privacy rules.
 
+Phase 10 adds migration `0010_community`, public community feed and Q&A APIs, comments, votes, bookmarks, snippets, study groups, reports, blocks, notifications, and the first community pages. Shared code is stored as text and is never executed by the API process.
+
 Phase 7 adds migration `0007_projects_portfolio`, project templates, student workspaces, GitHub submission validation, instructor review records, weighted rubrics, verified project skill evidence, and private/public portfolio routes. See [docs/project-based-learning.md](docs/project-based-learning.md), [docs/project-review-workflow.md](docs/project-review-workflow.md), [docs/github-integration.md](docs/github-integration.md), and [docs/portfolio-builder.md](docs/portfolio-builder.md).
 
 ## Troubleshooting

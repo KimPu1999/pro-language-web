@@ -17,3 +17,5 @@ Migration `0006_personalized_roadmaps` adds career roadmaps, ordered stages and 
 Migration `0007_projects_portfolio` adds project templates/categories/skills, milestones, student project records, submissions, review/rubric/feedback records, portfolios, portfolio links, verified project skills, and audit logs. Existing student data is preserved; approved evidence is unique by student, skill, and project.
 
 Migration `0008_ai_tutor` adds conversations, messages, message context references, usage records, provider/model policy records, tutor preferences, feedback, request logs, and UTC quota counters. Conversation and usage rows are user-scoped. Provider credentials are not stored in these tables; deployment secrets remain environment-managed. Deleted conversations are soft-deleted so operational retention can be managed without exposing them to list/detail queries.
+
+Migration `0010_community` adds community categories/posts/tags, answers, bounded-depth comments, unique votes and bookmarks, snippets, study groups and memberships, reports, user blocks, and user-scoped notifications. Existing users and learning records are preserved.

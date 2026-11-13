@@ -12,3 +12,5 @@ Phase 6 adds personalized career roadmaps, learning goals, prerequisite-aware st
 Phase 7 adds real-world project templates, milestones, GitHub metadata submission, instructor review workflow, weighted rubrics, verified project evidence, and private/public portfolios. Phase 8 can add GitHub App private-repository synchronization, secure media storage, mentor assignment, and richer portfolio presentation.
 
 Phase 8 adds the AI Tutor foundation: provider abstraction, disabled-provider behavior, persistent conversations, streaming transport, published lesson/challenge context retrieval, usage quotas, preferences, and admin operational visibility. Phase 9 can add a production provider adapter, richer project and roadmap assistant surfaces, evaluation, and additional AI-supported learning workflows.
+
+Phase 10 adds the community foundation: public discussions, Q&A answers, bounded comments, votes, bookmarks, code snippets, public study groups, reports, blocks, and notifications. Phase 11 can add real-time collaboration, mentor spaces, richer moderation workflows, and advanced community discovery.
