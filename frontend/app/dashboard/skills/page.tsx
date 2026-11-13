@@ -1,3 +1,5 @@
-"use client";
-import { useEffect, useState } from "react"; import { api } from "@/lib/api"; import type { SkillDashboard } from "@/lib/types"; import { Card, Skeleton } from "@/components/ui";
-export default function SkillsPage(){const [data,setData]=useState<SkillDashboard|null>(null);const [error,setError]=useState("");useEffect(()=>{api.skills().then(setData).catch(e=>setError(e.message))},[]);if(error)return <section className="mx-auto max-w-6xl px-5 py-14 text-red-300">Unable to load skill analytics. {error}</section>;if(!data)return <section className="mx-auto max-w-6xl px-5 py-14"><Skeleton className="h-48"/></section>;return <section className="mx-auto max-w-6xl px-5 py-14 lg:px-8"><p className="text-sm text-indigo-300">Your practice</p><h1 className="mt-2 text-4xl font-bold">Skill analytics</h1><div className="mt-8 grid gap-4 sm:grid-cols-3"><Card className="p-5"><p className="text-sm text-slate-500">Attempts</p><p className="mt-2 text-3xl font-bold">{data.attempts}</p></Card><Card className="p-5"><p className="text-sm text-slate-500">Unique solved</p><p className="mt-2 text-3xl font-bold">{data.solved}</p></Card><Card className="p-5"><p className="text-sm text-slate-500">Acceptance rate</p><p className="mt-2 text-3xl font-bold">{data.acceptance_rate}%</p></Card></div><Card className="mt-6 p-6"><h2 className="text-lg font-semibold">Practice recommendations</h2><p className="mt-3 text-sm text-slate-400">Topic-level recommendations will appear after you have challenge attempts. Statistics are calculated from your persisted submissions.</p></Card></section>}
+import { IntelligencePage } from "@/components/learning-intelligence";
+
+export default function Page() {
+  return <IntelligencePage />;
+}

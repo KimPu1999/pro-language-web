@@ -36,3 +36,6 @@ Live class routes are under `/api/v1/live-classes`: public catalog/detail, authe
 Operations endpoints include `GET /api/v1/health` for liveness and `GET /api/v1/ready` for database readiness. Platform quality and operations checks require `admin` or `super_admin` and report unconfigured dependencies without fabricating health metrics.
 
 Phase 15 operations include student-owned `POST /api/v1/platform/operations/feedback` and `GET /feedback/mine`; administrator-only incident, incident timeline, feedback inbox, engineering issue, release, health-history, and maintenance endpoints under `/api/v1/platform/operations`. Mutations require CSRF protection.
+# Learning intelligence (Phase 16)
+
+Authenticated student endpoints are under `/api/v1/learning`: `GET /intelligence`, `/skills`, `/recommendations`, `/study-plans`, `/revision`, and `GET /goals`. Verified students can create study plans, submit recommendation feedback, and record revision attempts with CSRF protection. `POST /coach` returns a truthful unavailable state when AI is disabled. `GET /platform/insights` is restricted to platform administrators and suppresses small groups.

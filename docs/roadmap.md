@@ -25,3 +25,6 @@ Phase 12 adds real-data platform analytics, metric definitions, administrator-on
 Phase 13 adds regression test infrastructure, request correlation headers, fail-closed live-room behavior, the administrator quality-status page, CI quality gates, dependency-scan hooks, and production-readiness/security documentation. Real runner, video, AI, telemetry, backup restore, and load-test verification remain deployment prerequisites.
 
 Phase 15 adds additive operations records, incident lifecycle APIs, student feedback ownership, engineering issue/release history, maintenance visibility, and an operations status surface. External monitoring, billing, backup, alerting, and deployment integrations remain provider-dependent and are shown as unknown until verified.
+# Phase 16 status
+
+Learning intelligence is implemented with evidence-based skill snapshots, rule-based recommendations, verified study-plan tracking, spaced repetition records, and an unavailable-safe AI coach surface. Background refresh and richer provider integrations remain operational follow-up work.

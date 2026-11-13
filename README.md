@@ -118,3 +118,6 @@ Phase 7 adds migration `0007_projects_portfolio`, project templates, student wor
 
 See [docs/architecture.md](docs/architecture.md), [docs/database.md](docs/database.md), [docs/api.md](docs/api.md), and [docs/roadmap.md](docs/roadmap.md).
 
+# Phase 16 learning intelligence
+
+Student intelligence pages are available at `/dashboard/intelligence`, `/dashboard/skills`, `/dashboard/recommendations`, `/dashboard/study-plan`, `/dashboard/revision`, and `/dashboard/ai-coach`. Scores use verified persisted evidence; insufficient evidence is shown as `Not Yet Assessed`. AI coach responses remain unavailable until a server-side provider is configured.

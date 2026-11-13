@@ -22,3 +22,6 @@ Migration `0010_community` adds community categories/posts/tags, answers, bounde
 
 Migration `0011_live_classes` adds classes, sessions, instructors, registrations, waitlists, attendance, idempotent presence events, private recording metadata, resources, Q&A, chat messages, code snapshots, and audit logs. Timestamps are timezone-aware and schedules are stored in UTC.
 Migration `0013_operations` adds post-launch incidents, incident events, student feedback, engineering issues, release records, service health history, maintenance windows, and improvement items. It is additive and preserves all existing learning data.
+# Phase 16 additions
+
+Migration `0014_learning_intelligence` adds skill prerequisites and snapshots, recommendation feedback, study plans/items, revision items/attempts, private risk indicators, and minimal AI coach interaction records. Existing `skill_definitions`, `student_skill_evidence`, `student_learning_goals`, and `learning_recommendations` are reused.
