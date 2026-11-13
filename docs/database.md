@@ -25,3 +25,5 @@ Migration `0013_operations` adds post-launch incidents, incident events, student
 # Phase 16 additions
 
 Migration `0014_learning_intelligence` adds skill prerequisites and snapshots, recommendation feedback, study plans/items, revision items/attempts, private risk indicators, and minimal AI coach interaction records. Existing `skill_definitions`, `student_skill_evidence`, `student_learning_goals`, and `learning_recommendations` are reused.
+
+Migration `0015_career_development` adds career, mentor, resume, portfolio review, interview, application, and career audit tables. Existing roadmaps, skills, portfolios, projects, users, and sessions remain intact.

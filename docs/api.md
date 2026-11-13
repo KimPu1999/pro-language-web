@@ -39,3 +39,7 @@ Phase 15 operations include student-owned `POST /api/v1/platform/operations/feed
 # Learning intelligence (Phase 16)
 
 Authenticated student endpoints are under `/api/v1/learning`: `GET /intelligence`, `/skills`, `/recommendations`, `/study-plans`, `/revision`, and `GET /goals`. Verified students can create study plans, submit recommendation feedback, and record revision attempts with CSRF protection. `POST /coach` returns a truthful unavailable state when AI is disabled. `GET /platform/insights` is restricted to platform administrators and suppresses small groups.
+
+## Career development (Phase 17)
+
+Career routes are under `/api/v1/career`: dashboard, published paths, approved mentors, mentor applications, UTC availability, mentorship requests, private resumes, portfolio-review requests, published interview questions, timed interview sessions, and private job applications. Admin-only routes review mentors and create interview questions. Student mutations require authentication and CSRF tokens.

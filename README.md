@@ -121,3 +121,7 @@ See [docs/architecture.md](docs/architecture.md), [docs/database.md](docs/databa
 # Phase 16 learning intelligence
 
 Student intelligence pages are available at `/dashboard/intelligence`, `/dashboard/skills`, `/dashboard/recommendations`, `/dashboard/study-plan`, `/dashboard/revision`, and `/dashboard/ai-coach`. Scores use verified persisted evidence; insufficient evidence is shown as `Not Yet Assessed`. AI coach responses remain unavailable until a server-side provider is configured.
+
+# Phase 17 career development
+
+Career pages include `/dashboard/career`, `/career/paths`, `/mentorship/mentors`, `/career/resume-builder`, `/career/interviews`, and `/career/applications`. Mentor profiles require administrator approval. Resume and application records are private to the authenticated student.

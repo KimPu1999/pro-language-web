@@ -28,3 +28,5 @@ Phase 15 adds additive operations records, incident lifecycle APIs, student feed
 # Phase 16 status
 
 Learning intelligence is implemented with evidence-based skill snapshots, rule-based recommendations, verified study-plan tracking, spaced repetition records, and an unavailable-safe AI coach surface. Background refresh and richer provider integrations remain operational follow-up work.
+
+Phase 17 adds career readiness, approved mentorship, private resume versions, portfolio review requests, timed interview practice, and private job application tracking. Phase 18 can add richer provider-backed scheduling, safe PDF rendering, and deeper interview evaluation.

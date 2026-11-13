@@ -22,6 +22,7 @@ from .live_class_routes import router as live_class_router
 from .analytics_routes import router as analytics_router
 from .operations_routes import router as operations_router
 from .learning_intelligence_routes import router as learning_intelligence_router
+from .career_routes import router as career_router
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger=logging.getLogger("codemaster.api")
 app=FastAPI(title="CodeMaster Academy API", version="1.0.0")
@@ -37,6 +38,7 @@ async def request_context(request, call_next):
 app.include_router(auth_router); app.include_router(student_router); app.include_router(admin_router); app.include_router(runner_router); app.include_router(challenge_router); app.include_router(roadmap_router); app.include_router(project_router); app.include_router(ai_router); app.include_router(gamification_router); app.include_router(community_router); app.include_router(live_class_router)
 app.include_router(analytics_router); app.include_router(operations_router)
 app.include_router(learning_intelligence_router)
+app.include_router(career_router)
 @app.get("/api/v1/health")
 def health(db: Session=Depends(get_db)): db.execute(select(1)); return {"status":"ok","service":"codemaster-api"}
 @app.get("/api/v1/ready")
