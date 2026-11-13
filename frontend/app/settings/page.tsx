@@ -1,0 +1,1 @@
+import { Card } from "@/components/ui"; export default function Settings(){return <section className="mx-auto max-w-4xl px-5 py-20 lg:px-8"><h1 className="text-4xl font-bold">Settings</h1><Card className="mt-8 p-7 text-slate-300">Account settings will become available after authentication is implemented.</Card></section>}

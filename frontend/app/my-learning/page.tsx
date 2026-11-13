@@ -1,0 +1,1 @@
+import { Card } from "@/components/ui"; export default function MyLearning(){return <section className="mx-auto max-w-4xl px-5 py-20 lg:px-8"><h1 className="text-4xl font-bold">My learning</h1><Card className="mt-8 p-7 text-slate-300">Sign-in and enrollment are intentionally deferred to Phase 2. Browse the public catalog to begin learning.</Card></section>}
