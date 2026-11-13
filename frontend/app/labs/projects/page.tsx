@@ -1,0 +1,1 @@
+import { Card } from "@/components/ui";export default function Page(){return <Card><h1 className="text-3xl font-semibold">Project labs</h1><p className="mt-3 text-slate-400">Multi-file project workspaces are available through published lab versions.</p></Card>}

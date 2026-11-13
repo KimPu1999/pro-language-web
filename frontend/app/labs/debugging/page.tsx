@@ -1,0 +1,1 @@
+import { Card } from "@/components/ui";export default function Page(){return <Card><h1 className="text-3xl font-semibold">Debugging lab</h1><p className="mt-3 text-amber-200">Runner unavailable. Submit a lab after an isolated execution worker is configured.</p></Card>}

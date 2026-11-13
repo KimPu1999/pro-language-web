@@ -46,3 +46,7 @@ Phase 22 adds tenant-scoped automation workflows, validated graph versions, dura
 ## Phase 23
 
 Phase 23 adds tenant-scoped AI content projects, durable generation job states, lesson/quiz/challenge/project drafts, separate translations, quality-check records, revision snapshots, independent review, and approved publication records. AI generation remains `Not Configured` or `provider_unavailable` without a real provider and worker; content can still be edited manually.
+
+## Phase 24
+
+Phase 24 adds published learning labs, owned workspaces, path-safe files, snapshots, durable run/submission records, progress records, instructor lab records, and truthful runner/SQL/API unavailable states. Isolated code workers, ephemeral SQL sandboxes, and controlled mock API services remain deployment prerequisites.

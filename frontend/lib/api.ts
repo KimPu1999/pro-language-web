@@ -69,3 +69,14 @@ export const contentStudioApi = {
   usage:(slug:string)=>request<{provider_status:string;items:unknown[]}>(`/api/v1/organizations/${slug}/content-studio/usage`),
   platform:()=>request<unknown>("/api/v1/platform/content-studio"),
 };
+export const labsApi = {
+  catalog:(query="")=>request<{items:unknown[];page:number;page_size:number;total:number}>(`/api/v1/labs${query}`),
+  detail:(id:string)=>request<any>(`/api/v1/labs/${id}`),
+  dashboard:()=>request<{items:unknown[]}>('/api/v1/me/labs'),
+  workspace:(id:string,csrf:string)=>request<{id:string;status:string}>(`/api/v1/labs/${id}/workspace`,{...json({}),headers:{"X-CSRF-Token":csrf}}),
+  getWorkspace:(id:string)=>request<any>(`/api/v1/lab-workspaces/${id}`),
+  saveFile:(id:string,body:unknown,csrf:string)=>request<any>(`/api/v1/lab-workspaces/${id}/files`,{method:"PUT",body:JSON.stringify(body),headers:{"X-CSRF-Token":csrf}}),
+  run:(id:string,body:unknown,csrf:string)=>request<any>(`/api/v1/lab-workspaces/${id}/run`,{...json(body),headers:{"X-CSRF-Token":csrf}}),
+  instructor:()=>request<unknown[]>('/api/v1/instructor/labs'),
+  platform:()=>request<any>('/api/v1/platform/labs'),
+};

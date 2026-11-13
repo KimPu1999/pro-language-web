@@ -1,0 +1,1 @@
+import { Card } from "@/components/ui";export default function Page(){return <Card><h1 className="text-3xl font-semibold">SQL practice lab</h1><p className="mt-3 text-amber-200">Not Configured: isolated SQL environments are unavailable. No query was executed against the platform database.</p></Card>}

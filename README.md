@@ -145,3 +145,7 @@ Instructor content authoring is available under `/instructor/content-studio`, wi
 ## Phase 22 automation
 
 Organization automation is available at `/organization/[slug]/automation`, with workflow drafts at `/organization/[slug]/automation/builder` and platform oversight at `/platform/automation`. Migration `0020_automation` adds tenant-scoped workflow versions, durable queued runs, approvals, idempotency, agent permissions, recommendations, templates, usage, security events, and audit logs. No worker, scheduler, or live AI agent provider is configured by default; those surfaces show truthful unavailable states.
+
+## Phase 24 learning labs
+
+Learning labs are available at `/labs` and `/dashboard/labs`; workspaces use `/labs/{labId}/workspace`. Migration `0022_learning_labs` adds lab versions, owned files, snapshots, execution records, progress, reviews, and audit logs. Code execution, SQL environments, controlled API targets, and AI assistance show truthful unavailable states until isolated services are configured.

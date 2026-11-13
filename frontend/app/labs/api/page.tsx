@@ -1,0 +1,1 @@
+import { Card } from "@/components/ui";export default function Page(){return <Card><h1 className="text-3xl font-semibold">API testing lab</h1><p className="mt-3 text-amber-200">Not Configured: controlled mock API targets are unavailable. No unrestricted proxy is provided.</p></Card>}

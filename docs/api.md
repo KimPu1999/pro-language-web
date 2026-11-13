@@ -62,3 +62,7 @@ Security status and policy routes are under `/api/v1/organizations/{slug}/securi
 ## Phase 23 content studio
 
 Tenant authoring endpoints are under `/api/v1/organizations/{slug}/content-studio`: dashboard, projects, generation jobs, lesson drafts, translations, revisions, reviews, quality records, and usage. Publishing is `POST .../projects/{project_id}/publish?revision_id=...` and requires an approved revision plus owner/admin membership. `/api/v1/platform/content-studio` is restricted to platform admins. AI generation returns `provider_unavailable` when no provider is configured.
+
+## Phase 24 learning labs
+
+Lab APIs include `GET /api/v1/labs`, `GET /api/v1/labs/{id}`, `GET /api/v1/me/labs`, workspace creation and file/snapshot/run endpoints, instructor lab endpoints, and `GET /api/v1/platform/labs`. Run responses report `runner_unavailable` when the isolated worker is absent.

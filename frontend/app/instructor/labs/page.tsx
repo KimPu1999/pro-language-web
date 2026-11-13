@@ -1,0 +1,1 @@
+import { Card } from "@/components/ui";export default function Page(){return <Card><h1 className="text-3xl font-semibold">Instructor labs</h1><p className="mt-3 text-slate-400">Lab authoring API is available for authorized instructors. Runner validation remains unavailable until configured.</p></Card>}
