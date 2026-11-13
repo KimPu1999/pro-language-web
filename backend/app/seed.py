@@ -1,28 +1,111 @@
+"""Idempotent catalog metadata seed.
+
+Creates catalog records only. It never creates placeholder lessons and does not
+replace existing curriculum, enrollments, or progress.
+Run from backend: python -m app.seed
+"""
 from sqlalchemy import select
+
 from .db import SessionLocal
-from .models import CareerRoadmap, CodeExample, Course, CourseCategory, CourseModule, LearningPath, Lesson, ProgrammingLanguage, RoadmapStage, RoadmapStep
-DATA=[("Python","python","#3776AB"),("JavaScript","javascript","#F7DF1E"),("TypeScript","typescript","#3178C6"),("Java","java","#ED8B00"),("C++","cpp","#00599C"),("PHP","php","#777BB4"),("HTML","html","#E34F26"),("CSS","css","#1572B6"),("SQL","sql","#22C55E")]
-ROADMAPS=[("Frontend Developer","frontend-developer","Frontend"),("Backend Developer","backend-developer","Backend"),("Full-Stack Developer","full-stack-developer","Web Development"),("Python Developer","python-developer","Python"),("AI Engineer","ai-engineer","Artificial Intelligence"),("Mobile Developer","mobile-developer","Mobile"),("Cybersecurity","cybersecurity","Security"),("DevOps Engineer","devops-engineer","DevOps")]
+from .models import Course, CourseCategory, ProgrammingLanguage
+
+CATEGORIES = [
+    ("Frontend Development", "frontend-development"),
+    ("Programming Languages", "programming-languages"),
+    ("Backend Development", "backend-development"),
+    ("Database Development", "database-development"),
+    ("DevOps & Cloud", "devops-cloud"),
+    ("Cybersecurity", "cybersecurity"),
+    ("Mobile Development", "mobile-development"),
+    ("AI & Data Science", "ai-data-science"),
+    ("Computer Science", "computer-science"),
+]
+COURSES = [
+    ("HTML", "html", "html", "#E34F26", "frontend-development"), ("CSS", "css", "css", "#1572B6", "frontend-development"),
+    ("JavaScript", "javascript", "javascript", "#F7DF1E", "frontend-development"), ("TypeScript", "typescript", "typescript", "#3178C6", "frontend-development"),
+    ("React", "react", "javascript", "#61DAFB", "frontend-development"), ("Next.js", "next-js", "javascript", "#F8FAFC", "frontend-development"),
+    ("jQuery", "jquery", "javascript", "#0769AD", "frontend-development"), ("Tailwind CSS", "tailwind-css", "css", "#06B6D4", "frontend-development"),
+    ("Bootstrap", "bootstrap", "css", "#7952B3", "frontend-development"), ("C Programming", "c-programming", "c", "#A8B9CC", "programming-languages"),
+    ("C++", "cpp", "cpp", "#00599C", "programming-languages"), ("Java", "java", "java", "#ED8B00", "programming-languages"),
+    ("Advanced Java", "advanced-java", "java", "#ED8B00", "programming-languages"), ("Python", "python", "python", "#3776AB", "programming-languages"),
+    ("C#", "c-sharp", "c-sharp", "#512BD4", "programming-languages"), ("Go", "go", "go", "#00ADD8", "programming-languages"),
+    ("Rust", "rust", "rust", "#DEA584", "programming-languages"), ("Node.js", "node-js", "javascript", "#339933", "backend-development"),
+    ("Express.js", "express-js", "javascript", "#F8FAFC", "backend-development"), ("PHP", "php", "php", "#777BB4", "backend-development"),
+    ("Laravel", "laravel", "php", "#FF2D20", "backend-development"), ("FastAPI", "fastapi", "python", "#009688", "backend-development"),
+    ("Django", "django", "python", "#092E20", "backend-development"), ("Spring Boot", "spring-boot", "java", "#6DB33F", "backend-development"),
+    ("SQL", "sql", "sql", "#22C55E", "database-development"), ("MySQL", "mysql", "sql", "#4479A1", "database-development"),
+    ("PostgreSQL", "postgresql", "sql", "#4169E1", "database-development"), ("SQLite", "sqlite", "sql", "#003B57", "database-development"),
+    ("MongoDB", "mongodb", "mongodb", "#47A248", "database-development"), ("Redis", "redis", "redis", "#DC382D", "database-development"),
+    ("Linux", "linux", "linux", "#FCC624", "devops-cloud"), ("Git", "git", "git", "#F05032", "devops-cloud"),
+    ("GitHub", "github", "git", "#F8FAFC", "devops-cloud"), ("Docker", "docker", "docker", "#2496ED", "devops-cloud"),
+    ("CI/CD", "ci-cd", "ci-cd", "#818CF8", "devops-cloud"), ("AWS", "aws", "aws", "#FF9900", "devops-cloud"),
+    ("Microsoft Azure", "microsoft-azure", "azure", "#0078D4", "devops-cloud"), ("Cybersecurity Fundamentals", "cybersecurity-fundamentals", "cybersecurity", "#EF4444", "cybersecurity"),
+    ("Networking Fundamentals", "networking-fundamentals", "networking", "#38BDF8", "cybersecurity"), ("Web Security", "web-security", "cybersecurity", "#F97316", "cybersecurity"),
+    ("Secure Coding", "secure-coding", "cybersecurity", "#A855F7", "cybersecurity"), ("OWASP Top 10", "owasp-top-10", "cybersecurity", "#F43F5E", "cybersecurity"),
+    ("Dart", "dart", "dart", "#0175C2", "mobile-development"), ("Flutter", "flutter", "dart", "#54C5F8", "mobile-development"),
+    ("React Native", "react-native", "javascript", "#61DAFB", "mobile-development"), ("Kotlin", "kotlin", "kotlin", "#7F52FF", "mobile-development"),
+    ("Python for AI", "python-for-ai", "python", "#3776AB", "ai-data-science"), ("Machine Learning", "machine-learning", "python", "#10B981", "ai-data-science"),
+    ("Data Analysis", "data-analysis", "python", "#F59E0B", "ai-data-science"), ("Data Structures", "data-structures", "computer-science", "#6366F1", "computer-science"),
+    ("Algorithms", "algorithms", "computer-science", "#8B5CF6", "computer-science"), ("Operating Systems", "operating-systems", "computer-science", "#64748B", "computer-science"),
+]
+LEGACY_SLUGS = {slug: f"{language}-foundations" for _, slug, language, _, _ in COURSES}
+
+def get_or_create(db, model, slug, **values):
+    row = db.scalar(select(model).where(model.slug == slug))
+    if not row:
+        row = model(slug=slug, **values)
+        db.add(row)
+        db.flush()
+    return row
+
 def main():
-    with SessionLocal() as db:
-        category=db.scalar(select(CourseCategory).where(CourseCategory.slug=="programming-fundamentals"))
-        if not category: category=CourseCategory(name="Programming Fundamentals",slug="programming-fundamentals"); db.add(category); db.flush()
-        for name,slug,color in DATA:
-            lang=db.scalar(select(ProgrammingLanguage).where(ProgrammingLanguage.slug==slug))
-            if not lang: lang=ProgrammingLanguage(name=name,slug=slug,color=color); db.add(lang); db.flush()
-            course=db.scalar(select(Course).where(Course.slug==f"{slug}-foundations"))
-            if course: continue
-            course=Course(language_id=lang.id,category_id=category.id,title=f"{name} Foundations",slug=f"{slug}-foundations",description=f"Build a practical foundation in {name} with focused lessons and examples.",level="Beginner",duration_minutes=240,outcomes="Understand core syntax|Build small programs|Read documentation",published=True); db.add(course); db.flush()
-            module=CourseModule(course_id=course.id,title="Core concepts",order_index=1); db.add(module); db.flush()
-            lesson=Lesson(module_id=module.id,title=f"Your first {name} program",slug="first-program",content_en=f"Start with the essentials of {name}. This lesson introduces the language, the core workflow, and a small program you can understand line by line.",content_mm="ဒီသင်ခန်းစာတွင် အခြေခံအကြောင်းအရာများကို လေ့လာမည်ဖြစ်သည်။",order_index=1,published=True); db.add(lesson); db.flush()
-            code="print('Hello, CodeMaster!')" if slug=="python" else "// Your first step\nconsole.log('Hello, CodeMaster!');"
-            db.add(CodeExample(lesson_id=lesson.id,title="A small first step",language=slug,code=code))
-        path=db.scalar(select(LearningPath).where(LearningPath.slug=="developer-foundations"))
-        if not path: db.add(LearningPath(title="Developer Foundations",slug="developer-foundations",description="A guided start for new developers.",published=True))
-        for title,slug,category_name in ROADMAPS:
-            roadmap=db.scalar(select(CareerRoadmap).where(CareerRoadmap.slug==slug))
-            if roadmap: continue
-            roadmap=CareerRoadmap(title=title,slug=slug,career_category=category_name,description_en=f"A practical, free path toward a career as a {title}.",outcomes_en="Build verified skills through courses and practice.",estimated_hours=120,status="published",published=True); db.add(roadmap); db.flush()
-            stage=RoadmapStage(roadmap_id=roadmap.id,title="Foundations",description_en="Build the essential concepts.",level="beginner",position=0); db.add(stage); db.flush(); db.add(RoadmapStep(stage_id=stage.id,title="Start with the fundamentals",instructions_en="Complete the linked courses and practice consistently.",position=0))
-        db.commit()
-if __name__=="__main__": main()
+    with SessionLocal.begin() as db:
+        categories = {slug: get_or_create(db, CourseCategory, slug, name=name, status="active") for name, slug in CATEGORIES}
+        languages = {}
+        for title, course_slug, language_slug, color, _ in COURSES:
+            language = db.scalar(select(ProgrammingLanguage).where(ProgrammingLanguage.slug == language_slug))
+            if not language:
+                display_name = title if language_slug == course_slug else language_slug.replace("-", " ").title()
+                language = ProgrammingLanguage(name=display_name, slug=language_slug, color=color, status="active")
+                db.add(language)
+                db.flush()
+            languages[language_slug] = language
+        for title, slug, language_slug, _, category_slug in COURSES:
+            course = db.scalar(select(Course).where(Course.slug == slug))
+            if not course:
+                course = db.scalar(select(Course).where(Course.slug == LEGACY_SLUGS.get(slug, "")))
+                if course:
+                    course.slug = slug
+            if not course:
+                course = Course(
+                    slug=slug,
+                    title=title,
+                    language_id=languages[language_slug].id,
+                    category_id=categories[category_slug].id,
+                    description=f"Learn {title} from first principles through a structured, free curriculum.",
+                    short_description=f"A theory-first introduction to {title}.",
+                    level="beginner",
+                    duration_minutes=0,
+                    outcomes="Understand the core concepts|Read and explain examples|Build a foundation for further study",
+                    requirements="",
+                    status="curriculum_pending",
+                    published=True,
+                )
+                db.add(course)
+                db.flush()
+            # Metadata only. Existing lesson/progress/enrollment records are untouched.
+            course.title = title
+            course.language_id = languages[language_slug].id
+            course.category_id = categories[category_slug].id
+            course.description = f"Learn {title} from first principles through a structured, free curriculum."
+            course.short_description = f"A theory-first introduction to {title}."
+            course.level = "beginner"
+            course.duration_minutes = course.duration_minutes or 0
+            course.outcomes = course.outcomes or "Understand the core concepts|Read and explain examples|Build a foundation for further study"
+            course.requirements = course.requirements or ""
+            course.status = "curriculum_pending"
+            course.published = True
+        db.flush()
+
+if __name__ == "__main__":
+    main()
