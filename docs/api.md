@@ -51,3 +51,7 @@ Collaboration routes are under `/api/v1/teams`, `/api/v1/hackathons`, and `/api/
 ## Developer ecosystem (Phase 19)
 
 `GET /api/v1/developers` and `/developers/contributions` are authenticated and ownership-scoped. `GET /api/v1/github/status` reports provider configuration without secrets. Public `GET /api/v1/open-source/projects` and `/open-source/opportunities` return approved/public records only. `GET /api/v1/developers/{username}` returns only opt-in public profiles. `POST /api/v1/github/webhooks` validates GitHub HMAC signatures and delivery IDs; it returns `503` when the provider secret is not configured. Admin integration status is `GET /api/v1/platform/developer-ecosystem/status`.
+
+## Organizations (Phase 20)
+
+Organization routes are under `/api/v1/organizations` and require an active membership for tenant routes. Creation, member changes, invitations, teams, private course mappings, training, settings and exports use CSRF-protected mutations. `/api/v1/platform/organizations` and platform status changes require global admin roles. Analytics suppresses groups smaller than five active members.

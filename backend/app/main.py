@@ -25,6 +25,7 @@ from .learning_intelligence_routes import router as learning_intelligence_router
 from .career_routes import router as career_router
 from .collaboration_routes import router as collaboration_router
 from .ecosystem_routes import router as ecosystem_router
+from .organization_routes import router as organization_router
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger=logging.getLogger("codemaster.api")
 app=FastAPI(title="CodeMaster Academy API", version="1.0.0")
@@ -43,6 +44,7 @@ app.include_router(learning_intelligence_router)
 app.include_router(career_router)
 app.include_router(collaboration_router)
 app.include_router(ecosystem_router)
+app.include_router(organization_router)
 @app.get("/api/v1/health")
 def health(db: Session=Depends(get_db)): db.execute(select(1)); return {"status":"ok","service":"codemaster-api"}
 @app.get("/api/v1/ready")

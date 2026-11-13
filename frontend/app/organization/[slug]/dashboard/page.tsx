@@ -1,0 +1,1 @@
+import{OrganizationDashboard}from"@/components/organization-pages";export default async function Page({params}:{params:Promise<{slug:string}>}){return <OrganizationDashboard slug={(await params).slug}/>}

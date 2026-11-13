@@ -129,3 +129,7 @@ Career pages include `/dashboard/career`, `/career/paths`, `/mentorship/mentors`
 ## Phase 19 developer ecosystem
 
 The developer hub is available at `/developers`; public open-source discovery is available at `/open-source` and `/open-source/opportunities`. GitHub is disabled by default and displays `Not Configured` until a reviewed OAuth/App deployment is configured. Verified contribution records are server-synced and ownership-scoped; user-submitted links never become verified evidence.
+
+## Phase 20 organizations
+
+Organization workspaces are available at `/organizations` and `/organization/[slug]/dashboard`. Organization data is membership-scoped, public learning remains free, and private training/analytics are not available to users outside the organization. PostgreSQL migration `0018_organizations` is additive.

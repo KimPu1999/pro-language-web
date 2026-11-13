@@ -29,3 +29,5 @@ Migration `0014_learning_intelligence` adds skill prerequisites and snapshots, r
 Migration `0015_career_development` adds career, mentor, resume, portfolio review, interview, application, and career audit tables. Existing roadmaps, skills, portfolios, projects, users, and sessions remain intact.
 
 Migration `0017_developer_ecosystem` adds GitHub connection/installations/sync records, approved public source projects and opportunities, contribution records and verification history, code review requests/feedback, collaboration requests, opt-in developer profiles, webhook delivery deduplication, contribution metrics, and ecosystem audit logs. It is additive and preserves existing student data. Apply with `PYTHONPATH=. python3 -m alembic upgrade head` from `backend`.
+
+Migration `0018_organizations` adds organizations, memberships, invitations, organization teams, settings, private course mappings, training programs/items/assignments, assessments/attempts, organization skill snapshots, report exports, audit/security events, resource usage and support access. All are additive and use foreign keys, indexes and tenant-scoped unique constraints.

@@ -1,0 +1,1 @@
+import{OrganizationListPage}from"@/components/organization-pages";export default async function Page({params}:{params:Promise<{slug:string}>}){return <OrganizationListPage slug={(await params).slug} kind="courses"/>}
