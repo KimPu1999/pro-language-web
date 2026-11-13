@@ -1,6 +1,6 @@
 import logging, math, uuid
 from uuid import UUID
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
@@ -36,6 +36,14 @@ app.include_router(auth_router); app.include_router(student_router); app.include
 app.include_router(analytics_router)
 @app.get("/api/v1/health")
 def health(db: Session=Depends(get_db)): db.execute(select(1)); return {"status":"ok","service":"codemaster-api"}
+@app.get("/api/v1/ready")
+def readiness(db: Session=Depends(get_db)):
+    try:
+        db.execute(select(1))
+    except Exception as exc:
+        logger.warning("readiness database check failed: %s", type(exc).__name__)
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Database is not ready") from exc
+    return {"status": "ready", "database": "ok", "service": "codemaster-api"}
 @app.get("/api/v1/languages",response_model=list[LanguageOut])
 def languages(db: Session=Depends(get_db)): return db.scalars(select(ProgrammingLanguage).order_by(ProgrammingLanguage.name)).all()
 @app.get("/api/v1/categories",response_model=list[CategoryOut])

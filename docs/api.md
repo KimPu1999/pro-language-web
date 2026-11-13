@@ -32,3 +32,5 @@ AI Tutor routes are under `/api/v1/ai`: conversation create/list/detail/rename/d
 Community routes are under `/api/v1/community`: public feed, post detail, authenticated post/answer/comment/vote/bookmark/snippet/group/report/block operations, public snippets/groups, authenticated notifications, and admin report inspection. State-changing routes require CSRF. Answers can only be accepted by the question owner; private group and moderation expansion remains server-side work.
 
 Live class routes are under `/api/v1/live-classes`: public catalog/detail, authenticated registration/cancellation, room-token status, presence, chat, Q&A, and instructor/admin class creation and scheduling. Room tokens return an explicit unavailable state while `VIDEO_ENABLED=false`. Registration, attendance, and chat access are membership-scoped.
+
+Operations endpoints include `GET /api/v1/health` for liveness and `GET /api/v1/ready` for database readiness. Platform quality and operations checks require `admin` or `super_admin` and report unconfigured dependencies without fabricating health metrics.

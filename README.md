@@ -77,6 +77,8 @@ npm run test:e2e
 
 Phase 13 adds the quality workflow, administrator quality page at `/platform/quality`, request correlation headers, frontend unit tests, and production-readiness documentation. Run `git diff --check` before commits. The secure runner, video provider, external AI provider, telemetry backend, backup restore, and staging load tests remain explicitly unavailable until configured and verified.
 
+Phase 14 adds deployment preparation: a non-root backend image, readiness endpoint (`/api/v1/ready`), environment-variable boundaries, deployment architecture, rollback, backup, monitoring, and launch documentation. No cloud deployment is claimed; provider credentials, domains, managed services, staging, restore tests, and final Go/No-Go approval are still required.
+
 ## Environment variables
 
 Backend: `DATABASE_URL`, `CORS_ORIGINS`, `LOG_LEVEL`, session/token TTLs, cookie settings, `APP_BASE_URL`, and mailer/SMTP settings. `MAILER_MODE=console` is the development default; SMTP credentials are only read from environment variables.

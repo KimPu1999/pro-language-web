@@ -1,6 +1,7 @@
 import type { AdminCourse, AdminDashboard, AdminPage, Challenge, ChallengePage, Course, CourseDetail, Dashboard, Enrollment, Language, Module, Paginated, RunnerJob, RunnerLanguage, SkillDashboard, User } from "./types";
 
-const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+// Browser requests use the same-origin Next rewrite. Server rendering may use the private internal URL.
+const base = process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === "undefined" ? process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000" : "");
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
