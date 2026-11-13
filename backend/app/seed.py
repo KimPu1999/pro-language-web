@@ -10,7 +10,8 @@ from sqlalchemy import select
 from .db import SessionLocal
 from .models import (Challenge, ChallengeCategory, ChallengeHint, ChallengeLanguageConfig,
                      ChallengeTestCase, ChallengeTopic, ChallengeTopicLink, Course,
-                     CourseCategory, ProgrammingLanguage)
+                     CourseCategory, ProgrammingLanguage, ProjectCategory,
+                     ProjectMilestone, ProjectTemplate)
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -77,6 +78,34 @@ CHALLENGES = [
     {"title":"Fix the Off-by-one Loop", "slug":"fix-off-by-one-loop", "category":"debugging", "topics":["debugging","loops"], "language":"python", "difficulty":"easy", "description":"Repair a loop so it prints every integer from 1 through n, including the final value.", "constraints":["1 <= n <= 1000."], "examples":[{"input":"3", "output":"1\n2\n3", "explanation":"The inclusive range must contain n."}], "starter":"n = int(input())\nfor number in range(1, n):\n    print(number)\n", "tests":[("3","1\n2\n3",False),("1","1",True)], "hint":"Python's range stop value is exclusive, so choose it deliberately."},
     {"title":"Balanced Parentheses", "slug":"balanced-parentheses", "category":"data-structures", "topics":["stacks"], "language":"python", "difficulty":"medium", "description":"Check whether every opening parenthesis is closed in the correct order.", "constraints":["The input contains only parentheses.","The input length is at most 10,000."], "examples":[{"input":"(()())", "output":"true", "explanation":"A stack can match each closing parenthesis with the latest opening one."}], "starter":"text = input().strip()\n# Validate the parentheses\n", "tests":[("(()())","true",False),("())(","false",True)], "hint":"Push opening parentheses and pop for closing ones; reject an empty pop or leftover openings."},
 ]
+
+PROJECT_CATEGORIES = [
+    ("Frontend Development", "frontend-development"),
+    ("Backend Development", "backend-development"),
+    ("Full-Stack Development", "full-stack-development"),
+    ("Programming Languages", "programming-languages"),
+    ("Database Development", "database-development"),
+    ("Mobile Development", "mobile-development"),
+    ("AI & Machine Learning", "ai-machine-learning"),
+    ("Cybersecurity", "cybersecurity"),
+    ("DevOps & Cloud", "devops-cloud"),
+    ("Software Engineering", "software-engineering"),
+]
+PROJECTS = [
+    ("Personal Portfolio Website", "personal-portfolio-website", "frontend-development", "beginner", "HTML, CSS, JavaScript", 8),
+    ("Calculator Application", "calculator-application", "programming-languages", "beginner", "Python, JavaScript", 6),
+    ("To-Do List", "todo-list", "frontend-development", "beginner", "HTML, CSS, JavaScript", 10),
+    ("HTML/CSS Landing Page", "html-css-landing-page", "frontend-development", "beginner", "HTML, CSS", 6),
+    ("Python CLI Calculator", "python-cli-calculator", "programming-languages", "beginner", "Python", 5),
+    ("C Student Record Program", "c-student-record-program", "programming-languages", "intermediate", "C", 14),
+    ("SQL Student Database", "sql-student-database", "database-development", "beginner", "SQL, PostgreSQL", 8),
+    ("React Task Manager", "react-task-manager", "frontend-development", "intermediate", "React, TypeScript", 18),
+    ("Python FastAPI REST API", "python-fastapi-rest-api", "backend-development", "intermediate", "Python, FastAPI, PostgreSQL", 24),
+    ("Node.js Authentication API", "nodejs-authentication-api", "backend-development", "advanced", "Node.js, Express.js, PostgreSQL", 28),
+    ("E-Commerce Application", "e-commerce-application", "full-stack-development", "advanced", "Next.js, FastAPI, PostgreSQL", 40),
+    ("Real-Time Chat Application", "real-time-chat-application", "full-stack-development", "advanced", "React, FastAPI, WebSockets", 32),
+    ("SaaS Dashboard", "saas-dashboard", "software-engineering", "professional", "Next.js, FastAPI, PostgreSQL", 48),
+]
 LEGACY_SLUGS = {slug: f"{language}-foundations" for _, slug, language, _, _ in COURSES}
 
 def get_or_create(db, model, slug, **values):
@@ -107,6 +136,33 @@ def seed_challenges(db):
         db.add(ChallengeHint(challenge_id=row.id, body_en=item["hint"], position=1))
         for position, (input_data, expected_output, hidden) in enumerate(item["tests"]):
             db.add(ChallengeTestCase(challenge_id=row.id, input_data=input_data, expected_output=expected_output, is_hidden=hidden, position=position))
+
+def seed_projects(db):
+    categories = {slug: get_or_create(db, ProjectCategory, slug, name=name, description=f"{name} projects", status="active") for name, slug in PROJECT_CATEGORIES}
+    for title, slug, category_slug, difficulty, technologies, hours in PROJECTS:
+        row = db.scalar(select(ProjectTemplate).where(ProjectTemplate.slug == slug))
+        if row:
+            continue
+        row = ProjectTemplate(
+            title=title, slug=slug, category_id=categories[category_slug].id,
+            description_en=f"Build {title} through a guided, theory-first project with an honest scope and reviewable milestones.",
+            difficulty=difficulty, estimated_hours=hours, requirements=f"Understand the basics of {technologies}. Read each project step and keep your own implementation notes.",
+            learning_outcomes=f"Explain the architecture of {title}; identify the main implementation trade-offs; test and document a maintainable solution.",
+            technology_stack=technologies, prerequisites="Complete the relevant beginner lessons before starting.",
+            architecture_overview="Start with a small, testable boundary; keep presentation, application logic, and persistence responsibilities separate where the project requires them.",
+            folder_structure="README.md\nsrc/\ntests/\ndocs/", testing_guide="Write focused tests for the core behavior and verify the documented examples.",
+            deployment_guide="Review configuration, secrets, logging, and the deployment target before publishing a real service.",
+            status="published", published=True,
+        )
+        db.add(row); db.flush()
+        steps = [
+            ("introduction", "Introduction and scope", "Understand the problem, users, constraints, and the completion criteria before writing code.", "README.md\n", "The project scope is written down before implementation."),
+            ("architecture", "Architecture and folder structure", "Map the major components and choose boundaries that make the project easy to test and maintain.", "src/\ntests/\n", "The repository has a documented structure."),
+            ("implementation", "Implementation plan", "Break the project into small deliverables and connect each deliverable to a verifiable behavior.", "# Implement one behavior at a time\n", "Each behavior has a clear verification step."),
+            ("testing", "Testing and deployment checklist", "Review tests, error handling, security, configuration, and operational readiness.", "# Run the test suite\n", "The project is ready for a deliberate review."),
+        ]
+        for position, (step_slug, step_title, content, code, output) in enumerate(steps, 1):
+            db.add(ProjectMilestone(project_id=row.id, title=step_title, slug=step_slug, description_en=content, content_en=content, code=code, filename="README.md", expected_output=output, line_explanation="Read the file path and the adjacent explanation together; each line identifies one part of the project workflow.", position=position, required=True))
 
 def main():
     with SessionLocal.begin() as db:
@@ -157,6 +213,7 @@ def main():
             course.published = True
         db.flush()
         seed_challenges(db)
+        seed_projects(db)
 
 if __name__ == "__main__":
     main()
