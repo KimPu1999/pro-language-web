@@ -1,5 +1,6 @@
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 class LanguageOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; name: str; slug: str; color: str
 class CategoryOut(BaseModel):
@@ -21,3 +22,33 @@ class PageOut(BaseModel):
     items: list[CourseOut]; page: int; page_size: int; total: int; pages: int
 class PathOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; description: str
+class RegisterIn(BaseModel):
+    full_name: str = Field(min_length=2, max_length=120); email: str; password: str = Field(min_length=8); confirm_password: str = Field(min_length=8); accept_terms: bool
+    @model_validator(mode="after")
+    def valid(self):
+        if "@" not in self.email: raise ValueError("Valid email required")
+        if self.password != self.confirm_password: raise ValueError("Passwords do not match")
+        if not self.accept_terms: raise ValueError("Terms must be accepted")
+        return self
+class LoginIn(BaseModel): email: str; password: str
+class ForgotPasswordIn(BaseModel): email: str
+class ResetPasswordIn(BaseModel):
+    token: str = Field(min_length=20); password: str = Field(min_length=8); confirm_password: str = Field(min_length=8)
+    @model_validator(mode="after")
+    def valid(self):
+        if self.password != self.confirm_password: raise ValueError("Passwords do not match")
+        return self
+class ChangePasswordIn(BaseModel):
+    current_password: str; new_password: str = Field(min_length=8); confirm_password: str = Field(min_length=8)
+    @model_validator(mode="after")
+    def valid(self):
+        if self.new_password != self.confirm_password: raise ValueError("Passwords do not match")
+        return self
+class ProfileIn(BaseModel):
+    full_name: str = Field(min_length=2, max_length=120); bio: str|None = Field(default=None, max_length=1000); learning_interests: list[str] = Field(default_factory=list); preferred_language: str|None = Field(default=None, max_length=80); learning_level: str|None = Field(default=None, max_length=30); show_myanmar: bool=False
+class UserOut(BaseModel):
+    id: UUID; email: str; full_name: str; role: str; email_verified: bool; email_verified_at: datetime|None; profile: dict
+class EnrollmentOut(BaseModel):
+    id: UUID; course: CourseOut; completed_lessons: int; total_lessons: int; progress_percent: float; last_lesson_slug: str|None
+class ProgressIn(BaseModel): completed: bool
+class DashboardOut(BaseModel): enrollments: list[EnrollmentOut]; completed_lessons: int; overall_progress: float; recent_activity: list[dict]

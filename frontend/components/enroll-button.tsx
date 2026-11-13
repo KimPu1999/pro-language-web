@@ -1,0 +1,2 @@
+"use client"; import { useState } from "react"; import { api } from "@/lib/api"; import { csrf } from "./auth-form"; import { Button } from "./ui";
+export function EnrollButton({ slug }: { slug: string }){const [state,setState]=useState("Enroll free"); async function enroll(){setState("Working…");try{await api.enroll(slug,csrf());setState("Enrolled");}catch(e){setState(e instanceof Error&&e.message.includes("401")?"Log in to enroll":"Unable to enroll");}}return <Button disabled={state==="Working…"||state==="Enrolled"} onClick={enroll}>{state}</Button>}

@@ -62,11 +62,13 @@ npm run test:e2e
 
 ## Environment variables
 
-Backend: `DATABASE_URL`, `CORS_ORIGINS`, `LOG_LEVEL`.
+Backend: `DATABASE_URL`, `CORS_ORIGINS`, `LOG_LEVEL`, session/token TTLs, cookie settings, `APP_BASE_URL`, and mailer/SMTP settings. `MAILER_MODE=console` is the development default; SMTP credentials are only read from environment variables.
 
 Frontend: `NEXT_PUBLIC_API_BASE_URL`.
 
 No secret is required for Phase 1.
+
+Phase 2 adds student accounts. Run `alembic upgrade head` after updating the environment. Registration creates student accounts only. In production set `COOKIE_SECURE=true`, use HTTPS, configure trusted `CORS_ORIGINS`, and configure an SMTP or transactional mail provider. Sessions are server-side and the browser stores only HttpOnly session cookies plus a CSRF double-submit cookie.
 
 ## Troubleshooting
 

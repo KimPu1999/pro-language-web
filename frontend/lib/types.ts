@@ -4,3 +4,6 @@ export type Lesson = { id: string; title: string; slug: string; content_en: stri
 export type Module = { id: string; title: string; order_index: number; lessons: Lesson[] };
 export type CourseDetail = Course & { modules: Module[] };
 export type Paginated<T> = { items: T[]; page: number; page_size: number; total: number; pages: number };
+export type User = { id: string; email: string; full_name: string; role: string; email_verified: boolean; email_verified_at?: string | null; profile: { bio?: string|null; learning_interests: string[]; preferred_language?: string|null; learning_level?: string|null; show_myanmar: boolean; avatar_url?: string|null } };
+export type Enrollment = { id: string; course: Course; completed_lessons: number; total_lessons: number; progress_percent: number; last_lesson_slug?: string|null };
+export type Dashboard = { enrollments: Enrollment[]; completed_lessons: number; overall_progress: number; recent_activity: { course_slug: string; lesson_slug: string; progress_percent: number }[] };

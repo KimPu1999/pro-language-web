@@ -1,0 +1,1 @@
+import { AuthForm } from "@/components/auth-form"; export default function Forgot(){return <main className="grid min-h-[calc(100vh-73px)] place-items-center px-5 py-12"><AuthForm mode="forgot"/></main>}
