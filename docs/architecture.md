@@ -25,3 +25,6 @@ Phase 11 adds live class records and room authorization. Session times are norma
 Phase 19 adds the developer ecosystem boundary under `/api/v1/developers`, `/api/v1/github`, and `/api/v1/open-source`. Public records are filtered to approved/public data. GitHub webhook delivery IDs are deduplicated in PostgreSQL and signatures are checked server-side. OAuth and repository synchronization remain disabled until provider configuration and a server-side PKCE/token encryption implementation are deployed.
 
 Phase 21 adds an enterprise security boundary under `/api/v1/organizations/{slug}/security`, `/api/v1/settings/security`, `/api/v1/scim`, `/api/v1/platform/compliance`, and `/api/v1/privacy`. Organization membership remains the tenant boundary. SSO/MFA protocols are provider/library-gated and return truthful unavailable states until configured.
+## Phase 23 content authoring boundary
+
+AI content is isolated in draft records. The provider boundary is server-side and generated output is untrusted. Human review binds to a specific revision; only an approved revision can be published. Tenant membership is resolved server-side before every content operation, and the secure runner remains the only allowed execution boundary for future challenge validation.

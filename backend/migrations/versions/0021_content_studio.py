@@ -1,0 +1,42 @@
+"""phase 23 AI content studio draft and review records"""
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+
+revision = "0021_content_studio"
+down_revision = "0020_automation"
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    u = postgresql.UUID(as_uuid=False)
+    ts = sa.DateTime(timezone=True)
+    def table(name, columns, uniques=(), indexes=()):
+        op.create_table(name, sa.Column("id", u, primary_key=True), *columns, sa.Column("created_at", ts, server_default=sa.func.now()), sa.Column("updated_at", ts, server_default=sa.func.now()), *[sa.UniqueConstraint(*x) for x in uniques])
+        for fields in indexes:
+            op.create_index("ix_" + name + "_" + "_".join(fields), name, list(fields))
+    def fk(target, ondelete=None):
+        return sa.ForeignKey(target, ondelete=ondelete)
+    table("ai_content_projects", [sa.Column("organization_id", u, fk("organizations.id", "CASCADE"), nullable=False), sa.Column("created_by", u, fk("users.id", "RESTRICT"), nullable=False), sa.Column("title", sa.String(180), nullable=False), sa.Column("content_type", sa.String(40), nullable=False), sa.Column("status", sa.String(30), server_default="draft"), sa.Column("metadata_json", sa.Text, server_default="{}")], indexes=[("organization_id", "status")])
+    table("ai_generation_jobs", [sa.Column("organization_id", u, fk("organizations.id", "CASCADE"), nullable=False), sa.Column("project_id", u, sa.ForeignKey("ai_content_projects.id", ondelete="CASCADE"), nullable=False), sa.Column("requested_by", u, fk("users.id", "RESTRICT"), nullable=False), sa.Column("job_type", sa.String(40), nullable=False), sa.Column("input_json", sa.Text, server_default="{}"), sa.Column("status", sa.String(30), server_default="queued"), sa.Column("idempotency_key", sa.String(180), nullable=False), sa.Column("failure_reason", sa.Text), sa.Column("started_at", ts), sa.Column("finished_at", ts)], uniques=[("organization_id", "idempotency_key")], indexes=[("organization_id", "status")])
+    table("ai_generation_outputs", [sa.Column("job_id", u, sa.ForeignKey("ai_generation_jobs.id", ondelete="CASCADE"), nullable=False), sa.Column("output_json", sa.Text, server_default="{}"), sa.Column("status", sa.String(20), server_default="draft")])
+    table("ai_curriculum_plans", [sa.Column("project_id", u, sa.ForeignKey("ai_content_projects.id", ondelete="CASCADE"), nullable=False), sa.Column("objectives_json", sa.Text, server_default="[]"), sa.Column("modules_json", sa.Text, server_default="[]"), sa.Column("prerequisites_json", sa.Text, server_default="[]")])
+    table("ai_curriculum_objectives", [sa.Column("plan_id", u, sa.ForeignKey("ai_curriculum_plans.id", ondelete="CASCADE"), nullable=False), sa.Column("objective", sa.Text, nullable=False), sa.Column("position", sa.Integer, server_default="0")])
+    table("ai_lesson_drafts", [sa.Column("project_id", u, sa.ForeignKey("ai_content_projects.id", ondelete="CASCADE"), nullable=False), sa.Column("course_id", u, sa.ForeignKey("courses.id", ondelete="SET NULL")), sa.Column("lesson_id", u, sa.ForeignKey("lessons.id", ondelete="SET NULL")), sa.Column("title", sa.String(180), nullable=False), sa.Column("content_en", sa.Text, nullable=False), sa.Column("content_mm", sa.Text), sa.Column("status", sa.String(20), server_default="draft")])
+    table("ai_quiz_drafts", [sa.Column("project_id", u, sa.ForeignKey("ai_content_projects.id", ondelete="CASCADE"), nullable=False), sa.Column("questions_json", sa.Text, server_default="[]"), sa.Column("answer_key_json", sa.Text, server_default="[]"), sa.Column("status", sa.String(20), server_default="draft")])
+    table("ai_challenge_drafts", [sa.Column("project_id", u, sa.ForeignKey("ai_content_projects.id", ondelete="CASCADE"), nullable=False), sa.Column("title", sa.String(180), nullable=False), sa.Column("statement_en", sa.Text, nullable=False), sa.Column("samples_json", sa.Text, server_default="[]"), sa.Column("hidden_tests_json", sa.Text, server_default="[]"), sa.Column("reference_solution", sa.Text), sa.Column("status", sa.String(20), server_default="draft")])
+    table("ai_project_drafts", [sa.Column("project_id", u, sa.ForeignKey("ai_content_projects.id", ondelete="CASCADE"), nullable=False), sa.Column("data_json", sa.Text, server_default="{}"), sa.Column("status", sa.String(20), server_default="draft")])
+    table("ai_content_translations", [sa.Column("project_id", u, sa.ForeignKey("ai_content_projects.id", ondelete="CASCADE"), nullable=False), sa.Column("source_type", sa.String(40), nullable=False), sa.Column("source_id", u, nullable=False), sa.Column("language", sa.String(10), nullable=False), sa.Column("content", sa.Text, nullable=False), sa.Column("status", sa.String(20), server_default="draft")], uniques=[("project_id", "source_type", "source_id", "language")])
+    table("ai_content_revisions", [sa.Column("project_id", u, sa.ForeignKey("ai_content_projects.id", ondelete="CASCADE"), nullable=False), sa.Column("version_number", sa.Integer, nullable=False), sa.Column("content_type", sa.String(40), nullable=False), sa.Column("snapshot_json", sa.Text, nullable=False), sa.Column("created_by", u, fk("users.id", "RESTRICT"), nullable=False), sa.Column("status", sa.String(20), server_default="draft")], uniques=[("project_id", "version_number")])
+    table("ai_content_quality_checks", [sa.Column("project_id", u, sa.ForeignKey("ai_content_projects.id", ondelete="CASCADE"), nullable=False), sa.Column("revision_id", u, sa.ForeignKey("ai_content_revisions.id", ondelete="SET NULL")), sa.Column("check_type", sa.String(50), nullable=False), sa.Column("status", sa.String(20), server_default="NOT_RUN"), sa.Column("details", sa.Text, server_default="")])
+    table("ai_content_review_requests", [sa.Column("project_id", u, sa.ForeignKey("ai_content_projects.id", ondelete="CASCADE"), nullable=False), sa.Column("revision_id", u, sa.ForeignKey("ai_content_revisions.id", ondelete="CASCADE"), nullable=False), sa.Column("requested_by", u, fk("users.id", "RESTRICT"), nullable=False), sa.Column("reviewer_id", u, sa.ForeignKey("users.id", ondelete="SET NULL")), sa.Column("status", sa.String(25), server_default="pending"), sa.Column("expires_at", ts)])
+    table("ai_content_review_decisions", [sa.Column("request_id", u, sa.ForeignKey("ai_content_review_requests.id", ondelete="CASCADE"), nullable=False), sa.Column("reviewer_id", u, fk("users.id", "RESTRICT"), nullable=False), sa.Column("decision", sa.String(25), nullable=False), sa.Column("comment", sa.Text, server_default="")])
+    table("ai_content_publications", [sa.Column("project_id", u, sa.ForeignKey("ai_content_projects.id", ondelete="CASCADE"), nullable=False), sa.Column("revision_id", u, sa.ForeignKey("ai_content_revisions.id", ondelete="RESTRICT"), nullable=False), sa.Column("published_by", u, fk("users.id", "RESTRICT"), nullable=False), sa.Column("status", sa.String(20), server_default="published"), sa.Column("scheduled_for", ts)])
+    table("ai_content_usage_records", [sa.Column("organization_id", u, fk("organizations.id", "CASCADE"), nullable=False), sa.Column("user_id", u, sa.ForeignKey("users.id", ondelete="SET NULL")), sa.Column("job_id", u, sa.ForeignKey("ai_generation_jobs.id", ondelete="SET NULL")), sa.Column("provider", sa.String(60), nullable=False), sa.Column("input_tokens", sa.Integer, server_default="0"), sa.Column("output_tokens", sa.Integer, server_default="0"), sa.Column("estimated_cost", sa.String(40), server_default="unknown"), sa.Column("status", sa.String(30), server_default="unknown")], indexes=[("organization_id",)])
+    table("ai_content_audit_logs", [sa.Column("organization_id", u, sa.ForeignKey("organizations.id", ondelete="SET NULL")), sa.Column("actor_id", u, sa.ForeignKey("users.id", ondelete="SET NULL")), sa.Column("action", sa.String(100), nullable=False), sa.Column("resource_type", sa.String(60), nullable=False), sa.Column("resource_id", u), sa.Column("outcome", sa.String(20), server_default="success")], indexes=[("organization_id",)])
+
+
+def downgrade():
+    for name in ["ai_content_audit_logs", "ai_content_usage_records", "ai_content_publications", "ai_content_review_decisions", "ai_content_review_requests", "ai_content_quality_checks", "ai_content_revisions", "ai_content_translations", "ai_project_drafts", "ai_challenge_drafts", "ai_quiz_drafts", "ai_lesson_drafts", "ai_curriculum_objectives", "ai_curriculum_plans", "ai_generation_outputs", "ai_generation_jobs", "ai_content_projects"]:
+        op.drop_table(name)

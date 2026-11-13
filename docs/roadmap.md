@@ -42,3 +42,7 @@ Phase 21 adds security policy/audit/access-review records, session revocation, p
 ## Phase 22
 
 Phase 22 adds tenant-scoped automation workflows, validated graph versions, durable queued run records, approval records, idempotency keys, agent/tool permission records, recommendations, usage visibility, and automation dashboards. A workflow worker, scheduler, and live AI provider remain explicitly unavailable until configured and independently tested.
+
+## Phase 23
+
+Phase 23 adds tenant-scoped AI content projects, durable generation job states, lesson/quiz/challenge/project drafts, separate translations, quality-check records, revision snapshots, independent review, and approved publication records. AI generation remains `Not Configured` or `provider_unavailable` without a real provider and worker; content can still be edited manually.

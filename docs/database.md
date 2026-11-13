@@ -33,3 +33,6 @@ Migration `0017_developer_ecosystem` adds GitHub connection/installations/sync r
 Migration `0018_organizations` adds organizations, memberships, invitations, organization teams, settings, private course mappings, training programs/items/assignments, assessments/attempts, organization skill snapshots, report exports, audit/security events, resource usage and support access. All are additive and use foreign keys, indexes and tenant-scoped unique constraints.
 
 Migration `0019_enterprise_security` adds organization identity provider/domain/session records, MFA/recovery/passkey records, SCIM tokens/mappings, security policies/sessions/audit events, access reviews, compliance controls/evidence, retention policies, privacy requests, and alert rules/events. Sensitive credential fields are never returned by public schemas.
+## Phase 23 content studio
+
+Migration `0021_content_studio` is additive. It stores tenant-scoped content projects, generation jobs and outputs, lesson/quiz/challenge/project drafts, translations, quality checks, review requests and decisions, immutable revision snapshots, publication records, usage records, and audit logs. Existing courses, lessons, challenges, and project records are preserved and are not overwritten by generation requests.

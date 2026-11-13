@@ -59,3 +59,6 @@ Organization routes are under `/api/v1/organizations` and require an active memb
 ## Enterprise security (Phase 21)
 
 Security status and policy routes are under `/api/v1/organizations/{slug}/security`. Account sessions/MFA are under `/api/v1/settings/security`; privacy requests are under `/api/v1/privacy`. SCIM endpoints are under `/api/v1/scim/v2` and return `503` while SCIM is disabled. Compliance controls are platform-admin-only under `/api/v1/platform/compliance`.
+## Phase 23 content studio
+
+Tenant authoring endpoints are under `/api/v1/organizations/{slug}/content-studio`: dashboard, projects, generation jobs, lesson drafts, translations, revisions, reviews, quality records, and usage. Publishing is `POST .../projects/{project_id}/publish?revision_id=...` and requires an approved revision plus owner/admin membership. `/api/v1/platform/content-studio` is restricted to platform admins. AI generation returns `provider_unavailable` when no provider is configured.
