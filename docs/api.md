@@ -43,3 +43,7 @@ Authenticated student endpoints are under `/api/v1/learning`: `GET /intelligence
 ## Career development (Phase 17)
 
 Career routes are under `/api/v1/career`: dashboard, published paths, approved mentors, mentor applications, UTC availability, mentorship requests, private resumes, portfolio-review requests, published interview questions, timed interview sessions, and private job applications. Admin-only routes review mentors and create interview questions. Student mutations require authentication and CSRF tokens.
+
+## Collaboration and competitions (Phase 18)
+
+Collaboration routes are under `/api/v1/teams`, `/api/v1/hackathons`, and `/api/v1/competitions`. Team membership and invitation actions are ownership-scoped. Hackathon registration/submission windows and competition registration use server UTC. `/api/v1/platform/collaboration/status` is admin-only and reports whether a CRDT gateway is configured.

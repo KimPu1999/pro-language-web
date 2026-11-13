@@ -1,0 +1,2 @@
+import { Card } from "@/components/ui";
+export default function Page(){return <section className="mx-auto max-w-4xl px-5 py-14"><Card className="p-8"><h1 className="text-3xl font-bold">Competition arena unavailable</h1><p className="mt-3 text-slate-400">The secure competition runner and server-authoritative arena are not configured in this environment. No code will be executed on the application host.</p></Card></section>;}
