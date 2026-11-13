@@ -2,10 +2,15 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.types import TypeDecorator, CHAR
+from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
 class UUIDType(TypeDecorator):
     impl = CHAR(36); cache_ok = True
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(PostgreSQLUUID(as_uuid=False))
+        return dialect.type_descriptor(CHAR(36))
     def process_bind_param(self, value, dialect): return str(value) if value else None
     def process_result_value(self, value, dialect): return uuid.UUID(value) if value else None
 class TimestampMixin:
