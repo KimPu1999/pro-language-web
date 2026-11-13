@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     video_provider: str = "disabled"
     video_enabled: bool = False
     video_token_ttl_seconds: int = 900
+    collaboration_enabled: bool = False
+    collaboration_max_message_bytes: int = 262144
     github_enabled: bool = False
     github_app_id: str = ""
     github_client_id: str = ""

@@ -50,3 +50,6 @@ Phase 23 adds tenant-scoped AI content projects, durable generation job states, 
 ## Phase 24
 
 Phase 24 adds published learning labs, owned workspaces, path-safe files, snapshots, durable run/submission records, progress records, instructor lab records, and truthful runner/SQL/API unavailable states. Isolated code workers, ephemeral SQL sandboxes, and controlled mock API services remain deployment prerequisites.
+## Phase 25 — Advanced real-time collaboration
+
+Added the room and durable document foundation, authenticated WebSocket contract, pair-role authorization, chat, snapshots, consent records, collaboration dashboards, and security documentation. Multi-client Yjs fan-out and provider-backed execution/recording remain deployment work.

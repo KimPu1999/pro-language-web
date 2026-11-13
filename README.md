@@ -149,3 +149,6 @@ Organization automation is available at `/organization/[slug]/automation`, with 
 ## Phase 24 learning labs
 
 Learning labs are available at `/labs` and `/dashboard/labs`; workspaces use `/labs/{labId}/workspace`. Migration `0022_learning_labs` adds lab versions, owned files, snapshots, execution records, progress, reviews, and audit logs. Code execution, SQL environments, controlled API targets, and AI assistance show truthful unavailable states until isolated services are configured.
+## Phase 25 collaboration
+
+Phase 25 adds authenticated collaboration rooms, durable document/update/snapshot records, room chat, pair-role controls, consent records, and a disabled-by-default WebSocket gateway. Run `alembic upgrade head` to apply migration `0023_collaboration`. Real-time editing, isolated execution, AI assistance, and recordings show truthful unavailable states until their providers are configured.

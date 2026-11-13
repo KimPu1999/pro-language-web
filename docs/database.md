@@ -38,3 +38,6 @@ Migration `0019_enterprise_security` adds organization identity provider/domain/
 Migration `0021_content_studio` is additive. It stores tenant-scoped content projects, generation jobs and outputs, lesson/quiz/challenge/project drafts, translations, quality checks, review requests and decisions, immutable revision snapshots, publication records, usage records, and audit logs. Existing courses, lessons, challenges, and project records are preserved and are not overwritten by generation requests.
 
 Migration `0022_learning_labs` adds lab definitions and versions, steps, files, test cases, student workspaces, snapshots, runs, submissions, progress, SQL/API boundary records, reviews, and audit logs. Existing course, challenge, and runner data is preserved.
+## Phase 25 tables
+
+Migration `0023_collaboration` adds collaboration rooms, members, invitations, sessions, documents, updates, snapshots, presence, chat, pair sessions, execution jobs, debugging notes, AI interactions, recording consent/metadata, feedback and audit logs. Existing team and lab tables are preserved.

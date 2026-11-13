@@ -1,0 +1,1 @@
+import {CollaborationRoom} from "@/components/realtime-collaboration-pages";export default async function Page({params}:{params:Promise<{roomId:string}>}){return <CollaborationRoom id={(await params).roomId}/>}
