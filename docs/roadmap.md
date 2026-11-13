@@ -16,3 +16,6 @@ Phase 8 adds the AI Tutor foundation: provider abstraction, disabled-provider be
 Phase 10 adds the community foundation: public discussions, Q&A answers, bounded comments, votes, bookmarks, code snippets, public study groups, reports, blocks, and notifications. Phase 11 can add real-time collaboration, mentor spaces, richer moderation workflows, and advanced community discovery.
 
 Phase 11 adds scheduled live classes, registrations, waitlist records, room authorization, provider configuration, attendance, chat, Q&A, and classroom UI states. Phase 12 can add a production WebSocket gateway, supported video integration, background reminder jobs, recordings, and collaborative live coding.
+## Phase 12
+
+Phase 12 adds real-data platform analytics, metric definitions, administrator-only CSV reporting, export audit records, and scoped instructor analytics. See `docs/phase-12-analytics.md`, `docs/analytics-metric-definitions.md`, and `docs/analytics-security.md`.

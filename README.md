@@ -100,6 +100,8 @@ Phase 10 adds migration `0010_community`, public community feed and Q&A APIs, co
 
 Phase 11 adds migration `0011_live_classes`, live-class catalog/detail pages, UTC session scheduling, registration, capacity/waitlist records, room access checks, attendance/presence, chat, Q&A, and a disabled-by-default video provider boundary. Configure `VIDEO_PROVIDER` and `VIDEO_ENABLED` only after integrating a supported provider adapter.
 
+Phase 12 adds migration `0012_analytics`, real database-backed platform analytics, scoped instructor analytics, administrator-only CSV reporting, and export audit records. Open `/platform/analytics` after signing in as an administrator. See `docs/phase-12-analytics.md`, `docs/analytics-api.md`, and `docs/analytics-security.md`.
+
 Phase 7 adds migration `0007_projects_portfolio`, project templates, student workspaces, GitHub submission validation, instructor review records, weighted rubrics, verified project skill evidence, and private/public portfolio routes. See [docs/project-based-learning.md](docs/project-based-learning.md), [docs/project-review-workflow.md](docs/project-review-workflow.md), [docs/github-integration.md](docs/github-integration.md), and [docs/portfolio-builder.md](docs/portfolio-builder.md).
 
 ## Troubleshooting
