@@ -14,3 +14,5 @@ Phase 7 adds real-world project templates, milestones, GitHub metadata submissio
 Phase 8 adds the AI Tutor foundation: provider abstraction, disabled-provider behavior, persistent conversations, streaming transport, published lesson/challenge context retrieval, usage quotas, preferences, and admin operational visibility. Phase 9 can add a production provider adapter, richer project and roadmap assistant surfaces, evaluation, and additional AI-supported learning workflows.
 
 Phase 10 adds the community foundation: public discussions, Q&A answers, bounded comments, votes, bookmarks, code snippets, public study groups, reports, blocks, and notifications. Phase 11 can add real-time collaboration, mentor spaces, richer moderation workflows, and advanced community discovery.
+
+Phase 11 adds scheduled live classes, registrations, waitlist records, room authorization, provider configuration, attendance, chat, Q&A, and classroom UI states. Phase 12 can add a production WebSocket gateway, supported video integration, background reminder jobs, recordings, and collaborative live coding.

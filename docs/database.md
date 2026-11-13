@@ -19,3 +19,5 @@ Migration `0007_projects_portfolio` adds project templates/categories/skills, mi
 Migration `0008_ai_tutor` adds conversations, messages, message context references, usage records, provider/model policy records, tutor preferences, feedback, request logs, and UTC quota counters. Conversation and usage rows are user-scoped. Provider credentials are not stored in these tables; deployment secrets remain environment-managed. Deleted conversations are soft-deleted so operational retention can be managed without exposing them to list/detail queries.
 
 Migration `0010_community` adds community categories/posts/tags, answers, bounded-depth comments, unique votes and bookmarks, snippets, study groups and memberships, reports, user blocks, and user-scoped notifications. Existing users and learning records are preserved.
+
+Migration `0011_live_classes` adds classes, sessions, instructors, registrations, waitlists, attendance, idempotent presence events, private recording metadata, resources, Q&A, chat messages, code snapshots, and audit logs. Timestamps are timezone-aware and schedules are stored in UTC.
