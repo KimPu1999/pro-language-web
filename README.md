@@ -137,3 +137,7 @@ Organization workspaces are available at `/organizations` and `/organization/[sl
 ## Phase 21 security
 
 Organization security is available at `/organization/[slug]/security`; account sessions and MFA status are under `/settings/security`. OIDC, SAML, TOTP, passkeys, and SCIM show `Not Configured` until maintained protocol libraries and deployment credentials are installed. The compliance page never claims certification.
+
+## Phase 22 automation
+
+Organization automation is available at `/organization/[slug]/automation`, with workflow drafts at `/organization/[slug]/automation/builder` and platform oversight at `/platform/automation`. Migration `0020_automation` adds tenant-scoped workflow versions, durable queued runs, approvals, idempotency, agent permissions, recommendations, templates, usage, security events, and audit logs. No worker, scheduler, or live AI agent provider is configured by default; those surfaces show truthful unavailable states.

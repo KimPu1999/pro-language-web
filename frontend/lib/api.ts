@@ -40,3 +40,20 @@ export const learningApi = {
   revision: () => request<{items:RevisionItem[]}>("/api/v1/learning/revision"),
   coach: (message:string, csrf:string) => request<{status:string;message:string}>("/api/v1/learning/coach", { ...json({message}), headers:{"X-CSRF-Token":csrf} }),
 };
+
+export type AutomationDashboard = { metrics: { workflows:number; active_workflows:number; queued_runs:number; failed_runs:number; pending_approvals:number }; execution:{status:string;detail:string}; ai:{status:string}; data_source:string };
+export type AutomationWorkflow = { id:string; name:string; slug:string; status:string; enabled:boolean };
+export const automationApi = {
+  dashboard: (slug:string) => request<AutomationDashboard>(`/api/v1/organizations/${slug}/automation`),
+  workflows: (slug:string) => request<{items:AutomationWorkflow[];page:number;page_size:number;total:number}>(`/api/v1/organizations/${slug}/automation/workflows`),
+  createWorkflow: (slug:string, body:unknown, csrf:string) => request<{id:string;status:string}>(`/api/v1/organizations/${slug}/automation/workflows`, {...json(body),headers:{"X-CSRF-Token":csrf}}),
+  validate: (slug:string,id:string,body:unknown) => request<{valid:boolean;errors:string[]}>(`/api/v1/organizations/${slug}/automation/workflows/${id}/validate`,{...json(body)}),
+  addVersion: (slug:string,id:string,body:unknown,csrf:string) => request<unknown>(`/api/v1/organizations/${slug}/automation/workflows/${id}/versions`,{...json(body),headers:{"X-CSRF-Token":csrf}}),
+  run: (slug:string,id:string,body:unknown,csrf:string) => request<unknown>(`/api/v1/organizations/${slug}/automation/workflows/${id}/runs`,{...json(body),headers:{"X-CSRF-Token":csrf}}),
+  runs: (slug:string) => request<{items:unknown[]}>(`/api/v1/organizations/${slug}/automation/runs`),
+  approvals: (slug:string) => request<unknown[]>(`/api/v1/organizations/${slug}/automation/approvals`),
+  agents: (slug:string) => request<unknown[]>(`/api/v1/organizations/${slug}/automation/agents`),
+  usage: (slug:string) => request<{provider_status:string;items:unknown[]}>(`/api/v1/organizations/${slug}/automation/usage`),
+  templates: (slug:string) => request<unknown[]>(`/api/v1/organizations/${slug}/automation/templates`),
+  platform: () => request<unknown>("/api/v1/platform/automation"),
+};

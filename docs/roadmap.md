@@ -38,3 +38,7 @@ Phase 19 adds the developer hub, opt-in public developer profiles, approved open
 Phase 20 adds organization creation, tenant memberships and invitations, organization teams, private course mappings, training programs, assessments, privacy-threshold analytics, exports, settings, platform organization oversight and time-limited support access. PostgreSQL RLS, full assessment authoring, worker-backed exports and production capacity measurements remain deployment follow-up work.
 
 Phase 21 adds security policy/audit/access-review records, session revocation, privacy requests, compliance readiness records, and SCIM token/provisioning boundaries. OIDC, SAML, TOTP, passkeys, PostgreSQL RLS, retention workers and provider-backed compliance evidence remain configuration and integration prerequisites.
+
+## Phase 22
+
+Phase 22 adds tenant-scoped automation workflows, validated graph versions, durable queued run records, approval records, idempotency keys, agent/tool permission records, recommendations, usage visibility, and automation dashboards. A workflow worker, scheduler, and live AI provider remain explicitly unavailable until configured and independently tested.
