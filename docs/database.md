@@ -4,4 +4,6 @@ The schema uses UUID identifiers, timestamp columns, unique slugs, ordered modul
 
 Migration `0002_auth_student` adds normalized email, account status, role, verification/login/password timestamps, `user_profiles`, `auth_sessions`, single-use verification/reset token tables, security audit logs, and lesson visit timestamps. Tokens are stored as SHA-256 hashes. Existing users are preserved and normalized emails are backfilled.
 
+Migration `0003_course_cms` extends languages, categories, courses, lessons, and code examples with CMS metadata and adds `course_instructors`, `course_revisions`, `publishing_reviews`, and `admin_audit_logs`. Existing `published` values are backfilled into the workflow status. No enrollment or progress rows are removed.
+
 Run `alembic upgrade head` followed by `python -m app.seed`. The seed is idempotent by slug and creates representative published courses for Python, JavaScript, TypeScript, Java, C++, PHP, HTML, CSS, and SQL.

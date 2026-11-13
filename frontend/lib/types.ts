@@ -7,3 +7,6 @@ export type Paginated<T> = { items: T[]; page: number; page_size: number; total:
 export type User = { id: string; email: string; full_name: string; role: string; email_verified: boolean; email_verified_at?: string | null; profile: { bio?: string|null; learning_interests: string[]; preferred_language?: string|null; learning_level?: string|null; show_myanmar: boolean; avatar_url?: string|null } };
 export type Enrollment = { id: string; course: Course; completed_lessons: number; total_lessons: number; progress_percent: number; last_lesson_slug?: string|null };
 export type Dashboard = { enrollments: Enrollment[]; completed_lessons: number; overall_progress: number; recent_activity: { course_slug: string; lesson_slug: string; progress_percent: number }[] };
+export type AdminCourse = Course & { short_description: string; status: string; published: boolean; language_id: string; category_id: string; estimated_duration: number; requirements: string[] };
+export type AdminPage = { items: AdminCourse[]; page: number; page_size: number; total: number; pages: number };
+export type AdminDashboard = { total_courses:number; published_courses:number; draft_courses:number; total_students:number; total_instructors:number; pending_reviews:number; recent_courses: AdminCourse[]; recent_activity: unknown[] };

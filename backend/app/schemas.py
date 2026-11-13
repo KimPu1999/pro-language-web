@@ -52,3 +52,19 @@ class EnrollmentOut(BaseModel):
     id: UUID; course: CourseOut; completed_lessons: int; total_lessons: int; progress_percent: float; last_lesson_slug: str|None
 class ProgressIn(BaseModel): completed: bool
 class DashboardOut(BaseModel): enrollments: list[EnrollmentOut]; completed_lessons: int; overall_progress: float; recent_activity: list[dict]
+class AdminLanguageIn(BaseModel):
+    name: str = Field(min_length=2,max_length=80); slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=80); description: str=""; icon: str|None=None; status: str="active"; display_order: int=0
+class AdminCategoryIn(BaseModel):
+    name: str = Field(min_length=2,max_length=100); slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=100); description: str=""; status: str="active"; display_order: int=0
+class AdminCourseIn(BaseModel):
+    title: str = Field(min_length=3,max_length=180); slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=180); short_description: str=""; description: str=""; language_id: UUID; category_id: UUID; level: str="beginner"; thumbnail: str|None=None; estimated_duration: int=Field(default=0,ge=0); status: str="draft"; outcomes: list[str]=Field(default_factory=list); requirements: list[str]=Field(default_factory=list)
+class AdminModuleIn(BaseModel): title: str=Field(min_length=2,max_length=180); position: int=Field(ge=0); description: str=""
+class AdminLessonIn(BaseModel): title: str=Field(min_length=2,max_length=180); slug: str=Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=180); description: str=""; content_en: str=""; content_mm: str|None=None; position: int=Field(ge=0); duration_minutes: int=Field(default=10,ge=0); status: str="draft"
+class AdminCodeExampleIn(BaseModel): title: str=Field(min_length=1,max_length=180); language: str=Field(min_length=1,max_length=50); filename: str|None=None; source_code: str; description: str=""; position: int=Field(ge=0)
+class PublishDecisionIn(BaseModel): decision: str; note: str=""
+class AdminCourseOut(BaseModel):
+    model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; short_description: str; description: str; language_id: UUID; category_id: UUID; level: str; thumbnail: str|None; estimated_duration: int; status: str; published: bool; outcomes: list[str]=Field(default_factory=list); requirements: list[str]=Field(default_factory=list)
+    @field_validator("outcomes","requirements",mode="before")
+    @classmethod
+    def split_values(cls,v): return v.split("|") if isinstance(v,str) and v else (v or [])
+class AdminPageOut(BaseModel): items: list[AdminCourseOut]; page: int; page_size: int; total: int; pages: int
