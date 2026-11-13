@@ -78,6 +78,8 @@ Phase 5 adds migration `0005_challenges_assessments`, the challenge catalog, wor
 
 Phase 6 adds migration `0006_personalized_roadmaps`, career roadmap catalog/detail pages, student learning goals, evidence-based roadmap enrollment/progress, prerequisite validation, deterministic recommendations, and roadmap administration. See [docs/personalized-learning.md](docs/personalized-learning.md), [docs/roadmap-builder.md](docs/roadmap-builder.md), and [docs/recommendation-engine.md](docs/recommendation-engine.md).
 
+Phase 8 adds migration `0008_ai_tutor`, the authenticated AI Tutor conversation API, SSE streaming contract, lesson/challenge context filtering, server-side quotas, preferences, usage records, and `/ai-tutor` plus `/admin/ai`. AI is disabled by default. Configure a reviewed provider adapter on the server before enabling live requests; no API key is sent to the browser. See [docs/ai-tutor.md](docs/ai-tutor.md), [docs/ai-provider-setup.md](docs/ai-provider-setup.md), [docs/ai-security.md](docs/ai-security.md), and [docs/ai-usage-limits.md](docs/ai-usage-limits.md).
+
 Phase 7 adds migration `0007_projects_portfolio`, project templates, student workspaces, GitHub submission validation, instructor review records, weighted rubrics, verified project skill evidence, and private/public portfolio routes. See [docs/project-based-learning.md](docs/project-based-learning.md), [docs/project-review-workflow.md](docs/project-review-workflow.md), [docs/github-integration.md](docs/github-integration.md), and [docs/portfolio-builder.md](docs/portfolio-builder.md).
 
 ## Troubleshooting

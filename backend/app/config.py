@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     runner_enabled: bool = False
     runner_queue_name: str = "codemaster:execution"
     max_source_code_bytes: int = 100_000
+    ai_provider: str = "disabled"
+    ai_model: str = "disabled"
+    ai_enabled: bool = False
+    ai_request_timeout_seconds: int = 30
+    ai_daily_request_limit: int = 20
+    ai_max_input_chars: int = 12000
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     @property
     def cors_origin_list(self) -> list[str]:

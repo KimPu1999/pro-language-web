@@ -10,3 +10,5 @@ Phase 5 adds the challenge catalog, challenge workspace, assessment schema, subm
 Phase 6 adds personalized career roadmaps, learning goals, prerequisite-aware steps, evidence-based progress, and deterministic recommendations. Phase 7 can add social learning, mentor review, richer project assessments, and certificates.
 
 Phase 7 adds real-world project templates, milestones, GitHub metadata submission, instructor review workflow, weighted rubrics, verified project evidence, and private/public portfolios. Phase 8 can add GitHub App private-repository synchronization, secure media storage, mentor assignment, and richer portfolio presentation.
+
+Phase 8 adds the AI Tutor foundation: provider abstraction, disabled-provider behavior, persistent conversations, streaming transport, published lesson/challenge context retrieval, usage quotas, preferences, and admin operational visibility. Phase 9 can add a production provider adapter, richer project and roadmap assistant surfaces, evaluation, and additional AI-supported learning workflows.
