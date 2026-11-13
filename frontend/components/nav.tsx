@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { LogoutButton } from "./auth-form";
 
-const links = [["Home", "/"], ["Courses", "/courses"], ["Learning Paths", "/paths"], ["Challenges", "/challenges"], ["Projects", "/projects"], ["Community", "/community"]] as const;
+const links = [["Home", "/"], ["Courses", "/courses"], ["Learning Paths", "/learning-paths"], ["Challenges", "/challenges"], ["Projects", "/projects"], ["Community", "/community"]] as const;
 
 export function Nav() {
   const [open, setOpen] = useState(false);

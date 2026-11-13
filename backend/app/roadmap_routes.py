@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf, verified_user
 from .db import get_db
-from .models import (CareerRoadmap, Challenge, ChallengeSubmission, Course, CourseModule, Enrollment, Lesson, LessonProgress, ProjectTemplate, RoadmapPrerequisite, RoadmapRevision, RoadmapStage, RoadmapStep, RoadmapStepResource, StudentLearningGoal, StudentProject, StudentRoadmap, StudentRoadmapProgress, User)
+from .models import (CareerRoadmap, Challenge, ChallengeSubmission, Course, CourseModule, Enrollment, Lesson, LessonProgress, ProjectTemplate, RoadmapPrerequisite, RoadmapRevision, RoadmapStage, RoadmapStep, RoadmapStepResource, StudentLearningGoal, StudentProject, StudentRoadmap, StudentRoadmapBookmark, StudentRoadmapProgress, User)
 from .admin_routes import admin_user, full_admin, audit
 
 router=APIRouter(prefix="/api/v1",tags=["roadmaps"])
@@ -35,17 +35,37 @@ def evidence_complete(db,user_id,step_id):
     return False
 def progress_view(db,enrollment):
     steps=db.scalars(select(RoadmapStep).join(RoadmapStage).where(RoadmapStage.roadmap_id==enrollment.roadmap_id)).all(); completed=sum(1 for s in steps if evidence_complete(db,enrollment.user_id,s.id)); return {"completed_steps":completed,"total_steps":len(steps),"progress_percent":round(completed/len(steps)*100,1) if steps else 0}
+@router.get("/learning-paths")
 @router.get("/roadmaps")
 def list_roadmaps(search:str|None=None,career_category:str|None=None,difficulty:str|None=None,page:int=Query(1,ge=1),page_size:int=Query(12,ge=1,le=50),db:Session=Depends(get_db)):
     q=select(CareerRoadmap).where(CareerRoadmap.published.is_(True)); count=select(func.count()).select_from(CareerRoadmap).where(CareerRoadmap.published.is_(True))
     if search:q=q.where(CareerRoadmap.title.ilike(f"%{search}%"));count=count.where(CareerRoadmap.title.ilike(f"%{search}%"))
     if career_category:q=q.where(CareerRoadmap.career_category==career_category);count=count.where(CareerRoadmap.career_category==career_category)
+    if difficulty:
+        matching=select(RoadmapStage.roadmap_id).where(RoadmapStage.level==difficulty)
+        q=q.where(CareerRoadmap.id.in_(matching)); count=count.where(CareerRoadmap.id.in_(matching))
     total=db.scalar(count) or 0; rows=db.scalars(q.order_by(CareerRoadmap.title).offset((page-1)*page_size).limit(page_size)).all(); return {"items":[roadmap_dict(x,db,False) for x in rows],"page":page,"page_size":page_size,"total":total,"pages":(total+page_size-1)//page_size if total else 0}
+@router.get("/learning-paths/categories")
+def learning_path_categories(db:Session=Depends(get_db)):
+    return db.scalars(select(CareerRoadmap.career_category).where(CareerRoadmap.published.is_(True)).distinct().order_by(CareerRoadmap.career_category)).all()
+@router.get("/learning-paths/{slug}")
 @router.get("/roadmaps/{slug}")
 def get_roadmap(slug:str,db:Session=Depends(get_db)):
     row=db.scalar(select(CareerRoadmap).where(CareerRoadmap.slug==slug,CareerRoadmap.published.is_(True)))
     if not row: raise HTTPException(404,"Roadmap not found")
     return roadmap_dict(row,db)
+@router.get("/learning-paths/{slug}/stages")
+def roadmap_stages(slug:str,db:Session=Depends(get_db)):
+    row=db.scalar(select(CareerRoadmap).where(CareerRoadmap.slug==slug,CareerRoadmap.published.is_(True)))
+    if not row: raise HTTPException(404,"Roadmap not found")
+    return roadmap_dict(row,db)["stages"]
+@router.get("/learning-paths/{slug}/courses")
+def roadmap_courses(slug:str,db:Session=Depends(get_db)):
+    row=db.scalar(select(CareerRoadmap).where(CareerRoadmap.slug==slug,CareerRoadmap.published.is_(True)))
+    if not row: raise HTTPException(404,"Roadmap not found")
+    resource_ids=db.scalars(select(RoadmapStepResource.resource_id).join(RoadmapStep,RoadmapStepResource.step_id==RoadmapStep.id).join(RoadmapStage,RoadmapStep.stage_id==RoadmapStage.id).where(RoadmapStage.roadmap_id==row.id,RoadmapStepResource.resource_type=="course")).all()
+    courses=db.scalars(select(Course).where(Course.id.in_(resource_ids),Course.published.is_(True)).order_by(Course.title)).all() if resource_ids else []
+    return [{"id":course.id,"title":course.title,"slug":course.slug,"level":course.level,"duration_minutes":course.duration_minutes} for course in courses]
 @router.post("/me/roadmaps/{roadmap_slug}",status_code=201)
 def start_roadmap(roadmap_slug:str,user:User=Depends(verified_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     roadmap=db.scalar(select(CareerRoadmap).where(CareerRoadmap.slug==roadmap_slug,CareerRoadmap.published.is_(True)))
@@ -54,9 +74,30 @@ def start_roadmap(roadmap_slug:str,user:User=Depends(verified_user),_:None=Depen
     if existing and existing.status=="active": raise HTTPException(409,"Roadmap already active")
     if existing: existing.status="active"; existing.paused_at=None; db.commit(); return {"id":existing.id,"status":existing.status,"progress":progress_view(db,existing)}
     row=StudentRoadmap(user_id=user.id,roadmap_id=roadmap.id);db.add(row);db.commit();return {"id":row.id,"status":row.status,"progress":progress_view(db,row)}
+@router.post("/learning-paths/{roadmap_id}/enroll",status_code=201)
+def enroll_learning_path(roadmap_id:UUID,user:User=Depends(verified_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    roadmap=db.scalar(select(CareerRoadmap).where(CareerRoadmap.id==roadmap_id,CareerRoadmap.published.is_(True)))
+    if not roadmap: raise HTTPException(404,"Published learning path not found")
+    existing=db.scalar(select(StudentRoadmap).where(StudentRoadmap.user_id==user.id,StudentRoadmap.roadmap_id==roadmap.id))
+    if existing and existing.status=="active": raise HTTPException(409,"Learning path already active")
+    if existing: existing.status="active"; existing.paused_at=None; db.commit(); return {"id":existing.id,"status":existing.status,"progress":progress_view(db,existing)}
+    row=StudentRoadmap(user_id=user.id,roadmap_id=roadmap.id); db.add(row); db.commit(); return {"id":row.id,"status":row.status,"progress":progress_view(db,row)}
 @router.get("/me/roadmaps")
 def my_roadmaps(user:User=Depends(current_user),db:Session=Depends(get_db)):
-    rows=db.scalars(select(StudentRoadmap).where(StudentRoadmap.user_id==user.id).order_by(StudentRoadmap.created_at.desc())).all(); return [{"id":x.id,"roadmap_id":x.roadmap_id,"status":x.status,"progress":progress_view(db,x)} for x in rows]
+    rows=db.scalars(select(StudentRoadmap).where(StudentRoadmap.user_id==user.id).order_by(StudentRoadmap.created_at.desc())).all(); bookmarks={x.roadmap_id for x in db.scalars(select(StudentRoadmapBookmark).where(StudentRoadmapBookmark.user_id==user.id)).all()}; return [{"id":x.id,"roadmap_id":x.roadmap_id,"status":x.status,"bookmarked":x.roadmap_id in bookmarks,"progress":progress_view(db,x)} for x in rows]
+@router.get("/me/learning-paths")
+def my_learning_paths(user:User=Depends(current_user),db:Session=Depends(get_db)):
+    return my_roadmaps(user,db)
+@router.get("/me/learning-paths/{roadmap_id}/progress")
+def learning_path_progress(roadmap_id:UUID,user:User=Depends(current_user),db:Session=Depends(get_db)):
+    return roadmap_progress(roadmap_id,user,db)
+@router.post("/learning-paths/{roadmap_id}/bookmark")
+def bookmark_learning_path(roadmap_id:UUID,user:User=Depends(verified_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    if not db.scalar(select(CareerRoadmap.id).where(CareerRoadmap.id==roadmap_id,CareerRoadmap.published.is_(True))): raise HTTPException(404,"Published learning path not found")
+    item=db.scalar(select(StudentRoadmapBookmark).where(StudentRoadmapBookmark.user_id==user.id,StudentRoadmapBookmark.roadmap_id==roadmap_id))
+    if item: db.delete(item); bookmarked=False
+    else: db.add(StudentRoadmapBookmark(user_id=user.id,roadmap_id=roadmap_id)); bookmarked=True
+    db.commit(); return {"roadmap_id":roadmap_id,"bookmarked":bookmarked}
 @router.post("/me/roadmaps/{roadmap_id}/pause")
 def pause_roadmap(roadmap_id:UUID,user:User=Depends(current_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=db.scalar(select(StudentRoadmap).where(StudentRoadmap.id==roadmap_id,StudentRoadmap.user_id==user.id));
