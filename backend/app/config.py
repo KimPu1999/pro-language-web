@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     smtp_tls: bool = True
     mail_from: str = "no-reply@codemaster.local"
     redis_url: str = "redis://localhost:6379/0"
+    db_pool_size: int = 5
+    db_max_overflow: int = 10
+    db_pool_timeout_seconds: int = 15
+    db_pool_recycle_seconds: int = 1800
+    slow_request_ms: int = 500
     runner_enabled: bool = False
     runner_queue_name: str = "codemaster:execution"
     max_source_code_bytes: int = 100_000

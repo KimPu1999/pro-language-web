@@ -1,7 +1,8 @@
-import logging, math, uuid
+import logging, math, time, uuid
 from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .config import settings
@@ -38,10 +39,20 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allo
 @app.middleware("http")
 async def request_context(request, call_next):
     request_id=request.headers.get("X-Request-ID") or str(uuid.uuid4())
-    response=await call_next(request)
+    started = time.perf_counter()
+    try:
+        response=await call_next(request)
+    except Exception:
+        duration_ms = (time.perf_counter() - started) * 1000
+        logger.exception("request_failed request_id=%s method=%s path=%s duration_ms=%.1f", request_id, request.method, request.url.path, duration_ms)
+        return JSONResponse(status_code=500, content={"detail": "Internal server error", "request_id": request_id}, headers={"X-Request-ID": request_id})
+    duration_ms = (time.perf_counter() - started) * 1000
     response.headers["X-Request-ID"]=request_id
+    response.headers["X-Response-Time-ms"] = f"{duration_ms:.1f}"
     response.headers["X-Content-Type-Options"]="nosniff"
     response.headers["Referrer-Policy"]="strict-origin-when-cross-origin"
+    level = logging.WARNING if duration_ms >= settings.slow_request_ms else logging.INFO
+    logger.log(level, "request_complete request_id=%s method=%s path=%s status=%s duration_ms=%.1f", request_id, request.method, request.url.path, response.status_code, duration_ms)
     return response
 app.include_router(auth_router); app.include_router(student_router); app.include_router(admin_router); app.include_router(runner_router); app.include_router(challenge_router); app.include_router(roadmap_router); app.include_router(project_router); app.include_router(ai_router); app.include_router(gamification_router); app.include_router(community_router); app.include_router(live_class_router)
 app.include_router(analytics_router); app.include_router(operations_router)

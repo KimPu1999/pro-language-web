@@ -70,12 +70,32 @@ def completion_rows(db: Session, start, end, user: User, course_id: UUID|None = 
     q = select(Enrollment.id, Enrollment.course_id, Enrollment.user_id).join(Course, Course.id == Enrollment.course_id).where(Enrollment.created_at < end)
     q = scoped_course_filter(q, db, user, course_id)
     enrollments = db.execute(q).all()
-    rows=[]
-    for enrollment_id, cid, uid in enrollments:
-        total = db.scalar(select(func.count(Lesson.id)).join(CourseModule, CourseModule.id == Lesson.module_id).where(CourseModule.course_id == cid, Lesson.published.is_(True))) or 0
-        done = db.scalar(select(func.count(LessonProgress.id)).join(Lesson, Lesson.id == LessonProgress.lesson_id).join(CourseModule, CourseModule.id == Lesson.module_id).where(LessonProgress.user_id == uid, CourseModule.course_id == cid, Lesson.published.is_(True), LessonProgress.completed.is_(True))) or 0
-        rows.append((enrollment_id, cid, total, min(done, total)))
-    return rows
+    if not enrollments:
+        return []
+    course_ids = {cid for _, cid, _ in enrollments}
+    user_ids = {uid for _, _, uid in enrollments}
+    totals = dict(db.execute(
+        select(CourseModule.course_id, func.count(Lesson.id))
+        .join(Lesson, Lesson.module_id == CourseModule.id)
+        .where(CourseModule.course_id.in_(course_ids), Lesson.published.is_(True))
+        .group_by(CourseModule.course_id)
+    ).all())
+    completed = {
+        (cid, uid): count
+        for cid, uid, count in db.execute(
+            select(CourseModule.course_id, LessonProgress.user_id, func.count(LessonProgress.id))
+            .join(Lesson, Lesson.module_id == CourseModule.id)
+            .join(LessonProgress, LessonProgress.lesson_id == Lesson.id)
+            .where(
+                CourseModule.course_id.in_(course_ids),
+                LessonProgress.user_id.in_(user_ids),
+                Lesson.published.is_(True),
+                LessonProgress.completed.is_(True),
+            )
+            .group_by(CourseModule.course_id, LessonProgress.user_id)
+        ).all()
+    }
+    return [(enrollment_id, cid, totals.get(cid, 0), min(completed.get((cid, uid), 0), totals.get(cid, 0))) for enrollment_id, cid, uid in enrollments]
 
 def definition_payload():
     return {"active_students": "Distinct students with enrollment, lesson progress, or challenge activity in the selected UTC period.", "completion_rate": "Enrollments with all published lessons completed divided by eligible enrollments; courses with zero published lessons are excluded.", "challenge_success_rate": "Accepted evaluated submissions divided by evaluated submissions; queued and infrastructure failures are excluded."}
@@ -93,8 +113,9 @@ def overview(start_date: date|None = Query(None), end_date: date|None = Query(No
     enrollments = db.scalar(enroll_q) or 0
     submissions = db.scalar(select(func.count(ChallengeSubmission.id)).where(ChallengeSubmission.created_at >= start, ChallengeSubmission.created_at < end)) or 0
     certificates = db.scalar(select(func.count(IssuedCertificate.id)).where(IssuedCertificate.issued_at >= start, IssuedCertificate.issued_at < end, IssuedCertificate.revoked_at.is_(None))) or 0
-    completed = sum(total > 0 and done == total for _,_,total,done in completion_rows(db,start,end,user,course_id))
-    eligible = sum(total > 0 for _,_,total,_ in completion_rows(db,start,end,user,course_id))
+    completion_data = completion_rows(db,start,end,user,course_id)
+    completed = sum(total > 0 and done == total for _,_,total,done in completion_data)
+    eligible = sum(total > 0 for _,_,total,_ in completion_data)
     return {"range":{"start":start_day.isoformat(),"end":end_day.isoformat()},"kpis":{"total_students":total_students,"active_students":active_student_count(db,start,end,user),"total_instructors":total_instructors,"published_courses":published_courses,"total_enrollments":enrollments,"completed_courses":completed,"coding_submissions":submissions,"certificates_issued":certificates},"trends":[{"date":(start_day+timedelta(days=i)).isoformat(),"enrollments":db.scalar(select(func.count(Enrollment.id)).where(Enrollment.created_at >= start+timedelta(days=i),Enrollment.created_at < start+timedelta(days=i+1))) or 0,"lesson_completions":db.scalar(select(func.count(LessonProgress.id)).where(LessonProgress.updated_at >= start+timedelta(days=i),LessonProgress.updated_at < start+timedelta(days=i+1),LessonProgress.completed.is_(True))) or 0} for i in range(min((end_day-start_day).days+1,90))],"completion_rate":round(completed/eligible*100,1) if eligible else 0,"definitions":definition_payload()}
 
 @router.get("/analytics/students")
