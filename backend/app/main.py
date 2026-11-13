@@ -1,4 +1,4 @@
-import logging, math
+import logging, math, uuid
 from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,6 +24,14 @@ logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s 
 logger=logging.getLogger("codemaster.api")
 app=FastAPI(title="CodeMaster Academy API", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allow_credentials=True, allow_methods=["GET","POST","PUT","PATCH","DELETE","OPTIONS"], allow_headers=["Content-Type","X-CSRF-Token"])
+@app.middleware("http")
+async def request_context(request, call_next):
+    request_id=request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    response=await call_next(request)
+    response.headers["X-Request-ID"]=request_id
+    response.headers["X-Content-Type-Options"]="nosniff"
+    response.headers["Referrer-Policy"]="strict-origin-when-cross-origin"
+    return response
 app.include_router(auth_router); app.include_router(student_router); app.include_router(admin_router); app.include_router(runner_router); app.include_router(challenge_router); app.include_router(roadmap_router); app.include_router(project_router); app.include_router(ai_router); app.include_router(gamification_router); app.include_router(community_router); app.include_router(live_class_router)
 app.include_router(analytics_router)
 @app.get("/api/v1/health")

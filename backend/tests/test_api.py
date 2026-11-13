@@ -1,4 +1,8 @@
-def test_health(client): assert client.get("/api/v1/health").json()["status"]=="ok"
+def test_health(client):
+    response = client.get("/api/v1/health", headers={"X-Request-ID": "test-request"})
+    assert response.json()["status"] == "ok"
+    assert response.headers["X-Request-ID"] == "test-request"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
 def test_course_filter_and_pagination(client):
     response=client.get("/api/v1/courses?language=python&page=1&page_size=1"); assert response.status_code==200; assert response.json()["total"]==1
 def test_course_detail_and_lesson(client):

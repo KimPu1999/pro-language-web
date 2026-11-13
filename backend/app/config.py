@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
+    app_env: str = "development"
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/codemaster"
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     log_level: str = "INFO"

@@ -68,11 +68,14 @@ PYTHONPATH=. pytest
 
 # frontend
 cd frontend
+npm run test:unit
 npm run lint
 npm run typecheck
 npm run build
 npm run test:e2e
 ```
+
+Phase 13 adds the quality workflow, administrator quality page at `/platform/quality`, request correlation headers, frontend unit tests, and production-readiness documentation. Run `git diff --check` before commits. The secure runner, video provider, external AI provider, telemetry backend, backup restore, and staging load tests remain explicitly unavailable until configured and verified.
 
 ## Environment variables
 

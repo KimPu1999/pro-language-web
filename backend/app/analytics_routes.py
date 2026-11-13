@@ -9,6 +9,7 @@ from .db import get_db
 from .models import (AnalyticsAuditLog, AnalyticsReportExport, Challenge, ChallengeSubmission, CommunityAnswer,
     CommunityPost, Course, CourseInstructor, CourseModule, Enrollment, IssuedCertificate, Lesson, LessonProgress,
     StudentAchievement, User)
+from .config import settings
 
 router = APIRouter(prefix="/api/v1/platform", tags=["platform analytics"])
 ADMIN = {"admin", "super_admin"}
@@ -20,6 +21,24 @@ def analytics_user(user: User = Depends(current_user)):
 def full_admin(user: User = Depends(current_user)):
     if user.role not in ADMIN: raise HTTPException(403, "Administrator access required")
     return user
+
+@router.get("/quality")
+def quality_status(user: User = Depends(full_admin), db: Session = Depends(get_db)):
+    """Expose observed configuration and dependency status without inventing health data."""
+    checks = [{"name": "api", "status": "healthy", "detail": "The API served this request."}]
+    try:
+        db.execute(select(1))
+        checks.append({"name": "database", "status": "healthy", "detail": "Database connectivity is available."})
+    except Exception:
+        checks.append({"name": "database", "status": "error", "detail": "Database connectivity could not be verified."})
+    checks.extend([
+        {"name": "secure_runner", "status": "configured" if settings.runner_enabled else "not_configured", "detail": "Sandbox execution is enabled." if settings.runner_enabled else "Runner is disabled; submissions fail closed."},
+        {"name": "ai_provider", "status": "configured" if settings.ai_enabled and settings.ai_provider != "disabled" else "not_configured", "detail": "AI provider is enabled." if settings.ai_enabled and settings.ai_provider != "disabled" else "AI provider is disabled or not configured."},
+        {"name": "video_provider", "status": "configured" if settings.video_enabled and settings.video_provider != "disabled" else "not_configured", "detail": "Video provider is enabled." if settings.video_enabled and settings.video_provider != "disabled" else "Video provider is disabled or not configured."},
+        {"name": "ci", "status": "not_configured", "detail": "CI status integration is not connected to this deployment."},
+        {"name": "observability", "status": "partial", "detail": "Request correlation IDs are enabled; external telemetry is not configured."},
+    ])
+    return {"checks": checks, "generated_at": datetime.now(timezone.utc)}
 
 def bounds(start: date|None, end: date|None):
     end = end or datetime.now(timezone.utc).date(); start = start or end - timedelta(days=29)

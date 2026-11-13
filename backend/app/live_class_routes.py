@@ -1,7 +1,7 @@
-import re,secrets
+import re
 from datetime import datetime,timezone
 from uuid import UUID
-from fastapi import APIRouter,Depends,HTTPException,Query
+from fastapi import APIRouter,Depends,HTTPException,Query,status
 from pydantic import BaseModel,Field
 from sqlalchemy import func,select
 from sqlalchemy.orm import Session
@@ -48,7 +48,7 @@ def cancel(session_id:UUID,user:User=Depends(current_user),_:None=Depends(requir
 def room_token(session_id:UUID,user:User=Depends(current_user),db:Session=Depends(get_db)):
  membership(session_id,user,db)
  if not settings.video_enabled or settings.video_provider=="disabled":return {"status":"unavailable","message":"Video provider is not configured."}
- return {"status":"available","provider":settings.video_provider,"token":secrets.token_urlsafe(32),"expires_in":settings.video_token_ttl_seconds}
+ raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE,"The configured video provider adapter is unavailable; room access is disabled.")
 @router.post("/{session_id}/presence")
 def presence(session_id:UUID,event_type:str,event_key:str=Query(...,min_length=1,max_length=120),user:User=Depends(current_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
  s=membership(session_id,user,db)

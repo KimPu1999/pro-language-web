@@ -19,3 +19,7 @@ Phase 11 adds scheduled live classes, registrations, waitlist records, room auth
 ## Phase 12
 
 Phase 12 adds real-data platform analytics, metric definitions, administrator-only CSV reporting, export audit records, and scoped instructor analytics. See `docs/phase-12-analytics.md`, `docs/analytics-metric-definitions.md`, and `docs/analytics-security.md`.
+
+## Phase 13
+
+Phase 13 adds regression test infrastructure, request correlation headers, fail-closed live-room behavior, the administrator quality-status page, CI quality gates, dependency-scan hooks, and production-readiness/security documentation. Real runner, video, AI, telemetry, backup restore, and load-test verification remain deployment prerequisites.
