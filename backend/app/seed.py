@@ -27,6 +27,7 @@ from .php_course_content import seed_php_course
 from .csharp_course_content import seed_csharp_course
 from .dart_course_content import seed_dart_course
 from .data_analysis_course_content import seed_data_analysis_course
+from .data_structures_course_content import seed_data_structures_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -67,7 +68,7 @@ COURSES = [
     ("Dart Programming — From Zero to Advanced", "dart", "dart", "#0175C2", "mobile-development"), ("Flutter", "flutter", "dart", "#54C5F8", "mobile-development"),
     ("React Native", "react-native", "javascript", "#61DAFB", "mobile-development"), ("Kotlin", "kotlin", "kotlin", "#7F52FF", "mobile-development"),
     ("Python for AI", "python-for-ai", "python", "#3776AB", "ai-data-science"), ("Machine Learning", "machine-learning", "python", "#10B981", "ai-data-science"),
-    ("Data Analysis — From Zero to Professional Data Analyst", "data-analysis", "python", "#0D9488", "data-analytics"), ("Data Structures", "data-structures", "computer-science", "#6366F1", "computer-science"),
+    ("Data Analysis — From Zero to Professional Data Analyst", "data-analysis", "python", "#0D9488", "data-analytics"), ("Data Structures — From Zero to Advanced", "data-structures", "python", "#7C3AED", "computer-science"),
     ("Algorithms", "algorithms", "computer-science", "#8B5CF6", "computer-science"), ("Operating Systems", "operating-systems", "computer-science", "#64748B", "computer-science"),
 ]
 
@@ -322,6 +323,10 @@ def main():
         if data_analysis_course:
             data_analysis_course.category_id = categories["data-analytics"].id
             seed_data_analysis_course(db, data_analysis_course)
+        data_structures_course = db.scalar(select(Course).where(Course.slug == "data-structures"))
+        if data_structures_course:
+            data_structures_course.category_id = categories["computer-science"].id
+            seed_data_structures_course(db, data_structures_course)
         seed_challenges(db)
         seed_projects(db)
 

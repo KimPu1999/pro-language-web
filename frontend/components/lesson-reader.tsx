@@ -19,6 +19,7 @@ import { PhpPlayground } from "@/components/php-playground";
 import { CsharpPlayground } from "@/components/csharp-playground";
 import { DartPlayground } from "@/components/dart-playground";
 import { DataAnalysisLab } from "@/components/data-analysis-lab";
+import { DataStructuresVisualizer } from "@/components/data-structures-visualizer";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -264,6 +265,12 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
 
       {courseSlug === "data-analysis" && (
         <DataAnalysisLab title={`${lesson.title} dataset lab`} />
+      )}
+
+      {courseSlug === "data-structures" && (
+        <div className="mt-8 overflow-hidden rounded-2xl border border-violet-400/20">
+          <DataStructuresVisualizer />
+        </div>
       )}
 
       {!quizLoading && quiz && (
