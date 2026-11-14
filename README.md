@@ -192,6 +192,15 @@ policies, and recovery evidence but do not provision paid resources or change
 production capacity. Local and provider-backed telemetry remain explicitly
 `not_tested` or `not_configured` until connected and verified.
 
+## Phase 34 Instructor Academy
+
+Instructor development routes include `/instructor/academy`, `/instructor/onboarding`,
+training, standards, quality, peer review, analytics, development,
+certifications, resources, and community. Platform oversight is at
+`/platform/instructor-quality`. Migration `0035_instructor_academy` is
+additive. Instructor activation requires authorized approval; AI coaching is
+draft-only and no certificates or teaching scores are fabricated.
+
 ## Phase 33 learning marketplace
 
 The free marketplace is available at `/marketplace`, `/marketplace/search`,

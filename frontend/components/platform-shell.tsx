@@ -32,6 +32,7 @@ const links = [
   ["Backups", "/platform/backups"],
   ["Scalability", "/platform/scalability"],
   ["Marketplace", "/platform/marketplace"],
+  ["Instructor Quality", "/platform/instructor-quality"],
   ["Settings", "/platform/settings"],
 ] as const;
 

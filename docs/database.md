@@ -77,6 +77,14 @@ cost records, budget policies, recovery drills, failover events, and
 scalability audit logs. It does not alter existing learning data or provision
 infrastructure.
 
+## Phase 34 Instructor Academy
+
+Migration `0035_instructor_academy` adds onboarding/application reviews,
+versioned teaching standards and training enrollment, course quality rubrics,
+criteria, reviews, scores/evidence, peer reviews, development plans/goals,
+certification records, appeals, and academy audit logs. Existing users,
+courses, progress, and certificate tables are preserved.
+
 ## Phase 33 marketplace
 
 Migration `0034_marketplace` adds resource types, resources, versions, assets,

@@ -203,3 +203,23 @@ export const marketplaceApi = {
   analytics: () => request<any>("/api/v1/marketplace/analytics"),
   instructorAnalytics: () => request<any>("/api/v1/marketplace/instructor/analytics"),
 };
+
+export const instructorAcademyApi = {
+  dashboard: () => request<any>("/api/v1/instructor-academy/dashboard"),
+  onboarding: () => request<any>("/api/v1/instructor-academy/onboarding"),
+  submitOnboarding: (body: unknown, csrf: string) => request<any>("/api/v1/instructor-academy/onboarding", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  standards: () => request<any[]>("/api/v1/instructor-academy/standards"),
+  training: () => request<any[]>("/api/v1/instructor-academy/training"),
+  enrollTraining: (id: string, csrf: string) => request<any>(`/api/v1/instructor-academy/training/${id}/enroll`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  development: () => request<any[]>("/api/v1/instructor-academy/development"),
+  createPlan: (body: unknown, csrf: string) => request<any>("/api/v1/instructor-academy/development", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  quality: () => request<any[]>("/api/v1/instructor-academy/quality"),
+  peerReview: (body: unknown, csrf: string) => request<any>("/api/v1/instructor-academy/peer-reviews", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  analytics: () => request<any>("/api/v1/instructor-academy/analytics"),
+  aiCoach: () => request<any>("/api/v1/instructor-academy/ai-coach"),
+  certifications: () => request<any>("/api/v1/instructor-academy/certifications"),
+  appeal: (body: unknown, csrf: string) => request<any>("/api/v1/instructor-academy/appeals", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  platform: () => request<any>("/api/v1/instructor-academy/platform/overview"),
+  applications: () => request<any[]>("/api/v1/instructor-academy/platform/applications"),
+  decideApplication: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/instructor-academy/platform/applications/${id}`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+};

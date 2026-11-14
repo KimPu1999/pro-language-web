@@ -166,3 +166,18 @@ they do not invoke an autoscaler or change infrastructure.
 Public endpoints filter published/public content server-side. Mutations require
 verified authentication, CSRF, ownership or moderation authorization, and
 resource-specific rate limits.
+
+## Phase 34 Instructor Academy API
+
+- `GET|POST /api/v1/instructor-academy/onboarding`
+- `GET /api/v1/instructor-academy/dashboard|standards|training|development|quality|analytics|ai-coach|certifications`
+- `POST /api/v1/instructor-academy/training/{id}/enroll`
+- `POST /api/v1/instructor-academy/development`
+- `POST /api/v1/instructor-academy/peer-reviews`
+- `POST /api/v1/instructor-academy/appeals`
+- `GET /api/v1/instructor-academy/platform/overview|applications`
+- `POST /api/v1/instructor-academy/platform/applications/{id}`
+
+Role activation is performed only by authorized platform administrators after
+an application decision. Quality, review, and certification endpoints remain
+evidence-driven.

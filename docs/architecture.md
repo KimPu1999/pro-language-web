@@ -76,3 +76,10 @@ Marketplace discovery is a public read boundary over published courses and
 published public resources. Contributor content remains private until an
 authorized review decision publishes it. Course enrollment and identity remain
 owned by existing models; new resource records do not duplicate course data.
+
+## Phase 34 instructor quality boundary
+
+Instructor Academy is an approval and evidence boundary over existing course,
+progress, certificate, community, mentorship, and marketplace systems. It does
+not self-assign instructor roles, publish AI edits, or infer teaching quality
+from unverified analytics.

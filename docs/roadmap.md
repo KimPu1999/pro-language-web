@@ -96,3 +96,11 @@ versions, human review decisions, collections, review integrity, licensing
 metadata, reports, moderation queue, and persisted analytics surfaces are
 implemented. External full-text indexing, media scanning, rich asset delivery,
 and production engagement telemetry remain deployment work.
+
+## Phase 34 status
+
+Instructor onboarding, approval records, teaching standards, training
+enrollment, quality/peer-review records, analytics privacy states, development
+plans, draft-only AI coaching, certification eligibility status, appeals, and
+platform oversight are implemented. Certificate issuance, provider-backed AI,
+and full rubric scoring require additional verified evidence and configuration.
