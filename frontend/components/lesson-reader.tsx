@@ -6,6 +6,7 @@ import type { CourseProgress, Lesson, LessonQuiz } from "@/lib/types";
 import { csrf } from "@/components/auth-form";
 import { LessonContent, CodeSample } from "@/components/lesson-content";
 import { LessonTranslationToggle } from "@/components/translation";
+import { HtmlPlayground } from "@/components/html-playground";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -158,6 +159,15 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
             </div>
           )}
         </section>
+      )}
+
+      {courseSlug === "html" && lesson.code_examples.some(item => item.language.toLowerCase() === "html") && (
+        <HtmlPlayground
+          title={`${lesson.title} practice`}
+          examples={lesson.code_examples
+            .filter(item => item.language.toLowerCase() === "html")
+            .map(item => ({ title: item.title, code: item.code }))}
+        />
       )}
 
       {!quizLoading && quiz && (
