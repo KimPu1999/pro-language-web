@@ -95,3 +95,6 @@ Instructor Academy is an approval and evidence boundary over existing course,
 progress, certificate, community, mentorship, and marketplace systems. It does
 not self-assign instructor roles, publish AI edits, or infer teaching quality
 from unverified analytics.
+## Career network
+
+Career network data is served by an additive FastAPI router. Existing career and credential sources remain authoritative; network exposure is governed by explicit privacy flags and administrator verification.

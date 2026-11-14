@@ -217,3 +217,6 @@ and `/contributor/studio`. It reuses published courses and instructor profiles,
 while community resources use additive migration `0034_marketplace`. There are
 no paid courses, checkout, subscriptions, payment gateways, commissions, or
 paywalls. Draft resources require human moderation before publication.
+### Phase 37 career network
+
+Phase 37 adds evidence-based career readiness views, private-by-default developer talent profiles, reviewed free job listings, employer verification, opt-in discovery, and platform audit controls. See `docs/phase-37-career-audit.md` and `docs/career-security.md`.

@@ -272,3 +272,22 @@ export const assessmentApi = {
   issueCredential: (body: unknown, csrf: string) => request<any>("/api/v1/assessments/platform/credentials", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
   revokeCredential: (id: string, reason: string, csrf: string) => request<any>(`/api/v1/assessments/platform/credentials/${id}/revoke?reason=${encodeURIComponent(reason)}`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
 };
+
+export const careerNetworkApi = {
+  dashboard: () => request<any>("/api/v1/career-network/dashboard"),
+  talentProfile: () => request<any>("/api/v1/career-network/talent-profile"),
+  saveTalentProfile: (body: unknown, csrf: string) => request<any>("/api/v1/career-network/talent-profile", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  visibility: () => request<any>("/api/v1/career-network/visibility"),
+  saveVisibility: (body: unknown, csrf: string) => request<any>("/api/v1/career-network/visibility", { method: "PUT", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
+  profile: (username: string) => request<any>(`/api/v1/career-network/profiles/${encodeURIComponent(username)}`),
+  skillGap: (role = "") => request<any>(`/api/v1/career-network/skill-gap${role ? `?role_slug=${encodeURIComponent(role)}` : ""}`),
+  jobs: (query = "") => request<any[]>(`/api/v1/career-network/jobs${query}`),
+  saveJob: (id: string, csrf: string) => request<any>(`/api/v1/career-network/jobs/${id}/save`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  employer: (body: unknown, csrf: string) => request<any>("/api/v1/career-network/employer/organizations", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  createJob: (body: unknown, csrf: string) => request<any>("/api/v1/career-network/employer/jobs", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  talent: (query = "") => request<any[]>(`/api/v1/career-network/employer/talent${query}`),
+  platform: () => request<any>("/api/v1/career-network/platform/overview"),
+  employerDecision: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/career-network/platform/employers/${id}/decision`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  jobDecision: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/career-network/platform/jobs/${id}/decision`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  report: (body: unknown, csrf: string) => request<any>("/api/v1/career-network/reports", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+};

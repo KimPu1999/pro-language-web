@@ -201,3 +201,6 @@ Attempt ownership, timers, idempotent submission, hidden-answer filtering, revie
 Role activation is performed only by authorized platform administrators after
 an application decision. Quality, review, and certification endpoints remain
 evidence-driven.
+## Phase 37 career network
+
+The additive `/api/v1/career-network` API provides private-by-default talent profiles and visibility controls, evidence-based skill gaps, reviewed jobs, employer verification, opt-in talent discovery, contact requests, fraud reports, and platform overview counts. Existing `/api/v1/career` endpoints remain authoritative for roadmaps, resumes, interviews, mentorship, portfolios, and the private application tracker.

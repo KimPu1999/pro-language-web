@@ -1,3 +1,3 @@
 # Interview practice
 
-Published question-bank records are public to authenticated students. Interview sessions have server-side UTC end times. Attempts are owned by the session owner, and evaluation records distinguish pending evaluation from automated or rubric-based results. Hidden test JSON remains server-side.
+Existing interview sessions and published question records are reused. Timer and attempt behavior remain server-authoritative. Automated feedback is not represented as a verified hiring result.

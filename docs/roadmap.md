@@ -112,3 +112,6 @@ enrollment, quality/peer-review records, analytics privacy states, development
 plans, draft-only AI coaching, certification eligibility status, appeals, and
 platform oversight are implemented. Certificate issuance, provider-backed AI,
 and full rubric scoring require additional verified evidence and configuration.
+## Phase 37 — Career readiness
+
+Implemented additively: career dashboard entry points, private talent profiles, evidence-based skill gaps, employer verification gates, reviewed job discovery, opt-in talent contact, and audit/report controls. Remaining work is provider/infrastructure validation for production job workflows and resume rendering.

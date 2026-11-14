@@ -100,3 +100,6 @@ tags, reviews, collections, contributions, review requests/decisions, reports,
 moderation actions, contributor verification/reputation, license metadata,
 recommendation/search events, and audit logs. It is additive and does not alter
 existing course or enrollment records.
+## Phase 37
+
+Migration `0038_career_network` adds talent privacy, employer verification, role requirements, skill-gap snapshots, resume sections, reviewed job postings, saved jobs, contact requests, fraud reports, and application event history. Existing `career_profiles`, `career_roadmaps`, `resume_documents`, `resume_versions`, `interview_sessions`, and `job_applications` are reused.
