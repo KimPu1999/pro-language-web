@@ -29,6 +29,7 @@ from .dart_course_content import seed_dart_course
 from .data_analysis_course_content import seed_data_analysis_course
 from .data_structures_course_content import seed_data_structures_course
 from .algorithms_course_content import seed_algorithms_course
+from .aws_course_content import seed_aws_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -43,6 +44,7 @@ CATEGORIES = [
     ("AI & Data Science", "ai-data-science"),
     ("Computer Science", "computer-science"),
     ("Data Science & Analytics", "data-analytics"),
+    ("Cloud Computing & AWS", "cloud-computing"),
 ]
 COURSES = [
     ("HTML", "html", "html", "#E34F26", "web-development"), ("CSS", "css", "css", "#264DE4", "web-development"),
@@ -62,7 +64,7 @@ COURSES = [
     ("MongoDB", "mongodb", "mongodb", "#47A248", "database-development"), ("Redis", "redis", "redis", "#DC382D", "database-development"),
     ("Linux", "linux", "linux", "#FCC624", "devops-cloud"), ("Git", "git", "git", "#F05032", "devops-cloud"),
     ("GitHub", "github", "git", "#F8FAFC", "devops-cloud"), ("Docker", "docker", "docker", "#2496ED", "devops-cloud"),
-    ("CI/CD", "ci-cd", "ci-cd", "#818CF8", "devops-cloud"), ("AWS", "aws", "aws", "#FF9900", "devops-cloud"),
+    ("CI/CD", "ci-cd", "ci-cd", "#818CF8", "devops-cloud"), ("AWS", "aws", "aws", "#FF9900", "cloud-computing"),
     ("Microsoft Azure", "microsoft-azure", "azure", "#0078D4", "devops-cloud"), ("Cybersecurity Fundamentals", "cybersecurity-fundamentals", "cybersecurity", "#EF4444", "cybersecurity"),
     ("Networking Fundamentals", "networking-fundamentals", "networking", "#38BDF8", "cybersecurity"), ("Web Security", "web-security", "cybersecurity", "#F97316", "cybersecurity"),
     ("Secure Coding", "secure-coding", "cybersecurity", "#A855F7", "cybersecurity"), ("OWASP Top 10", "owasp-top-10", "cybersecurity", "#F43F5E", "cybersecurity"),
@@ -332,6 +334,10 @@ def main():
         if algorithms_course:
             algorithms_course.category_id = categories["computer-science"].id
             seed_algorithms_course(db, algorithms_course)
+        aws_course = db.scalar(select(Course).where(Course.slug == "aws"))
+        if aws_course:
+            aws_course.category_id = categories["cloud-computing"].id
+            seed_aws_course(db, aws_course)
         seed_challenges(db)
         seed_projects(db)
 

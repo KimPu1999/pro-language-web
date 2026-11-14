@@ -21,6 +21,7 @@ import { DartPlayground } from "@/components/dart-playground";
 import { DataAnalysisLab } from "@/components/data-analysis-lab";
 import { DataStructuresVisualizer } from "@/components/data-structures-visualizer";
 import { AlgorithmsVisualizer } from "@/components/algorithms-visualizer";
+import { AWSArchitectureExplorer } from "@/components/aws-architecture-explorer";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -277,6 +278,12 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
       {courseSlug === "algorithms" && (
         <div className="mt-8 overflow-hidden rounded-2xl border border-orange-400/20">
           <AlgorithmsVisualizer />
+        </div>
+      )}
+
+      {courseSlug === "aws" && (
+        <div className="mt-8 overflow-hidden rounded-2xl border border-orange-400/20">
+          <AWSArchitectureExplorer compact />
         </div>
       )}
 

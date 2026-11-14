@@ -628,6 +628,43 @@ def test_algorithms_curriculum_is_published_and_idempotent(client):
     assert response.json()["title"] == "Algorithms — From Zero to Advanced"
     assert len(response.json()["modules"]) == 40
 
+def test_aws_curriculum_is_published_and_idempotent(client):
+    from app.aws_course_content import MODULES, MODULE_ONE, seed_aws_course
+    from app.models import CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
+    import json
+
+    with client.session_factory() as db:
+        language = db.query(ProgrammingLanguage).filter_by(slug="aws").one_or_none()
+        if language is None:
+            language = ProgrammingLanguage(name="AWS", slug="aws", color="#FF9900")
+            db.add(language)
+        category = db.query(CourseCategory).filter_by(slug="cloud-computing").one_or_none()
+        if category is None:
+            category = CourseCategory(name="Cloud Computing & AWS", slug="cloud-computing")
+            db.add(category)
+        db.flush()
+        course = Course(language_id=language.id, category_id=category.id, title="AWS", slug="aws", description="AWS", level="beginner", duration_minutes=0, published=True, status="draft")
+        db.add(course); db.flush(); seed_aws_course(db, course); db.commit()
+        seed_aws_course(db, course); db.commit()
+        modules = db.query(CourseModule).filter_by(course_id=course.id).order_by(CourseModule.order_index).all()
+        lessons = db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).order_by(CourseModule.order_index, Lesson.order_index).all()
+        assert [module.title for module in modules] == MODULES
+        assert len(modules) == 40
+        assert len(lessons) == 46
+        assert len(db.query(Lesson).filter_by(module_id=modules[0].id).all()) == len(MODULE_ONE)
+        assert all(lesson.published and "Cost considerations" in lesson.content_en and "Cleanup instructions" in lesson.content_en and "IAM permissions required" in lesson.content_en for lesson in lessons)
+        assert all(lesson.content_mm for lesson in lessons)
+        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 46
+        assert db.query(CodeExample).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 46
+        for question in db.query(QuizQuestion).join(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all():
+            assert question.correct_answer in json.loads(question.options_json)
+        assert course.title == "AWS Cloud Computing & Architecture — Zero to Advanced"
+
+    response = client.get("/api/v1/courses/aws")
+    assert response.status_code == 200
+    assert response.json()["title"] == "AWS Cloud Computing & Architecture — Zero to Advanced"
+    assert len(response.json()["modules"]) == 40
+
 def test_course_detail_and_lesson(client):
     course=client.get("/api/v1/courses/python-foundations"); assert course.status_code==200; assert course.json()["modules"][0]["lessons"][0]["content_en"]=="Hello lesson"
     learning=client.get("/api/v1/courses/python-foundations/learning"); assert learning.status_code==200
