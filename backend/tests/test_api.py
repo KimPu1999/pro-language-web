@@ -51,7 +51,9 @@ def test_course_filters_sort_and_published_scope(client):
 
 def test_c_curriculum_seed_is_complete_and_idempotent(client):
     from app.c_course_content import seed_c_curriculum
-    from app.models import Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage
+    from app.c_module_three import MODULE_THREE_LESSONS, MODULE_THREE_SECTION_HEADINGS
+    from app.models import CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
+    import json
 
     with client.session_factory() as db:
         language = ProgrammingLanguage(name="C", slug="c")
@@ -59,10 +61,29 @@ def test_c_curriculum_seed_is_complete_and_idempotent(client):
         db.add_all([language, category]); db.flush()
         course = Course(language_id=language.id, category_id=category.id, title="C Programming", slug="c-programming", description="Beginner C", level="beginner", duration_minutes=0, published=True, status="draft")
         db.add(course); db.flush(); seed_c_curriculum(db, course); db.commit()
+        module_three = db.query(CourseModule).filter_by(course_id=course.id, order_index=3).one()
+        first_ids = {lesson.order_index: lesson.id for lesson in db.query(Lesson).filter_by(module_id=module_three.id).all()}
         seed_c_curriculum(db, course); db.commit()
         assert db.query(CourseModule).filter_by(course_id=course.id).count() == 20
-        assert db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 50
-        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 50
+        assert db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 58
+        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 58
+        assert module_three.title == "03 Your First C Program & C Syntax Fundamentals"
+        lessons = db.query(Lesson).filter_by(module_id=module_three.id).order_by(Lesson.order_index).all()
+        assert [lesson.title for lesson in lessons] == [item["title"] for item in MODULE_THREE_LESSONS]
+        assert {lesson.order_index: lesson.id for lesson in lessons} == first_ids
+        for lesson in lessons:
+            assert lesson.published is True
+            assert lesson.content_mm and lesson.content_mm.strip()
+            for heading in MODULE_THREE_SECTION_HEADINGS:
+                if heading in {"Additional complete example", "Explanation"}:
+                    continue
+                assert heading in lesson.content_en, (lesson.title, heading)
+        quiz_rows = db.query(QuizQuestion).join(LessonQuiz).filter(LessonQuiz.lesson_id.in_([lesson.id for lesson in lessons])).all()
+        assert quiz_rows
+        for question in quiz_rows:
+            assert question.correct_answer in json.loads(question.options_json), question.prompt
+        assert db.query(CodeExample).filter_by(lesson_id=lessons[-1].id).count() == 2
+
 def test_course_detail_and_lesson(client):
     course=client.get("/api/v1/courses/python-foundations"); assert course.status_code==200; assert course.json()["modules"][0]["lessons"][0]["content_en"]=="Hello lesson"
 def test_missing_and_unpublished(client):

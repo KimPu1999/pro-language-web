@@ -114,7 +114,7 @@ def archive_course(course_id:UUID,user:User=Depends(full_admin),_:None=Depends(r
     row=require_edit(course_id,user,db); row.status="archived"; row.published=False; row.updated_by=user.id; audit(db,user,"course_archived","course",row.id); db.commit(); return course_out(row)
 @router.get("/courses/{course_id}/curriculum")
 def curriculum(course_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
-    row=require_edit(course_id,user,db); return [{"id":m.id,"title":m.title,"position":m.order_index,"lessons":[{"id":l.id,"title":l.title,"slug":l.slug,"position":l.order_index,"status":l.status,"content_en":l.content_en,"content_mm":l.content_mm,"duration_minutes":l.duration_minutes} for l in m.lessons]} for m in row.modules]
+    row=require_edit(course_id,user,db); return [{"id":m.id,"title":m.title,"position":m.order_index,"lessons":[{"id":l.id,"title":l.title,"slug":l.slug,"description":l.description,"position":l.order_index,"status":l.status,"content_en":l.content_en,"content_mm":l.content_mm,"duration_minutes":l.duration_minutes} for l in m.lessons]} for m in row.modules]
 @router.post("/courses/{course_id}/modules",status_code=201)
 def create_module(course_id:UUID,payload:AdminModuleIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     course=require_edit(course_id,user,db); row=CourseModule(course_id=course.id,title=payload.title,order_index=payload.position); db.add(row); audit(db,user,"module_created","course_module",row.id); db.commit(); return {"id":row.id,"title":row.title,"position":row.order_index}
@@ -134,6 +134,17 @@ def create_example(lesson_id:UUID,payload:AdminCodeExampleIn,user:User=Depends(a
     lesson=db.get(Lesson,lesson_id)
     if not lesson: raise HTTPException(404,"Lesson not found")
     module=db.get(CourseModule,lesson.module_id); require_edit(module.course_id,user,db); row=CodeExample(lesson_id=lesson.id,title=payload.title,language=payload.language,filename=payload.filename,code=payload.source_code,description=payload.description,position=payload.position); db.add(row); db.commit(); return {"id":row.id,"title":row.title}
+@router.get("/lessons/{lesson_id}/examples")
+def admin_examples(lesson_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    lesson=lesson_for_edit(lesson_id,user,db)
+    return [{"id":str(row.id),"title":row.title,"language":row.language,"filename":row.filename,"source_code":row.code,"description":row.description,"position":row.position} for row in db.scalars(select(CodeExample).where(CodeExample.lesson_id==lesson.id).order_by(CodeExample.position)).all()]
+@router.patch("/examples/{example_id}")
+def update_example(example_id:UUID,payload:AdminCodeExampleIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    row=db.get(CodeExample,example_id)
+    if not row: raise HTTPException(404,"Example not found")
+    lesson_for_edit(row.lesson_id,user,db)
+    row.title=payload.title; row.language=payload.language; row.filename=payload.filename; row.code=payload.source_code; row.description=payload.description; row.position=payload.position
+    audit(db,user,"example_updated","code_example",row.id); db.commit(); return {"id":row.id,"title":row.title,"position":row.position}
 @router.get("/lessons/{lesson_id}/quiz")
 def admin_quiz(lesson_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
     lesson=lesson_for_edit(lesson_id,user,db)

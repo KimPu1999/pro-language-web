@@ -2,6 +2,8 @@
 import json
 from sqlalchemy import select
 
+from .c_module_three import MODULE_THREE_LESSONS, seed_module_three
+
 MODULES = [
     ("Introduction to Programming & C", "programming", [
         ("What a program is", "A program is a precise list of instructions. C source is translated by a compiler into a native executable. This lesson introduces source files, compilation, execution, and the edit-compile-run cycle.", '#include <stdio.h>\n\nint main(void) {\n    puts("Hello, C!");\n    return 0;\n}', "Hello, C!", "main starts the program, puts writes one line, and return 0 reports successful completion."),
@@ -11,10 +13,7 @@ MODULES = [
         ("Compiler and warnings", "A compiler turns C into an executable. Use warnings while learning: `-std=c11 -Wall -Wextra -Wpedantic` catches many mistakes before runtime.", '#include <stdio.h>\n\nint main(void) {\n    int answer = 42;\n    printf("answer = %d\\n", answer);\n    return 0;\n}', "answer = 42", "The compiler checks the declarations, then printf formats the integer using %d."),
         ("Source files and build steps", "Keep source files readable and build them deliberately. Compilation and linking are separate conceptual steps even when one command performs both.", '#include <stdio.h>\n\nint main(void) {\n    puts("Compile, link, run, repeat.");\n    return 0;\n}', "Compile, link, run, repeat.", "The source is compiled, linked with the standard library, and then executed by the operating system."),
     ]),
-    ("Your First C Program", "syntax", [
-        ("main and return", "Execution begins in main. `int main(void)` says that main receives no arguments and returns an integer status to the operating system.", '#include <stdio.h>\n\nint main(void) {\n    printf("My first program\\n");\n    return 0;\n}', "My first program", "printf writes the string and `\\n` moves to a new line; return 0 ends main successfully."),
-        ("Comments and formatting", "Whitespace makes code easier to read but does not usually change its meaning. Use comments to explain why, not to repeat obvious syntax.", '#include <stdio.h>\n\nint main(void) {\n    int lines = 2;\n    printf("Readable code has %d lines here.\\n", lines);\n    return 0;\n}', "Readable code has 2 lines here.", "The integer is passed as an argument and `%d` is replaced with its value."),
-    ]),
+    ("Your First C Program & C Syntax Fundamentals", "syntax", []),
     ("Variables & Data Types", "types", [
         ("Integers and floating point", "A variable names storage with a type. `int` stores whole numbers, while `double` stores fractional values. Choose a type that matches the data.", '#include <stdio.h>\n\nint main(void) {\n    int minutes = 90;\n    double hours = minutes / 60.0;\n    printf("%d minutes is %.1f hours.\\n", minutes, hours);\n    return 0;\n}', "90 minutes is 1.5 hours.", "The decimal `60.0` makes the division floating point; `%.1f` prints one digit after the decimal point."),
         ("Characters and constants", "A char stores one character such as 'C'. `const` communicates that a value should not be changed after initialization.", '#include <stdio.h>\n\nint main(void) {\n    const char grade = \'A\';\n    printf("Grade: %c\\n", grade);\n    return 0;\n}', "Grade: A", "Character literals use single quotes and `%c` formats one character."),
@@ -301,6 +300,9 @@ def seed_c_curriculum(db, course):
         if module_position == 2:
             seed_module_two(db, module)
             continue
+        if module_position == 3:
+            seed_module_three(db, module)
+            continue
         for lesson_position, (title, theory, code, output, explanation) in enumerate(lessons, 1):
             lesson_slug = f"{module_position:02d}-{title.lower().replace(' ', '-')[:50]}"
             lesson = db.scalar(select(Lesson).where(Lesson.module_id == module.id, Lesson.order_index == lesson_position))
@@ -314,9 +316,9 @@ def seed_c_curriculum(db, course):
                 quiz = LessonQuiz(lesson_id=lesson.id, title=f"Check your understanding: {title}", explanation="Review the lesson and try the exercises before repeating the quiz.")
                 db.add(quiz); db.flush()
                 db.add(QuizQuestion(quiz_id=quiz.id, prompt=f"Which idea is central to {title.lower()}?", options_json=json.dumps([title, "Ignoring compiler warnings", "Writing code without testing"]), correct_answer=title, explanation=f"The correct answer is {title}, because it is the focus of this lesson.", position=1))
-    total_lessons = len(MODULE_ONE_LESSONS) + len(MODULE_TWO_LESSONS) + sum(len(lessons) for _, _, lessons in MODULES[2:])
+    total_lessons = len(MODULE_ONE_LESSONS) + len(MODULE_TWO_LESSONS) + len(MODULE_THREE_LESSONS) + sum(len(lessons) for _, _, lessons in MODULES[3:])
     course.duration_minutes = total_lessons * 30
-    course.outcomes = "Understand C program structure|Write and explain portable C programs|Use types, control flow, functions, arrays, pointers, and files safely|Plan and test beginner C projects"
+    course.outcomes = "Understand C program structure|Write and explain portable C programs|Read and write printf format strings and escape sequences|Compile with GCC or Clang using strict C11 warnings|Use types, control flow, functions, arrays, pointers, and files safely|Plan and test beginner C projects"
     course.requirements = "No prior programming experience|A C11 compiler such as GCC or Clang|A text editor"
     course.status = "published"
     course.published = True

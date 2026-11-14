@@ -35,6 +35,33 @@ def update_progress(lesson_id, payload: ProgressIn, user: User=Depends(verified_
     course_id=db.scalar(select(CourseModule.course_id).where(CourseModule.id==lesson.module_id)); enrollment=db.scalar(select(Enrollment).where(Enrollment.user_id==user.id,Enrollment.course_id==course_id))
     if not enrollment: raise HTTPException(403,"Enroll in this course first")
     progress=db.scalar(select(LessonProgress).where(LessonProgress.user_id==user.id,LessonProgress.lesson_id==lesson_id)) or LessonProgress(user_id=user.id,lesson_id=lesson_id); progress.completed=payload.completed; progress.last_visited_at=now(); db.add(progress); db.commit(); return {"lesson_id":lesson_id,"completed":progress.completed}
+@router.post("/lessons/{lesson_id}/visit")
+def visit_lesson(lesson_id, user: User=Depends(verified_user), __: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    """Record last-visited time without changing completion state."""
+    lesson=db.scalar(select(Lesson).join(CourseModule).join(Course).where(Lesson.id==lesson_id,Lesson.published.is_(True),Course.published.is_(True)))
+    if not lesson: raise HTTPException(404,"Published lesson not found")
+    course_id=db.scalar(select(CourseModule.course_id).where(CourseModule.id==lesson.module_id)); enrollment=db.scalar(select(Enrollment).where(Enrollment.user_id==user.id,Enrollment.course_id==course_id))
+    if not enrollment: raise HTTPException(403,"Enroll in this course first")
+    progress=db.scalar(select(LessonProgress).where(LessonProgress.user_id==user.id,LessonProgress.lesson_id==lesson_id))
+    if not progress: progress=LessonProgress(user_id=user.id,lesson_id=lesson_id,completed=False); db.add(progress)
+    progress.last_visited_at=now(); db.commit()
+    return {"lesson_id":lesson_id,"completed":progress.completed,"last_visited_at":progress.last_visited_at}
+@router.get("/courses/{course_slug}/progress")
+def course_progress(course_slug: str, user: User=Depends(current_user), db: Session=Depends(get_db)):
+    course=db.scalar(course_base().where(Course.slug==course_slug))
+    if not course: raise HTTPException(404,"Published course not found")
+    rows=db.execute(select(Lesson.id,Lesson.title,Lesson.order_index,CourseModule.id,CourseModule.title,CourseModule.order_index).join(CourseModule,Lesson.module_id==CourseModule.id).where(CourseModule.course_id==course.id,Lesson.published.is_(True)).order_by(CourseModule.order_index,Lesson.order_index)).all()
+    progress_rows=db.scalars(select(LessonProgress).where(LessonProgress.user_id==user.id,LessonProgress.lesson_id.in_([row[0] for row in rows]) if rows else False)).all() if rows else []
+    progress_by_lesson={row.lesson_id: row for row in progress_rows}
+    lessons=[{"lesson_id":str(lesson_id),"title":title,"position":lesson_position,"module_id":str(module_id),"module_title":module_title,"module_position":module_position,"completed":bool(progress_by_lesson.get(lesson_id) and progress_by_lesson[lesson_id].completed),"last_visited_at":progress_by_lesson[lesson_id].last_visited_at.isoformat() if progress_by_lesson.get(lesson_id) and progress_by_lesson[lesson_id].last_visited_at else None} for lesson_id,title,lesson_position,module_id,module_title,module_position in rows]
+    completed=sum(1 for item in lessons if item["completed"]); total=len(lessons)
+    module_rows={}
+    for item in lessons:
+        module=module_rows.setdefault(item["module_id"],{"module_id":item["module_id"],"title":item["module_title"],"position":item["module_position"],"total_lessons":0,"completed_lessons":0})
+        module["total_lessons"]+=1; module["completed_lessons"]+=1 if item["completed"] else 0
+    modules=[{**module,"progress_percent":round(module["completed_lessons"]/module["total_lessons"]*100,1) if module["total_lessons"] else 0} for module in sorted(module_rows.values(),key=lambda row:row["position"])]
+    last_visited=max((item for item in lessons if item["last_visited_at"]),key=lambda item:item["last_visited_at"],default=None)
+    return {"course_slug":course.slug,"course_title":course.title,"total_lessons":total,"completed_lessons":completed,"progress_percent":round(completed/total*100,1) if total else 0,"last_visited_lesson_id":last_visited["lesson_id"] if last_visited else None,"modules":modules,"lessons":lessons}
 def quiz_for_lesson(lesson_id, db):
     lesson=db.scalar(select(Lesson).join(CourseModule).join(Course).where(Lesson.id==lesson_id,Lesson.published.is_(True),Course.published.is_(True)))
     if not lesson: raise HTTPException(404,"Published lesson not found")

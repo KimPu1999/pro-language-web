@@ -32,3 +32,19 @@ def test_verified_student_enrollment_and_progress_are_persistent(client):
     with client.session_factory() as db: lesson_id=str(db.scalar(select(Lesson)).id)
     assert client.post(f"/api/v1/me/lessons/{lesson_id}/progress",json={"completed":True},headers={"X-CSRF-Token":csrf}).status_code==200
     assert client.get("/api/v1/me/dashboard").json()["enrollments"][0]["progress_percent"]==100
+def test_lesson_visit_tracks_activity_without_completing(client):
+    register(client,"visitor@example.com")
+    with client.session_factory() as db:
+        user=db.scalar(select(User).where(User.email=="visitor@example.com")); user.email_verified_at=datetime.now(timezone.utc); db.commit()
+        lesson_id=str(db.scalar(select(Lesson)).id)
+    csrf=client.cookies.get("cm_csrf")
+    assert client.post(f"/api/v1/me/lessons/{lesson_id}/visit",headers={"X-CSRF-Token":csrf}).status_code==403
+    assert client.post("/api/v1/me/enrollments/python-foundations",headers={"X-CSRF-Token":csrf}).status_code==201
+    visit=client.post(f"/api/v1/me/lessons/{lesson_id}/visit",headers={"X-CSRF-Token":csrf}); assert visit.status_code==200; assert visit.json()["completed"] is False
+    progress=client.get("/api/v1/me/courses/python-foundations/progress"); assert progress.status_code==200
+    body=progress.json(); assert body["completed_lessons"]==0; assert body["total_lessons"]==1; assert body["lessons"][0]["completed"] is False
+    assert body["modules"][0]["completed_lessons"]==0
+    assert client.post(f"/api/v1/me/lessons/{lesson_id}/progress",json={"completed":True},headers={"X-CSRF-Token":csrf}).status_code==200
+    revisit=client.post(f"/api/v1/me/lessons/{lesson_id}/visit",headers={"X-CSRF-Token":csrf}); assert revisit.status_code==200; assert revisit.json()["completed"] is True
+    body=client.get("/api/v1/me/courses/python-foundations/progress").json(); assert body["completed_lessons"]==1; assert body["progress_percent"]==100.0
+

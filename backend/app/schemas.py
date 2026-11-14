@@ -36,6 +36,12 @@ class AdminQuizQuestionIn(BaseModel):
     explanation: str = Field(default="", max_length=4000)
     question_type: str = Field(default="multiple_choice", pattern=r"^(multiple_choice|true_false|code_output)$")
     position: int = Field(ge=1)
+    @model_validator(mode="after")
+    def valid_options(self):
+        cleaned=[option.strip() for option in self.options if option.strip()]
+        if len(cleaned) != len(self.options) or len(set(cleaned)) != len(cleaned): raise ValueError("Quiz options must be non-empty and unique")
+        if self.correct_answer not in cleaned: raise ValueError("Correct answer must match one of the options")
+        return self
 class PathOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; description: str
 class RegisterIn(BaseModel):
