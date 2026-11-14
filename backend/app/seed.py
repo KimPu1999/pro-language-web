@@ -28,6 +28,7 @@ from .csharp_course_content import seed_csharp_course
 from .dart_course_content import seed_dart_course
 from .data_analysis_course_content import seed_data_analysis_course
 from .data_structures_course_content import seed_data_structures_course
+from .algorithms_course_content import seed_algorithms_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -69,7 +70,7 @@ COURSES = [
     ("React Native", "react-native", "javascript", "#61DAFB", "mobile-development"), ("Kotlin", "kotlin", "kotlin", "#7F52FF", "mobile-development"),
     ("Python for AI", "python-for-ai", "python", "#3776AB", "ai-data-science"), ("Machine Learning", "machine-learning", "python", "#10B981", "ai-data-science"),
     ("Data Analysis — From Zero to Professional Data Analyst", "data-analysis", "python", "#0D9488", "data-analytics"), ("Data Structures — From Zero to Advanced", "data-structures", "python", "#7C3AED", "computer-science"),
-    ("Algorithms", "algorithms", "computer-science", "#8B5CF6", "computer-science"), ("Operating Systems", "operating-systems", "computer-science", "#64748B", "computer-science"),
+    ("Algorithms — From Zero to Advanced", "algorithms", "python", "#EA580C", "computer-science"), ("Operating Systems", "operating-systems", "computer-science", "#64748B", "computer-science"),
 ]
 
 CHALLENGE_CATEGORIES = [
@@ -327,6 +328,10 @@ def main():
         if data_structures_course:
             data_structures_course.category_id = categories["computer-science"].id
             seed_data_structures_course(db, data_structures_course)
+        algorithms_course = db.scalar(select(Course).where(Course.slug == "algorithms"))
+        if algorithms_course:
+            algorithms_course.category_id = categories["computer-science"].id
+            seed_algorithms_course(db, algorithms_course)
         seed_challenges(db)
         seed_projects(db)
 
