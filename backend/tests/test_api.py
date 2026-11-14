@@ -129,7 +129,7 @@ def test_html_curriculum_is_published_and_idempotent(client):
         assert [module.title for module in modules] == MODULES
         assert len(modules) == 20
         assert len([lesson for lesson in lessons if lesson.module.order_index == 1]) == len(MODULE_ONE)
-        assert len(lessons) >= 50
+        assert len(lessons) == 53
         assert all(lesson.published and "Browser preview" in lesson.content_en and "Accessibility guidance" in lesson.content_en for lesson in lessons)
         assert all(lesson.content_mm for lesson in lessons)
         assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == len(lessons)
@@ -142,6 +142,38 @@ def test_html_curriculum_is_published_and_idempotent(client):
     assert response.status_code == 200
     assert response.json()["title"] == "HTML — From Zero to Web Development Foundations"
     assert len(response.json()["modules"]) == 20
+
+def test_css_curriculum_is_published_and_idempotent(client):
+    from app.css_course_content import MODULES, MODULE_ONE, seed_css_course
+    from app.models import CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
+    import json
+
+    with client.session_factory() as db:
+        language = ProgrammingLanguage(name="CSS", slug="css", color="#264DE4")
+        category = db.query(CourseCategory).filter_by(slug="fundamentals").one()
+        db.add(language); db.flush()
+        course = Course(language_id=language.id, category_id=category.id, title="CSS", slug="css", description="CSS", level="beginner", duration_minutes=0, published=True, status="draft")
+        db.add(course); db.flush(); seed_css_course(db, course); db.commit()
+        seed_css_course(db, course); db.commit()
+        modules = db.query(CourseModule).filter_by(course_id=course.id).order_by(CourseModule.order_index).all()
+        lessons = db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).order_by(CourseModule.order_index, Lesson.order_index).all()
+        assert [module.title for module in modules] == MODULES
+        assert len(modules) == 24
+        assert len([lesson for lesson in lessons if lesson.module.order_index == 1]) == len(MODULE_ONE)
+        assert len(lessons) == 44
+        assert all(lesson.published and "Browser preview" in lesson.content_en and "Visual explanation" in lesson.content_en for lesson in lessons)
+        assert all(lesson.content_mm for lesson in lessons)
+        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == len(lessons)
+        assert db.query(CodeExample).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id, CodeExample.language == "html").count() == len(lessons)
+        assert db.query(CodeExample).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id, CodeExample.language == "css").count() == len(lessons)
+        for question in db.query(QuizQuestion).join(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all():
+            assert question.correct_answer in json.loads(question.options_json)
+        assert course.title == "CSS — From Zero to Professional Web Design"
+
+    response = client.get("/api/v1/courses/css")
+    assert response.status_code == 200
+    assert response.json()["title"] == "CSS — From Zero to Professional Web Design"
+    assert len(response.json()["modules"]) == 24
 
 def test_course_detail_and_lesson(client):
     course=client.get("/api/v1/courses/python-foundations"); assert course.status_code==200; assert course.json()["modules"][0]["lessons"][0]["content_en"]=="Hello lesson"

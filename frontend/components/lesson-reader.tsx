@@ -7,6 +7,7 @@ import { csrf } from "@/components/auth-form";
 import { LessonContent, CodeSample } from "@/components/lesson-content";
 import { LessonTranslationToggle } from "@/components/translation";
 import { HtmlPlayground } from "@/components/html-playground";
+import { CssPlayground } from "@/components/css-playground";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -167,6 +168,17 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
           examples={lesson.code_examples
             .filter(item => item.language.toLowerCase() === "html")
             .map(item => ({ title: item.title, code: item.code }))}
+        />
+      )}
+
+      {courseSlug === "css" && lesson.code_examples.some(item => item.language.toLowerCase() === "css") && (
+        <CssPlayground
+          title={`${lesson.title} practice`}
+          examples={[{
+            title: lesson.title,
+            html: lesson.code_examples.find(item => item.language.toLowerCase() === "html")?.code ?? "<main><h1>CSS practice</h1><p>Edit the CSS.</p></main>",
+            css: lesson.code_examples.find(item => item.language.toLowerCase() === "css")?.code ?? "",
+          }]}
         />
       )}
 

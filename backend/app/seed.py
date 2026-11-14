@@ -15,6 +15,7 @@ from .models import (Challenge, ChallengeCategory, ChallengeHint, ChallengeLangu
 from .c_course_content import seed_c_curriculum
 from .cpp_course_content import seed_cpp_course
 from .html_course_content import seed_html_course
+from .css_course_content import seed_css_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -29,7 +30,7 @@ CATEGORIES = [
     ("Computer Science", "computer-science"),
 ]
 COURSES = [
-    ("HTML", "html", "html", "#E34F26", "web-development"), ("CSS", "css", "css", "#1572B6", "frontend-development"),
+    ("HTML", "html", "html", "#E34F26", "web-development"), ("CSS", "css", "css", "#264DE4", "web-development"),
     ("JavaScript", "javascript", "javascript", "#F7DF1E", "frontend-development"), ("TypeScript", "typescript", "typescript", "#3178C6", "frontend-development"),
     ("React", "react", "javascript", "#61DAFB", "frontend-development"), ("Next.js", "next-js", "javascript", "#F8FAFC", "frontend-development"),
     ("jQuery", "jquery", "javascript", "#0769AD", "frontend-development"), ("Tailwind CSS", "tailwind-css", "css", "#06B6D4", "frontend-development"),
@@ -252,6 +253,9 @@ def main():
         html_course = db.scalar(select(Course).where(Course.slug == "html"))
         if html_course:
             seed_html_course(db, html_course)
+        css_course = db.scalar(select(Course).where(Course.slug == "css"))
+        if css_course:
+            seed_css_course(db, css_course)
         seed_challenges(db)
         seed_projects(db)
 
