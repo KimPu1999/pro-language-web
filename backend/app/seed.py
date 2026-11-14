@@ -31,6 +31,7 @@ from .data_structures_course_content import seed_data_structures_course
 from .algorithms_course_content import seed_algorithms_course
 from .aws_course_content import seed_aws_course
 from .ci_cd_course_content import seed_ci_cd_course
+from .cybersecurity_fundamentals_course_content import seed_cybersecurity_fundamentals_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -47,6 +48,7 @@ CATEGORIES = [
     ("Data Science & Analytics", "data-analytics"),
     ("Cloud Computing & AWS", "cloud-computing"),
     ("DevOps & CI/CD", "devops-ci-cd"),
+    ("Cybersecurity & Information Security", "cybersecurity-information-security"),
 ]
 COURSES = [
     ("HTML", "html", "html", "#E34F26", "web-development"), ("CSS", "css", "css", "#264DE4", "web-development"),
@@ -67,7 +69,7 @@ COURSES = [
     ("Linux", "linux", "linux", "#FCC624", "devops-cloud"), ("Git", "git", "git", "#F05032", "devops-cloud"),
     ("GitHub", "github", "git", "#F8FAFC", "devops-cloud"), ("Docker", "docker", "docker", "#2496ED", "devops-cloud"),
     ("CI/CD & DevOps Engineering — From Zero to Professional", "ci-cd", "ci-cd", "#2563EB", "devops-ci-cd"), ("AWS", "aws", "aws", "#FF9900", "cloud-computing"),
-    ("Microsoft Azure", "microsoft-azure", "azure", "#0078D4", "devops-cloud"), ("Cybersecurity Fundamentals", "cybersecurity-fundamentals", "cybersecurity", "#EF4444", "cybersecurity"),
+    ("Microsoft Azure", "microsoft-azure", "azure", "#0078D4", "devops-cloud"), ("Cybersecurity Fundamentals — From Zero to Professional", "cybersecurity-fundamentals", "cybersecurity", "#059669", "cybersecurity-information-security"),
     ("Networking Fundamentals", "networking-fundamentals", "networking", "#38BDF8", "cybersecurity"), ("Web Security", "web-security", "cybersecurity", "#F97316", "cybersecurity"),
     ("Secure Coding", "secure-coding", "cybersecurity", "#A855F7", "cybersecurity"), ("OWASP Top 10", "owasp-top-10", "cybersecurity", "#F43F5E", "cybersecurity"),
     ("Dart Programming — From Zero to Advanced", "dart", "dart", "#0175C2", "mobile-development"), ("Flutter", "flutter", "dart", "#54C5F8", "mobile-development"),
@@ -344,6 +346,10 @@ def main():
         if ci_cd_course:
             ci_cd_course.category_id = categories["devops-ci-cd"].id
             seed_ci_cd_course(db, ci_cd_course)
+        cybersecurity_course = db.scalar(select(Course).where(Course.slug == "cybersecurity-fundamentals"))
+        if cybersecurity_course:
+            cybersecurity_course.category_id = categories["cybersecurity-information-security"].id
+            seed_cybersecurity_fundamentals_course(db, cybersecurity_course)
         seed_challenges(db)
         seed_projects(db)
 

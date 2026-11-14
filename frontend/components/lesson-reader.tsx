@@ -23,6 +23,7 @@ import { DataStructuresVisualizer } from "@/components/data-structures-visualize
 import { AlgorithmsVisualizer } from "@/components/algorithms-visualizer";
 import { AWSArchitectureExplorer } from "@/components/aws-architecture-explorer";
 import { CICDPipelineVisualizer } from "@/components/ci-cd-pipeline-visualizer";
+import { CybersecurityVisualizer } from "@/components/cybersecurity-visualizer";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -291,6 +292,12 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
       {courseSlug === "ci-cd" && (
         <div className="mt-8 overflow-hidden rounded-2xl border border-blue-400/20">
           <CICDPipelineVisualizer compact />
+        </div>
+      )}
+
+      {courseSlug === "cybersecurity-fundamentals" && (
+        <div className="mt-8 overflow-hidden rounded-2xl border border-emerald-400/20">
+          <CybersecurityVisualizer compact />
         </div>
       )}
 
