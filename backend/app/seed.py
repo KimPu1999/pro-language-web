@@ -25,6 +25,7 @@ from .bootstrap_course_content import seed_bootstrap_course
 from .typescript_course_content import seed_typescript_course
 from .php_course_content import seed_php_course
 from .csharp_course_content import seed_csharp_course
+from .dart_course_content import seed_dart_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -61,7 +62,7 @@ COURSES = [
     ("Microsoft Azure", "microsoft-azure", "azure", "#0078D4", "devops-cloud"), ("Cybersecurity Fundamentals", "cybersecurity-fundamentals", "cybersecurity", "#EF4444", "cybersecurity"),
     ("Networking Fundamentals", "networking-fundamentals", "networking", "#38BDF8", "cybersecurity"), ("Web Security", "web-security", "cybersecurity", "#F97316", "cybersecurity"),
     ("Secure Coding", "secure-coding", "cybersecurity", "#A855F7", "cybersecurity"), ("OWASP Top 10", "owasp-top-10", "cybersecurity", "#F43F5E", "cybersecurity"),
-    ("Dart", "dart", "dart", "#0175C2", "mobile-development"), ("Flutter", "flutter", "dart", "#54C5F8", "mobile-development"),
+    ("Dart Programming — From Zero to Advanced", "dart", "dart", "#0175C2", "mobile-development"), ("Flutter", "flutter", "dart", "#54C5F8", "mobile-development"),
     ("React Native", "react-native", "javascript", "#61DAFB", "mobile-development"), ("Kotlin", "kotlin", "kotlin", "#7F52FF", "mobile-development"),
     ("Python for AI", "python-for-ai", "python", "#3776AB", "ai-data-science"), ("Machine Learning", "machine-learning", "python", "#10B981", "ai-data-science"),
     ("Data Analysis", "data-analysis", "python", "#F59E0B", "ai-data-science"), ("Data Structures", "data-structures", "computer-science", "#6366F1", "computer-science"),
@@ -311,6 +312,10 @@ def main():
         if csharp_course:
             csharp_course.category_id = categories["backend-development"].id
             seed_csharp_course(db, csharp_course)
+        dart_course = db.scalar(select(Course).where(Course.slug == "dart"))
+        if dart_course:
+            dart_course.category_id = categories["mobile-development"].id
+            seed_dart_course(db, dart_course)
         seed_challenges(db)
         seed_projects(db)
 
