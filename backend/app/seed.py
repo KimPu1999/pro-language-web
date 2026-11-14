@@ -13,6 +13,7 @@ from .models import (Challenge, ChallengeCategory, ChallengeHint, ChallengeLangu
                      CourseCategory, ProgrammingLanguage, ProjectCategory,
                      ProjectMilestone, ProjectTemplate)
 from .c_course_content import seed_c_curriculum
+from .cpp_course_content import seed_cpp_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -31,7 +32,7 @@ COURSES = [
     ("React", "react", "javascript", "#61DAFB", "frontend-development"), ("Next.js", "next-js", "javascript", "#F8FAFC", "frontend-development"),
     ("jQuery", "jquery", "javascript", "#0769AD", "frontend-development"), ("Tailwind CSS", "tailwind-css", "css", "#06B6D4", "frontend-development"),
     ("Bootstrap", "bootstrap", "css", "#7952B3", "frontend-development"), ("C Programming", "c-programming", "c", "#A8B9CC", "programming-languages"),
-    ("C++", "cpp", "cpp", "#00599C", "programming-languages"), ("Java", "java", "java", "#ED8B00", "programming-languages"),
+    ("C++ Programming — Beginner to Professional Foundations", "cpp-programming", "cpp", "#00599C", "programming-languages"), ("Java", "java", "java", "#ED8B00", "programming-languages"),
     ("Advanced Java", "advanced-java", "java", "#ED8B00", "programming-languages"), ("Python", "python", "python", "#3776AB", "programming-languages"),
     ("C#", "c-sharp", "c-sharp", "#512BD4", "programming-languages"), ("Go", "go", "go", "#00ADD8", "programming-languages"),
     ("Rust", "rust", "rust", "#DEA584", "programming-languages"), ("Node.js", "node-js", "javascript", "#339933", "backend-development"),
@@ -168,6 +169,30 @@ def seed_projects(db):
 def main():
     with SessionLocal.begin() as db:
         categories = {slug: get_or_create(db, CourseCategory, slug, name=name, status="active") for name, slug in CATEGORIES}
+        cpp_rows = list(db.scalars(select(Course).where(Course.slug.in_(["cpp", "cpp-programming"]))))
+        if len(cpp_rows) > 1:
+            # Keep the row that already owns curriculum/progress and archive
+            # empty duplicate catalog rows created by older seed versions.
+            populated = sorted(cpp_rows, key=lambda row: len(row.modules), reverse=True)[0]
+            for duplicate in cpp_rows:
+                if duplicate is populated:
+                    continue
+                duplicate.slug = f"cpp-programming-legacy-{str(duplicate.id)[:8]}"
+                duplicate.status = "archived"
+                duplicate.published = False
+            populated.slug = "cpp-programming"
+        # Keep any previously archived migration leftovers out of the public
+        # catalog even if an older seed version left their status unchanged.
+        for legacy in db.scalars(select(Course).where(Course.slug.like("cpp-programming-legacy-%"))).all():
+            legacy.status = "archived"
+            legacy.published = False
+        # The old catalog seed used the generic ``cpp`` slug. Repoint that
+        # same course row when possible so an existing enrollment/progress row
+        # is preserved rather than creating a second C++ source of truth.
+        old_cpp = db.scalar(select(Course).where(Course.slug == "cpp"))
+        requested_cpp = db.scalar(select(Course).where(Course.slug == "cpp-programming"))
+        if old_cpp and not requested_cpp:
+            old_cpp.slug = "cpp-programming"
         languages = {}
         for title, course_slug, language_slug, color, _ in COURSES:
             language = db.scalar(select(ProgrammingLanguage).where(ProgrammingLanguage.slug == language_slug))
@@ -176,6 +201,9 @@ def main():
                 language = ProgrammingLanguage(name=display_name, slug=language_slug, color=color, status="active")
                 db.add(language)
                 db.flush()
+            if language_slug == "cpp":
+                language.name = "C++"
+                language.color = color
             languages[language_slug] = language
         for title, slug, language_slug, _, category_slug in COURSES:
             course = db.scalar(select(Course).where(Course.slug == slug))
@@ -216,6 +244,9 @@ def main():
         c_course = db.scalar(select(Course).where(Course.slug == "c-programming"))
         if c_course:
             seed_c_curriculum(db, c_course)
+        cpp_course = db.scalar(select(Course).where(Course.slug == "cpp-programming"))
+        if cpp_course:
+            seed_cpp_course(db, cpp_course)
         seed_challenges(db)
         seed_projects(db)
 

@@ -156,6 +156,10 @@ const C_KEYWORDS = new Set([
   "enum", "extern", "float", "for", "goto", "if", "inline", "int", "long", "register",
   "restrict", "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef",
   "union", "unsigned", "void", "volatile", "while", "_Bool", "_Complex", "_Imaginary",
+  "bool", "class", "concept", "constexpr", "catch", "delete", "explicit", "final", "namespace",
+  "new", "noexcept", "nullptr", "operator", "override", "private", "protected", "public", "template",
+  "this", "throw", "try", "typename", "using", "virtual", "friend", "mutable", "static_assert",
+  "string", "vector", "array", "map", "set", "pair", "tuple", "cin", "cout", "cerr", "endl",
 ]);
 
 const C_TOKEN_PATTERN = /(\/\*[\s\S]*?\*\/|\/\/[^\n]*|#[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0[xX][0-9a-fA-F]+|\d+(?:\.\d+)?)\b|\b[A-Za-z_]\w*\b|[^\sA-Za-z0-9_]+|\s+)/g;
