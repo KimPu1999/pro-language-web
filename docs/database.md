@@ -50,3 +50,7 @@ routes intentionally reuse `learning_labs`, `learning_lab_workspaces`,
 `learning_lab_workspace_files`, `learning_lab_snapshots`,
 `learning_lab_runs`, and `learning_lab_audit_logs`; no duplicate cloud
 workspace tables are created.
+
+## Phase 27 cybersecurity
+
+Migration `0029_cybersecurity_training` adds published lab definitions, ownership-scoped attempts, vulnerability/remediation records, threat-model versions, AI interaction metadata, security events, and cybersecurity audit logs. It is additive and preserves existing learning, challenge, certificate, and runner records. Run `PYTHONPATH=. python3 -m alembic upgrade head` from `backend` in an environment with PostgreSQL configured.

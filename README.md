@@ -162,3 +162,7 @@ adds migration `0028_cloud_lab_indexes` for dashboard, lifecycle, and audit
 queries. Docker, CI/CD, Kubernetes, and deployment are simulation-only until
 an isolated worker or preview service is separately configured. The FastAPI
 host never executes student commands and never exposes a Docker socket.
+
+## Phase 27 cybersecurity learning
+
+Cybersecurity catalog, learning paths, lab attempts, threat-model drafts, AI provider status, instructor authoring, and platform operations are available under `/cybersecurity`, `/instructor/cybersecurity`, and `/platform/cybersecurity`. Migration `0029_cybersecurity_training` is additive. Evaluation is server-side and runner-gated; arbitrary external targets, public vulnerable targets, automatic scoring, and platform-secret access remain disabled.

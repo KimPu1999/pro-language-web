@@ -61,3 +61,7 @@ reporting are implemented. Isolated Docker/microVM execution, Kubernetes
 integration, public previews, and provider-backed AI remain deployment work,
 not claimed functionality. Phase 27 should not begin until those boundaries
 have independent security validation.
+
+## Phase 27 status
+
+The cybersecurity catalog, learning-path surfaces, approved lab records, ownership-scoped attempts, threat-model version one, instructor draft creation, AI status, and platform operations are implemented. Secure execution, server-side grading, vulnerability evidence generation, external provider AI, and published instructor workflows remain unavailable until their isolated workers/providers are configured and tested. No arbitrary target scanning is implemented.

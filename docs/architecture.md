@@ -41,3 +41,7 @@ execution jobs, and an external isolated runner is the only permitted command
 execution boundary. Docker, CI/CD, Kubernetes, and deployment are simulation
 mode by default. See [cloud-workspace-architecture.md](cloud-workspace-architecture.md)
 and [workspace-security.md](workspace-security.md).
+
+## Phase 27 cybersecurity boundary
+
+Cybersecurity routes are a policy and learning boundary over approved lab definitions and owned workspaces. The API never scans arbitrary hosts, stores platform credentials in labs, executes code in the FastAPI process, or trusts client-provided scores. The existing isolated runner remains the only execution boundary; when it is disabled, evaluations return an explicit `runner_unavailable` state. Threat models are owner-scoped and versioned, and platform telemetry requires platform RBAC.

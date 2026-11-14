@@ -101,3 +101,16 @@ export const cloudLabsApi = {
   modes: () => request<any>("/api/v1/cloud-labs/modes"),
   operations: () => request<any>("/api/v1/cloud-labs/platform/operations"),
 };
+export const cybersecurityApi = {
+  dashboard: () => request<any>("/api/v1/cybersecurity/dashboard"),
+  paths: () => request<any>("/api/v1/cybersecurity/paths"),
+  path: (slug: string) => request<any>(`/api/v1/cybersecurity/paths/${slug}`),
+  labs: (query = "") => request<any>(`/api/v1/cybersecurity/labs${query}`),
+  lab: (id: string) => request<any>(`/api/v1/cybersecurity/labs/${id}`),
+  attempt: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/cybersecurity/labs/${id}/attempts`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  evaluate: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/cybersecurity/attempts/${id}/evaluate`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  threatModels: () => request<any>("/api/v1/cybersecurity/threat-models"),
+  createThreatModel: (body: unknown, csrf: string) => request<any>("/api/v1/cybersecurity/threat-models", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  aiStatus: () => request<any>("/api/v1/cybersecurity/ai-tutor/status"),
+  operations: () => request<any>("/api/v1/cybersecurity/platform/operations"),
+};

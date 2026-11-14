@@ -84,3 +84,18 @@ The collaboration API includes `/api/v1/collaboration/dashboard`, room CRUD and 
 
 All mutating endpoints require an authenticated verified user and CSRF token.
 Workspace data is ownership-scoped. Operations requires platform RBAC.
+
+## Phase 27 cybersecurity API
+
+- `GET /api/v1/cybersecurity/dashboard`
+- `GET /api/v1/cybersecurity/paths` and `/paths/{slug}`
+- `GET /api/v1/cybersecurity/labs` and `/labs/{id}`
+- `POST /api/v1/cybersecurity/labs/{id}/attempts`
+- `POST /api/v1/cybersecurity/attempts/{id}/evaluate`
+- `POST /api/v1/cybersecurity/assessment/targets`
+- `GET|POST /api/v1/cybersecurity/threat-models`
+- `GET /api/v1/cybersecurity/ai-tutor/status`
+- `GET /api/v1/cybersecurity/platform/operations`
+- `GET|POST /api/v1/cybersecurity/instructor/labs`
+
+Mutations require an authenticated verified user and CSRF token. Evaluation accepts only an owned learning workspace and never accepts a URL or arbitrary target. Platform operations use server-side platform RBAC.
