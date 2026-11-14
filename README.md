@@ -166,3 +166,7 @@ host never executes student commands and never exposes a Docker socket.
 ## Phase 27 cybersecurity learning
 
 Cybersecurity catalog, learning paths, lab attempts, threat-model drafts, AI provider status, instructor authoring, and platform operations are available under `/cybersecurity`, `/instructor/cybersecurity`, and `/platform/cybersecurity`. Migration `0029_cybersecurity_training` is additive. Evaluation is server-side and runner-gated; arbitrary external targets, public vulnerable targets, automatic scoring, and platform-secret access remain disabled.
+
+## Phase 28 mobile/offline learning
+
+Mobile learning routes include `/dashboard/mobile`, `/offline/library`, `/offline/downloads`, `/offline/lessons/[lessonId]`, `/settings/notifications`, `/instructor/offline-settings`, and `/platform/mobile`. Migration `0030_mobile_offline` adds account-scoped manifests, sync events/conflicts, preferences, push subscriptions, and audit records. API responses are never cached and offline progress is not verified grading.

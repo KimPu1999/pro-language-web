@@ -54,3 +54,7 @@ workspace tables are created.
 ## Phase 27 cybersecurity
 
 Migration `0029_cybersecurity_training` adds published lab definitions, ownership-scoped attempts, vulnerability/remediation records, threat-model versions, AI interaction metadata, security events, and cybersecurity audit logs. It is additive and preserves existing learning, challenge, certificate, and runner records. Run `PYTHONPATH=. python3 -m alembic upgrade head` from `backend` in an environment with PostgreSQL configured.
+
+## Phase 28 mobile/offline
+
+Migration `0030_mobile_offline` adds mobile devices, push subscriptions/preferences, offline content versions/manifests/policies, sync events/conflicts, learning activity, bookmarks, preferences, delivery events, and platform audit records. It is additive and preserves existing course and progress data.

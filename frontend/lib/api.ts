@@ -114,3 +114,18 @@ export const cybersecurityApi = {
   aiStatus: () => request<any>("/api/v1/cybersecurity/ai-tutor/status"),
   operations: () => request<any>("/api/v1/cybersecurity/platform/operations"),
 };
+export const mobileApi = {
+  dashboard: () => request<any>("/api/v1/mobile/dashboard"),
+  library: () => request<any>("/api/v1/mobile/library"),
+  manifest: (course_id: string, csrf: string) => request<any>("/api/v1/mobile/manifests", { ...json({ course_id }), headers: { "X-CSRF-Token": csrf } }),
+  content: (manifest_id: string) => request<any>(`/api/v1/mobile/manifests/${manifest_id}/content`),
+  sync: (events: unknown[], csrf: string) => request<any>("/api/v1/mobile/sync", { ...json({ events }), headers: { "X-CSRF-Token": csrf } }),
+  preferences: () => request<any>("/api/v1/mobile/preferences"),
+  updatePreferences: (body: unknown, csrf: string) => request<any>("/api/v1/mobile/preferences", { method: "PUT", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
+  notifications: () => request<any>("/api/v1/mobile/notifications"),
+  updateNotifications: (body: unknown, csrf: string) => request<any>("/api/v1/mobile/notifications", { method: "PUT", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
+  push: (body: unknown, csrf: string) => request<any>("/api/v1/mobile/push-subscriptions", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  removePush: (body: unknown, csrf: string) => request<any>("/api/v1/mobile/push-subscriptions", { method: "DELETE", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
+  instructor: () => request<any>("/api/v1/mobile/instructor/offline-settings"),
+  operations: () => request<any>("/api/v1/mobile/platform/operations"),
+};

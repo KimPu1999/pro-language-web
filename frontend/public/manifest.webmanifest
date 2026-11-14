@@ -1,0 +1,10 @@
+{
+  "name": "CodeMaster Academy",
+  "short_name": "CodeMaster",
+  "start_url": "/dashboard/mobile",
+  "display": "standalone",
+  "background_color": "#0B1020",
+  "theme_color": "#6366F1",
+  "description": "Free programming learning with a mobile-friendly offline library.",
+  "icons": [{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

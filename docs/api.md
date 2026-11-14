@@ -99,3 +99,19 @@ Workspace data is ownership-scoped. Operations requires platform RBAC.
 - `GET|POST /api/v1/cybersecurity/instructor/labs`
 
 Mutations require an authenticated verified user and CSRF token. Evaluation accepts only an owned learning workspace and never accepts a URL or arbitrary target. Platform operations use server-side platform RBAC.
+
+## Phase 28 mobile API
+
+- `GET /api/v1/mobile/dashboard` and `/library`
+- `POST /api/v1/mobile/manifests`
+- `GET /api/v1/mobile/manifests/{id}/content`
+- `POST /api/v1/mobile/sync`
+- `GET|PUT /api/v1/mobile/preferences`
+- `GET|PUT /api/v1/mobile/notifications`
+- `POST /api/v1/mobile/push-subscriptions`
+- `DELETE /api/v1/mobile/push-subscriptions`
+- `POST /api/v1/mobile/devices`
+- `GET /api/v1/mobile/instructor/offline-settings`
+- `GET /api/v1/mobile/platform/operations`
+
+Manifests and content are ownership-scoped and published-only. Sync is idempotent per user/event ID and returns explicit conflicts for deleted content or version mismatch. Push delivery reports `not_configured` until a provider is installed.

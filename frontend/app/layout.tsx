@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { Nav } from "@/components/nav";
+import { PwaRegister } from "@/components/pwa-register";
 
 export const metadata: Metadata = {
   title: { default: "CodeMaster Academy | Master Coding. Build Your Future.", template: "%s | CodeMaster Academy" },
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en">
-    <body>
+    <body><PwaRegister />
       <Nav />
       <main className="min-h-screen pt-[73px]">{children}</main>
       <footer className="border-t border-line bg-ink px-5 py-12 text-sm text-slate-400">

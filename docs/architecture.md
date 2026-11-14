@@ -45,3 +45,7 @@ and [workspace-security.md](workspace-security.md).
 ## Phase 27 cybersecurity boundary
 
 Cybersecurity routes are a policy and learning boundary over approved lab definitions and owned workspaces. The API never scans arbitrary hosts, stores platform credentials in labs, executes code in the FastAPI process, or trusts client-provided scores. The existing isolated runner remains the only execution boundary; when it is disabled, evaluations return an explicit `runner_unavailable` state. Threat models are owner-scoped and versioned, and platform telemetry requires platform RBAC.
+
+## Phase 28 mobile boundary
+
+The PWA service worker caches only static assets and an explicit offline shell. Published lesson packages are fetched through authenticated mobile APIs and stored in account-scoped IndexedDB records. Sync writes durable, unique server events and reports conflicts rather than silently overwriting progress. Offline code is local practice only; secure execution and verified grading remain online runner responsibilities.

@@ -65,3 +65,7 @@ have independent security validation.
 ## Phase 27 status
 
 The cybersecurity catalog, learning-path surfaces, approved lab records, ownership-scoped attempts, threat-model version one, instructor draft creation, AI status, and platform operations are implemented. Secure execution, server-side grading, vulnerability evidence generation, external provider AI, and published instructor workflows remain unavailable until their isolated workers/providers are configured and tested. No arbitrary target scanning is implemented.
+
+## Phase 28 status
+
+The mobile dashboard, PWA shell, offline library/reader, IndexedDB event queue, authenticated sync boundary, preferences, push subscription records, instructor status, and platform operations surface are implemented. Browser offline installation, push delivery, accessibility automation, and PostgreSQL migration execution require environment-level verification and are not claimed as complete here.
