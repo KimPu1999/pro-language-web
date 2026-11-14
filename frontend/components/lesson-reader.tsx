@@ -16,6 +16,7 @@ import { JqueryPlayground } from "@/components/jquery-playground";
 import { BootstrapPlayground } from "@/components/bootstrap-playground";
 import { TypescriptPlayground } from "@/components/typescript-playground";
 import { PhpPlayground } from "@/components/php-playground";
+import { CsharpPlayground } from "@/components/csharp-playground";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -242,6 +243,13 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
         <PhpPlayground
           title={`${lesson.title} practice`}
           code={lesson.code_examples.find(item => item.language.toLowerCase() === "php")?.code ?? ""}
+        />
+      )}
+
+      {courseSlug === "csharp" && lesson.code_examples.some(item => item.language.toLowerCase() === "csharp") && (
+        <CsharpPlayground
+          title={`${lesson.title} practice`}
+          code={lesson.code_examples.find(item => item.language.toLowerCase() === "csharp")?.code ?? ""}
         />
       )}
 

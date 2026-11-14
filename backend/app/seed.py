@@ -24,6 +24,7 @@ from .jquery_course_content import seed_jquery_course
 from .bootstrap_course_content import seed_bootstrap_course
 from .typescript_course_content import seed_typescript_course
 from .php_course_content import seed_php_course
+from .csharp_course_content import seed_csharp_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -46,7 +47,7 @@ COURSES = [
     ("Bootstrap 5 — From Zero to Professional Responsive Web Design", "bootstrap", "css", "#7952B3", "web-development"), ("C Programming", "c-programming", "c", "#A8B9CC", "programming-languages"),
     ("C++ Programming — Beginner to Professional Foundations", "cpp-programming", "cpp", "#00599C", "programming-languages"), ("Java", "java", "java", "#E76F51", "programming"),
     ("Advanced Java — Enterprise Backend Engineering", "advanced-java", "java", "#E76F51", "backend-development"), ("Python", "python", "python", "#3776AB", "programming"),
-    ("C#", "c-sharp", "c-sharp", "#512BD4", "programming-languages"), ("Go", "go", "go", "#00ADD8", "programming-languages"),
+    ("C# Programming — From Zero to Advanced", "csharp", "c-sharp", "#68217A", "backend-development"), ("Go", "go", "go", "#00ADD8", "programming-languages"),
     ("Rust", "rust", "rust", "#DEA584", "programming-languages"), ("Node.js", "node-js", "javascript", "#339933", "backend-development"),
     ("Express.js", "express-js", "javascript", "#F8FAFC", "backend-development"), ("PHP Programming — From Zero to Advanced", "php", "php", "#777BB4", "backend-development"),
     ("Laravel", "laravel", "php", "#FF2D20", "backend-development"), ("FastAPI", "fastapi", "python", "#009688", "backend-development"),
@@ -205,6 +206,23 @@ def main():
         requested_cpp = db.scalar(select(Course).where(Course.slug == "cpp-programming"))
         if old_cpp and not requested_cpp:
             old_cpp.slug = "cpp-programming"
+        old_csharp = db.scalar(select(Course).where(Course.slug == "c-sharp"))
+        requested_csharp = db.scalar(select(Course).where(Course.slug == "csharp"))
+        if old_csharp and not requested_csharp:
+            old_csharp.slug = "csharp"
+        csharp_rows = list(db.scalars(select(Course).where(Course.slug.in_(["c-sharp", "csharp"]))).all())
+        if len(csharp_rows) > 1:
+            populated_csharp = sorted(csharp_rows, key=lambda row: len(row.modules), reverse=True)[0]
+            for duplicate in csharp_rows:
+                if duplicate is populated_csharp:
+                    continue
+                duplicate.slug = f"csharp-legacy-{str(duplicate.id)[:8]}"
+                duplicate.status = "archived"
+                duplicate.published = False
+            populated_csharp.slug = "csharp"
+        for legacy in db.scalars(select(Course).where(Course.slug.like("csharp-legacy-%"))).all():
+            legacy.status = "archived"
+            legacy.published = False
         languages = {}
         for title, course_slug, language_slug, color, _ in COURSES:
             language = db.scalar(select(ProgrammingLanguage).where(ProgrammingLanguage.slug == language_slug))
@@ -289,6 +307,10 @@ def main():
         php_course = db.scalar(select(Course).where(Course.slug == "php"))
         if php_course:
             seed_php_course(db, php_course)
+        csharp_course = db.scalar(select(Course).where(Course.slug == "csharp"))
+        if csharp_course:
+            csharp_course.category_id = categories["backend-development"].id
+            seed_csharp_course(db, csharp_course)
         seed_challenges(db)
         seed_projects(db)
 
