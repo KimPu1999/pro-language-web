@@ -138,7 +138,7 @@ def recording_consent(session_id: UUID, consented: bool, user: User = Depends(ve
     row.consented = consented; row.withdrawn_at = None if consented else now(); db.commit(); return {"consented": row.consented}
 
 @router.get("/platform/collaboration")
-def platform_status(user: User = Depends(require_role("admin", "super_admin")), db: Session = Depends(get_db)):
+def platform_status(user: User = Depends(require_role("admin", "platform_admin", "super_admin")), db: Session = Depends(get_db)):
     rooms = db.scalar(select(func.count()).select_from(CollaborationRoom).where(CollaborationRoom.status == "active")) or 0
     return {"rooms": rooms, "websocket_crdt": "configured" if settings.collaboration_enabled else "Not Configured", "runner": "configured" if settings.runner_enabled else "Not Configured", "recordings": "disabled_by_default", "data_source": "postgresql"}
 

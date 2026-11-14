@@ -51,5 +51,7 @@ def verified_user(user: User = Depends(current_user)) -> User: return require_ve
 def require_role(*roles: str):
     def dependency(user: User = Depends(current_user)):
         if user.role not in roles: raise HTTPException(status.HTTP_403_FORBIDDEN, "Insufficient permissions")
+        if user.role in {"admin", "platform_admin", "super_admin"} and not user.email_verified_at:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Email verification required")
         return user
     return dependency

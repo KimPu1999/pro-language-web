@@ -97,10 +97,10 @@ def privacy_request(payload:PrivacyIn,user:User=Depends(verified_user),_:None=De
 def privacy_requests(user:User=Depends(current_user),db:Session=Depends(get_db)):return db.scalars(select(PrivacyDataRequest).where(PrivacyDataRequest.user_id==user.id).order_by(PrivacyDataRequest.created_at.desc())).all()
 
 @router.get("/platform/compliance")
-def compliance(user:User=Depends(require_role("admin","super_admin")),db:Session=Depends(get_db)):
+def compliance(user:User=Depends(require_role("admin","platform_admin","super_admin")),db:Session=Depends(get_db)):
     return {"certification":"Not claimed","controls":db.scalars(select(ComplianceControlDefinition).order_by(ComplianceControlDefinition.framework,ComplianceControlDefinition.control_key)).all(),"evidence_count":db.scalar(select(func.count()).select_from(ComplianceEvidenceRecord)) or 0}
 @router.post("/platform/compliance/controls",status_code=201)
-def add_control(payload:dict,user:User=Depends(require_role("admin","super_admin")),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+def add_control(payload:dict,user:User=Depends(require_role("admin","platform_admin","super_admin")),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=ComplianceControlDefinition(framework=str(payload.get("framework","internal"))[:60],control_key=str(payload.get("control_key","control"))[:80],title=str(payload.get("title","Control"))[:240],description=str(payload.get("description","")));db.add(row);db.commit();return {"id":row.id,"status":row.status}
 
 def scim_context(organization_id:UUID,authorization:str|None=Header(None),db:Session=Depends(get_db)):

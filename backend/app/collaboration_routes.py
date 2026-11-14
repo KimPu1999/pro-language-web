@@ -12,7 +12,7 @@ from .models import (CodingCompetition, CompetitionParticipant, CompetitionRanki
     HackathonSubmission, HackathonTeam, TeamActivityEvent, TeamProject, TeamProjectTask, User)
 
 router=APIRouter(prefix="/api/v1",tags=["collaboration"])
-ADMIN={"admin","super_admin"}
+ADMIN={"admin","platform_admin","super_admin"}
 class TeamIn(BaseModel): name:str=Field(min_length=2,max_length=160); description:str=Field(default="",max_length=10000); visibility:str="private"
 class InviteIn(BaseModel): email:str|None=None; user_id:UUID|None=None
 class RoleIn(BaseModel): role:str=Field(pattern="^(owner|admin|member|viewer)$")
@@ -127,4 +127,4 @@ def register_competition(competition_id:UUID,user:User=Depends(verified_user),_:
     if db.scalar(select(CompetitionParticipant).where(CompetitionParticipant.competition_id==row.id,CompetitionParticipant.user_id==user.id)):raise HTTPException(409,"Already registered")
     db.add(CompetitionParticipant(competition_id=row.id,user_id=user.id));db.commit();return {"status":"registered"}
 @router.get("/platform/collaboration/status")
-def collaboration_status(user:User=Depends(require_role("admin","super_admin"))):return {"websocket_crdt":"not_configured","runner":"configured_separately","message":"Real-time collaboration is disabled until an authenticated CRDT gateway is deployed."}
+def collaboration_status(user:User=Depends(require_role("admin","platform_admin","super_admin"))):return {"websocket_crdt":"not_configured","runner":"configured_separately","message":"Real-time collaboration is disabled until an authenticated CRDT gateway is deployed."}

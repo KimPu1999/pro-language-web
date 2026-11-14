@@ -181,15 +181,15 @@ def export_report(report_type:str=Query(...,pattern=r"^[a-z0-9_-]{2,60}$"),ctx=D
     org,member,user,db=ctx;check_role(ctx,MANAGERS);row=OrganizationReportExport(organization_id=org.id,requested_by=user.id,report_type=safe_csv(report_type),status="queued");db.add(row);audit(db,org,user,"report_export_requested","report",row.id);db.commit();return {"id":row.id,"status":"queued","message":"Export is queued for tenant-scoped processing."}
 
 @router.get("/platform/organizations")
-def platform_organizations(user:User=Depends(require_role("admin","super_admin")),db:Session=Depends(get_db)):
+def platform_organizations(user:User=Depends(require_role("admin","platform_admin","super_admin")),db:Session=Depends(get_db)):
     rows=db.execute(select(Organization,func.count(OrganizationMembership.id)).outerjoin(OrganizationMembership,OrganizationMembership.organization_id==Organization.id).group_by(Organization.id).order_by(Organization.created_at.desc())).all();return [{"id":o.id,"name":o.name,"slug":o.slug,"status":o.status,"owner_id":o.owner_id,"member_count":count} for o,count in rows]
 @router.patch("/platform/organizations/{organization_id}/status")
-def platform_status(organization_id:UUID,status_value:str=Query(...,pattern=r"^(active|suspended)$"),user:User=Depends(require_role("admin","super_admin")),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+def platform_status(organization_id:UUID,status_value:str=Query(...,pattern=r"^(active|suspended)$"),user:User=Depends(require_role("admin","platform_admin","super_admin")),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     org=db.get(Organization,organization_id)
     if not org:raise HTTPException(404,"Organization not found")
     org.status=status_value;db.add(OrganizationSecurityEvent(organization_id=org.id,actor_id=user.id,event_type="organization_status_changed",severity="warning" if status_value=="suspended" else "info"));db.commit();return {"status":org.status}
 @router.post("/platform/organizations/{organization_id}/support-access",status_code=201)
-def support_access(organization_id:UUID,payload:SupportIn,user:User=Depends(require_role("admin","super_admin")),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+def support_access(organization_id:UUID,payload:SupportIn,user:User=Depends(require_role("admin","platform_admin","super_admin")),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     org=db.get(Organization,organization_id)
     if not org:raise HTTPException(404,"Organization not found")
     row=OrganizationSupportAccess(organization_id=org.id,requested_by=user.id,approved_by=user.id,reason=payload.reason,scope_json=payload.scope_json,expires_at=payload.expires_at,status="active");db.add(row);db.commit();return {"id":row.id,"status":row.status,"scope":payload.scope_json}

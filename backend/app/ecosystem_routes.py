@@ -81,4 +81,4 @@ async def github_webhook(request:Request,x_github_event:str|None=Header(None),x_
     if db.scalar(select(GithubWebhookEvent).where(GithubWebhookEvent.delivery_id==x_github_delivery)):return {"status":"duplicate_acknowledged"}
     row=GithubWebhookEvent(delivery_id=x_github_delivery,event_name=x_github_event or "unknown",payload_hash=hashlib.sha256(body).hexdigest(),status="received");db.add(row);db.commit();return {"status":"accepted"}
 @router.get("/platform/developer-ecosystem/status")
-def ecosystem_status(user:User=Depends(require_role("admin","super_admin"))):return {"github":github_status(),"webhooks":"configured" if settings.github_webhook_secret else "not_configured","sync":"not_configured"}
+def ecosystem_status(user:User=Depends(require_role("admin","platform_admin","super_admin"))):return {"github":github_status(),"webhooks":"configured" if settings.github_webhook_secret else "not_configured","sync":"not_configured"}

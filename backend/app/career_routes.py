@@ -15,7 +15,7 @@ from .models import (CareerGoal, CareerProfile, CareerReadinessSnapshot, CareerR
     StudentProject, User)
 
 router=APIRouter(prefix="/api/v1/career",tags=["career development"])
-ADMIN={"admin","super_admin"}
+ADMIN={"admin","platform_admin","super_admin"}
 class ProfileIn(BaseModel): headline:str=Field(default="",max_length=180); summary:str=Field(default="",max_length=10000); visibility:str="private"
 class MentorApplyIn(BaseModel): bio:str=Field(min_length=1,max_length=10000); expertise:list[str]=Field(default_factory=list,max_length=20); languages:list[str]=Field(default_factory=list,max_length=20)
 class SlotIn(BaseModel): starts_at:datetime; ends_at:datetime; timezone:str="UTC"
@@ -121,12 +121,12 @@ def add_application(payload:ApplicationIn,user:User=Depends(current_user),_:None
     row=JobApplication(user_id=user.id,company_name=payload.company_name,job_title=payload.job_title,status=payload.status,notes=payload.notes,application_date=payload.application_date or now(),interview_at=payload.interview_at,follow_up_at=payload.follow_up_at);db.add(row);db.commit();return row
 
 @router.get("/admin/mentors")
-def admin_mentors(user:User=Depends(require_role("admin","super_admin")),db:Session=Depends(get_db)):return [mentor_out(x,db) for x in db.scalars(select(MentorProfile).order_by(MentorProfile.created_at.desc())).all()]
+def admin_mentors(user:User=Depends(require_role("admin","platform_admin","super_admin")),db:Session=Depends(get_db)):return [mentor_out(x,db) for x in db.scalars(select(MentorProfile).order_by(MentorProfile.created_at.desc())).all()]
 @router.patch("/admin/mentors/{mentor_id}")
-def review_mentor(mentor_id:UUID,status_value:str=Query(...,pattern="^(approved|rejected|suspended|pending)$"),user:User=Depends(require_role("admin","super_admin")),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+def review_mentor(mentor_id:UUID,status_value:str=Query(...,pattern="^(approved|rejected|suspended|pending)$"),user:User=Depends(require_role("admin","platform_admin","super_admin")),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=db.get(MentorProfile,mentor_id)
     if not row:raise HTTPException(404,"Mentor application not found")
     row.approval_status=status_value;row.reviewed_by=user.id;row.reviewed_at=now();db.commit();return {"id":row.id,"status":row.approval_status}
 @router.post("/admin/interview-questions",status_code=201)
-def create_question(payload:QuestionIn,user:User=Depends(require_role("admin","super_admin","instructor")),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+def create_question(payload:QuestionIn,user:User=Depends(require_role("admin","platform_admin","super_admin","instructor")),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=InterviewQuestion(**payload.model_dump());db.add(row);db.commit();return {"id":row.id,"published":row.published}

@@ -15,7 +15,7 @@ from .models import (CareerRoadmap, Course, CourseModule, Enrollment, LearningCo
     StudentSkillAssessment, StudentSkillEvidence, User)
 
 router = APIRouter(prefix="/api/v1/learning", tags=["learning intelligence"])
-ADMIN = {"admin", "super_admin"}
+ADMIN = {"admin", "platform_admin", "super_admin"}
 
 class FeedbackIn(BaseModel):
     action: str = Field(pattern="^(accept|dismiss|save_for_later|not_interested|already_completed)$")

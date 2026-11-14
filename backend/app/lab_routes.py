@@ -88,5 +88,5 @@ def publish(lab_id:UUID,user:User=Depends(current_user),_:None=Depends(require_c
     if not version:raise HTTPException(409,"Lab version is required")
     version.status="published";row.status="published";row.published=True;audit(db,user,"lab_published",row.id);db.commit();return {"id":row.id,"status":row.status}
 @router.get("/platform/labs")
-def platform_labs(user:User=Depends(__import__("app.auth",fromlist=["require_role"]).require_role("admin","super_admin")),db:Session=Depends(get_db)):
+def platform_labs(user:User=Depends(__import__("app.auth",fromlist=["require_role"]).require_role("admin","platform_admin","super_admin")),db:Session=Depends(get_db)):
     return {"metrics":{"labs":db.scalar(select(func.count()).select_from(LearningLab)) or 0,"runs":db.scalar(select(func.count()).select_from(LearningLabRun)) or 0,"failed_runs":db.scalar(select(func.count()).select_from(LearningLabRun).where(LearningLabRun.status.in_(["runner_unavailable","failed"]))) or 0},"runner_status":"configured" if settings.runner_enabled else "Not Configured","data_source":"postgresql"}

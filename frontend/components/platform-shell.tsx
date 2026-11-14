@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3 as Bell, BarChart3 as ChevronRight, BarChart3 as LogOut, Menu, Search, BarChart3 as ShieldCheck, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { LogoutButton } from "@/components/auth-form";
 import { Card, Skeleton } from "@/components/ui";
@@ -31,7 +31,15 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [error, setError] = useState("");
   const isLogin = pathname === "/platform/login";
-  useEffect(() => { if (!isLogin) api.me().then(setUser).catch((e) => setError(e.message)); }, [isLogin]);
+  const refreshSession = useCallback(() => {
+    if (isLogin) return;
+    api.me().then((nextUser) => { setUser(nextUser); setError(""); }).catch((e) => setError(e.message));
+  }, [isLogin]);
+  useEffect(() => {
+    refreshSession();
+    window.addEventListener("focus", refreshSession);
+    return () => window.removeEventListener("focus", refreshSession);
+  }, [refreshSession]);
   if (isLogin) return <>{children}</>;
   if (error) return <div className="grid min-h-screen place-items-center bg-ink px-5"><Card className="max-w-md p-7"><ShieldCheck className="h-8 w-8 text-indigo-300"/><h1 className="mt-4 text-xl font-semibold">Platform access unavailable</h1><p className="mt-2 text-sm leading-6 text-slate-400">{error}</p><Link href="/platform/login" className="mt-5 inline-block rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold">Go to admin login</Link></Card></div>;
   if (!user) return <div className="min-h-screen bg-ink p-5"><Skeleton className="mx-auto mt-8 h-14 max-w-7xl"/><div className="mx-auto mt-6 grid max-w-7xl gap-4 lg:grid-cols-[220px_1fr]"><Skeleton className="h-[600px]"/><Skeleton className="h-[600px]"/></div></div>;

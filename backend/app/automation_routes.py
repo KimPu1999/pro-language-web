@@ -307,5 +307,5 @@ def usage(ctx=Depends(org_context)):
 
 
 @router.get("/platform/automation")
-def platform_automation(user: User = Depends(__import__("app.auth", fromlist=["require_role"]).require_role("admin", "super_admin")), db: Session = Depends(get_db)):
+def platform_automation(user: User = Depends(__import__("app.auth", fromlist=["require_role"]).require_role("admin", "platform_admin", "super_admin")), db: Session = Depends(get_db)):
     return {"metrics": {"workflows": db.scalar(select(func.count()).select_from(AutomationWorkflow)) or 0, "queued_runs": db.scalar(select(func.count()).select_from(AutomationWorkflowRun).where(AutomationWorkflowRun.status.in_(["queued", "running"]))) or 0, "failed_runs": db.scalar(select(func.count()).select_from(AutomationWorkflowRun).where(AutomationWorkflowRun.status == "failed")) or 0}, "ai_status": "configured" if settings.ai_enabled and settings.ai_provider != "disabled" else "Not Configured", "data_source": "postgresql"}
