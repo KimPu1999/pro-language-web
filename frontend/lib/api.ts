@@ -3,6 +3,8 @@ import type { AdminCourse, AdminDashboard, AdminPage, Challenge, ChallengeCatego
 // Browser requests use the same-origin Next rewrite. Server rendering may use the private internal URL.
 const base = process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === "undefined" ? process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000" : "");
 const inflightGets = new Map<string, Promise<unknown>>();
+export type ApiErrorKind = "timeout" | "unavailable" | "http" | "unknown";
+export class ApiError extends Error { constructor(message: string, readonly kind: ApiErrorKind, readonly status?: number, readonly requestId?: string) { super(message); this.name = "ApiError"; } }
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const method = (init?.method ?? "GET").toUpperCase();
   const key = typeof window !== "undefined" && method === "GET" ? path : "";
@@ -20,15 +22,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       } catch {
         // Keep the status-based message when the server does not return JSON.
       }
-      throw new Error(message);
+      throw new ApiError(message, "http", response.status, response.headers.get("X-Request-ID") ?? undefined);
     }
     return response.json() as Promise<T>;
   })().catch((error) => {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("The API request timed out. Make sure the backend is running on port 8000.");
+      throw new ApiError("The API did not respond within 8 seconds. Check that FastAPI is healthy and that port 8000 is reachable.", "timeout");
     }
     if (error instanceof TypeError) {
-      throw new Error(`Cannot connect to the CodeMaster API at ${base}. Start FastAPI with: uvicorn app.main:app --reload --port 8000`);
+      throw new ApiError("The CodeMaster API is unavailable. Start FastAPI on port 8000 or check API_INTERNAL_URL.", "unavailable");
     }
     throw error;
   }).finally(() => { clearTimeout(timer); if (key) inflightGets.delete(key); });

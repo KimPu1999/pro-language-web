@@ -1,4 +1,6 @@
 from datetime import timedelta
+import logging
+import time
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, Cookie
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
@@ -9,6 +11,7 @@ from .mailer import mailer
 from .models import AuthSession, EmailVerificationToken, PasswordResetToken, SecurityAuditLog, User, UserProfile
 from .schemas import ChangePasswordIn, ForgotPasswordIn, LoginIn, ProfileIn, RegisterIn, ResetPasswordIn, UserOut
 router=APIRouter(prefix="/api/v1/auth", tags=["auth"])
+logger = logging.getLogger("codemaster.auth")
 def profile_payload(user: User, db: Session):
     profile=db.scalar(select(UserProfile).where(UserProfile.user_id==user.id))
     return {"id":user.id,"email":user.email,"full_name":user.display_name,"role":user.role,"email_verified":bool(user.email_verified_at),"email_verified_at":user.email_verified_at,"profile":{"bio":profile.bio if profile else None,"learning_interests":profile.learning_interests.split("|") if profile and profile.learning_interests else [],"preferred_language":profile.preferred_language if profile else None,"learning_level":profile.learning_level if profile else None,"show_myanmar":profile.show_myanmar if profile else False,"avatar_url":profile.avatar_url if profile else None}}
@@ -23,10 +26,22 @@ def register(payload: RegisterIn, request: Request, response: Response, db: Sess
     user=User(email=email,email_normalized=email,password_hash=password_hasher.hash(payload.password),display_name=payload.full_name.strip(),role="student",account_status="active",password_changed_at=now()); db.add(user); db.flush(); db.add(UserProfile(user_id=user.id)); send_verification(db,user,request); raw,csrf=create_session(db,user); user.last_login_at=now(); db.commit(); set_auth_cookies(response,raw,csrf); return profile_payload(user,db)
 @router.post("/login", response_model=UserOut)
 def login(payload: LoginIn, response: Response, request: Request, db: Session=Depends(get_db)):
+    started = time.perf_counter()
     check_rate_limit(f"login:{request.client.host if request.client else 'unknown'}:{normalize_email(payload.email)}", 10)
+    lookup_started = time.perf_counter()
     user=db.scalar(select(User).where(User.email_normalized==normalize_email(payload.email)))
-    if not user or not verify_password(payload.password,user.password_hash): raise HTTPException(401,"Invalid email or password")
-    raw,csrf=create_session(db,user); user.last_login_at=now(); log_event(db,"login_success",user.id,request); db.commit(); set_auth_cookies(response,raw,csrf); return profile_payload(user,db)
+    lookup_ms = (time.perf_counter() - lookup_started) * 1000
+    verify_started = time.perf_counter()
+    valid = bool(user and verify_password(payload.password,user.password_hash))
+    verify_ms = (time.perf_counter() - verify_started) * 1000
+    if not valid:
+        logger.info("login_failed request_id=%s lookup_ms=%.1f password_verify_ms=%.1f total_ms=%.1f error_category=invalid_credentials", getattr(request.state, "request_id", "-"), lookup_ms, verify_ms, (time.perf_counter() - started) * 1000)
+        raise HTTPException(401,"Invalid email or password")
+    session_started = time.perf_counter()
+    raw,csrf=create_session(db,user); user.last_login_at=now(); log_event(db,"login_success",user.id,request); db.commit(); set_auth_cookies(response,raw,csrf)
+    payload_out = profile_payload(user,db)
+    logger.info("login_success request_id=%s lookup_ms=%.1f password_verify_ms=%.1f session_commit_ms=%.1f total_ms=%.1f error_category=success", getattr(request.state, "request_id", "-"), lookup_ms, verify_ms, (time.perf_counter() - session_started) * 1000, (time.perf_counter() - started) * 1000)
+    return payload_out
 @router.get("/me", response_model=UserOut)
 def me(user: User=Depends(current_user), db: Session=Depends(get_db)): return profile_payload(user,db)
 @router.post("/logout")

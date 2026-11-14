@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     db_max_overflow: int = 10
     db_pool_timeout_seconds: int = 15
     db_pool_recycle_seconds: int = 1800
+    db_connect_timeout_seconds: int = 5
     slow_request_ms: int = 500
     runner_enabled: bool = False
     runner_queue_name: str = "codemaster:execution"

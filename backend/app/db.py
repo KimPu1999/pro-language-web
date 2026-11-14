@@ -2,7 +2,7 @@ from collections.abc import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from .config import settings
-connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
+connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {"connect_timeout": settings.db_connect_timeout_seconds}
 engine_options = {"connect_args": connect_args, "pool_pre_ping": True}
 if not settings.database_url.startswith("sqlite"):
     engine_options.update({
