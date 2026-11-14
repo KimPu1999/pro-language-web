@@ -34,7 +34,9 @@ def login(payload: LoginIn, response: Response, request: Request, db: Session=De
     verify_started = time.perf_counter()
     valid = bool(user and verify_password(payload.password,user.password_hash))
     verify_ms = (time.perf_counter() - verify_started) * 1000
-    if not valid:
+    # Keep password verification before the account-status check so inactive
+    # accounts do not become an account-enumeration oracle.
+    if not valid or user.account_status != "active":
         logger.info("login_failed request_id=%s lookup_ms=%.1f password_verify_ms=%.1f total_ms=%.1f error_category=invalid_credentials", getattr(request.state, "request_id", "-"), lookup_ms, verify_ms, (time.perf_counter() - started) * 1000)
         raise HTTPException(401,"Invalid email or password")
     session_started = time.perf_counter()

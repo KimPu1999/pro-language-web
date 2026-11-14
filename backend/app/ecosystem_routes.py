@@ -6,13 +6,14 @@ from pydantic import BaseModel,Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from .auth import current_user,require_csrf,require_role,verified_user
+from .rbac import PLATFORM_ADMIN_ROLES
 from .config import settings
 from .db import get_db
 from .models import (CodeReviewFeedback,CodeReviewRequest,CollaborationRequest,ContributionRecord,
     DeveloperEcosystemAuditLog,DeveloperPublicProfile,GithubConnection,GithubWebhookEvent,
     OpenSourceOpportunity,OpenSourceProject,OpenSourceProjectMember,User)
 
-router=APIRouter(prefix="/api/v1",tags=["developer ecosystem"]);ADMIN={"admin","super_admin"}
+router=APIRouter(prefix="/api/v1",tags=["developer ecosystem"]);ADMIN=PLATFORM_ADMIN_ROLES
 class ProfileIn(BaseModel):username:str=Field(pattern=r"^[a-zA-Z0-9_-]{3,80}$");headline:str="";bio:str="";visibility:str="private";show_contributions:bool=False
 class ReviewIn(BaseModel):body:str=Field(min_length=1,max_length=5000);project_id:UUID|None=None;contribution_id:UUID|None=None
 class CollaborationIn(BaseModel):message:str=Field(default="",max_length=3000)

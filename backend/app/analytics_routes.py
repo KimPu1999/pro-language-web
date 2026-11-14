@@ -10,17 +10,17 @@ from .models import (AnalyticsAuditLog, AnalyticsReportExport, Challenge, Challe
     CommunityPost, Course, CourseInstructor, CourseModule, Enrollment, IssuedCertificate, Lesson, LessonProgress,
     StudentAchievement, User)
 from .config import settings
+from .rbac import PLATFORM_ADMIN_ROLES, require_platform_admin
 
 router = APIRouter(prefix="/api/v1/platform", tags=["platform analytics"])
-ADMIN = {"admin", "super_admin"}
+ADMIN = PLATFORM_ADMIN_ROLES
 
 def analytics_user(user: User = Depends(current_user)):
     if user.role not in ADMIN and user.role != "instructor": raise HTTPException(403, "Analytics access required")
     return user
 
 def full_admin(user: User = Depends(current_user)):
-    if user.role not in ADMIN: raise HTTPException(403, "Administrator access required")
-    return user
+    return require_platform_admin(user)
 
 @router.get("/quality")
 def quality_status(user: User = Depends(full_admin), db: Session = Depends(get_db)):

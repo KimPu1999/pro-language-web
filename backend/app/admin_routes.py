@@ -6,15 +6,15 @@ from sqlalchemy.orm import Session, selectinload
 from .auth import current_user, require_csrf
 from .db import get_db
 from .models import AdminAuditLog, Course, CourseCategory, CourseInstructor, CourseModule, CourseRevision, Lesson, CodeExample, ProgrammingLanguage, PublishingReview, User
+from .rbac import PLATFORM_ADMIN_ROLES, require_platform_admin
 from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, PublishDecisionIn
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
-ADMIN={"admin","super_admin"}
+ADMIN=PLATFORM_ADMIN_ROLES
 def admin_user(user: User=Depends(current_user)):
     if user.role not in ADMIN and user.role!="instructor": raise HTTPException(403,"Admin access required")
     return user
 def full_admin(user: User=Depends(current_user)):
-    if user.role not in ADMIN: raise HTTPException(403,"Administrator access required")
-    return user
+    return require_platform_admin(user)
 def audit(db, actor, action, entity_type, entity_id=None): db.add(AdminAuditLog(actor_id=actor.id,action=action,entity_type=entity_type,entity_id=entity_id))
 def course_out(course): return {"id":course.id,"title":course.title,"slug":course.slug,"short_description":course.short_description or "","description":course.description,"language_id":course.language_id,"category_id":course.category_id,"level":course.level,"thumbnail":course.thumbnail,"estimated_duration":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"published":course.published,"outcomes":course.outcomes,"requirements":course.requirements}
 def load_course(db, course_id): return db.scalar(select(Course).options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples)).where(Course.id==course_id))
