@@ -150,3 +150,20 @@ export const aiCompanionApi = {
   instructorInsights: () => request<any>("/api/v1/ai-companion/instructor/insights"),
   operations: () => request<any>("/api/v1/ai-companion/platform/operations"),
 };
+
+export const operationsApi = {
+  status: () => request<any>("/api/v1/status"),
+  monitoring: () => request<any>("/api/v1/platform/monitoring"),
+  dashboard: () => Promise.all([request<any>("/api/v1/platform/quality"), request<any>("/api/v1/platform/monitoring"), request<any>("/api/v1/platform/operations/incidents")]),
+  feedback: (body: unknown, csrf: string) => request<any>("/api/v1/feedback", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  myFeedback: () => request<any[]>("/api/v1/feedback/my"),
+  bugs: (body: unknown, csrf: string) => request<any>("/api/v1/support/report-bug", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  myBugs: () => request<any[]>("/api/v1/support/report-bug/my"),
+  incidents: () => request<any[]>("/api/v1/platform/operations/incidents"),
+  improvements: () => request<any[]>("/api/v1/platform/improvements"),
+  releases: () => request<any[]>("/api/v1/platform/releases"),
+  flags: () => request<any[]>("/api/v1/platform/feature-flags"),
+  maintenance: () => request<any[]>("/api/v1/platform/maintenance"),
+  backups: () => request<any>("/api/v1/platform/backups"),
+  reviews: () => request<any[]>("/api/v1/platform/reviews"),
+};

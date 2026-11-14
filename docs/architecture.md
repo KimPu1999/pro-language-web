@@ -33,6 +33,10 @@ AI content is isolated in draft records. The provider boundary is server-side an
 
 The platform quality center reports runtime configuration and database probes only. CI, staging, backup, runner-isolation, accessibility, load, and rollback evidence remain external release artifacts and are not inferred by the application.
 
+## Phase 31 operations boundary
+
+Phase 31 extends the existing operations router with evidence ingestion and staff workflows. Monitoring records are authenticated inputs; the application never invents telemetry. Public status is deliberately coarse, while feedback, bugs, attachments, incidents, releases, flags, backups, and reviews are owner- or platform-scoped.
+
 Phase 24 keeps application services separate from code, SQL, and API execution services. The FastAPI layer validates lab ownership and persists durable run state; it does not execute student code. Provider and sandbox absence are explicit unavailable states.
 ## Phase 25 collaboration boundary
 

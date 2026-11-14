@@ -22,6 +22,14 @@ const links = [
   ["Media Library", "/platform/media"],
   ["Security Center", "/platform/security"],
   ["System Health", "/platform/system-health"],
+  ["Operations", "/platform/operations"],
+  ["Monitoring", "/platform/monitoring"],
+  ["Incidents", "/platform/incidents"],
+  ["Improvements", "/platform/improvements"],
+  ["Releases", "/platform/releases"],
+  ["Feature Flags", "/platform/feature-flags"],
+  ["Maintenance", "/platform/maintenance"],
+  ["Backups", "/platform/backups"],
   ["Settings", "/platform/settings"],
 ] as const;
 

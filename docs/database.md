@@ -25,6 +25,8 @@ Migration `0011_live_classes` adds classes, sessions, instructors, registrations
 ## Phase 30 database release control
 
 The migration chain currently has one head, `0031_ai_companion`. Production upgrades require an encrypted backup, isolated restore rehearsal, migration application, smoke tests, and rollback evidence before approval.
+
+Migration `0032_operations_feedback` adds alert rules/events, incident actions, feedback responses, bug reports and attachment metadata, improvement events, release approvals, feature flags/rules, backup checks, restore drills, operational reviews, and operations audit logs. It is additive and does not delete existing data.
 Migration `0013_operations` adds post-launch incidents, incident events, student feedback, engineering issues, release records, service health history, maintenance windows, and improvement items. It is additive and preserves all existing learning data.
 # Phase 16 additions
 

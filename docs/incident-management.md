@@ -1,5 +1,3 @@
 # Incident management
 
-Incidents use `detected`, `acknowledged`, `investigating`, `mitigating`, `resolved`, and `closed` statuses. Admins create and transition incidents; every transition appends an immutable timeline event. Resolution notes are restricted to administrators.
-
-API: `GET/POST /api/v1/platform/operations/incidents`, `GET/PATCH /incidents/{id}`. State changes require the server session and CSRF token.
+Existing incident records and timeline events are reused. Phase 31 adds alert records and incident-action audit records. Incident creation and updates require platform authorization and CSRF validation. Public status exposes only incident title, severity, status, and sanitized timeline data.

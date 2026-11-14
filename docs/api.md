@@ -4,6 +4,8 @@ Public routes are under `/api/v1`:
 
 The platform quality endpoint is `GET /api/v1/platform/quality`. It is server-protected by platform RBAC and returns observed configuration/database signals. It intentionally reports unavailable or not-run checks instead of fabricating CI, provider, backup, or isolation success.
 
+Phase 31 adds `/api/v1/status`, `/api/v1/feedback`, `/api/v1/feedback/my`, `/api/v1/support/report-bug`, `/api/v1/platform/monitoring`, `/api/v1/platform/alerts`, `/api/v1/platform/improvements`, `/api/v1/platform/releases`, `/api/v1/platform/feature-flags`, `/api/v1/platform/maintenance`, `/api/v1/platform/backups`, and `/api/v1/platform/reviews`. Mutations require CSRF and appropriate authenticated ownership or platform RBAC.
+
 - `GET /health`
 - `GET /languages`
 - `GET /categories`

@@ -178,3 +178,7 @@ AI companion routes include `/dashboard/ai-companion`, `/ai-companion/chat`, `/a
 ## Phase 30 quality and launch readiness
 
 The quality center is available at `/platform/quality-center` and reuses the server-protected platform quality API. The Phase 30 recommendation is currently NO-GO for production until staging migration, restore, browser, isolation, accessibility, performance, provider, and rollback evidence is attached. See `docs/phase-30-release-readiness.md`.
+
+## Phase 31 operations
+
+Post-launch operations are available at `/platform/operations`, `/platform/monitoring`, `/platform/incidents`, `/platform/improvements`, `/platform/releases`, `/platform/feature-flags`, `/platform/maintenance`, and `/platform/backups`. Student feedback is available at `/feedback`, bug reporting at `/support/report-bug`, and public status at `/status`. These surfaces show recorded evidence and explicit unavailable states; they do not fabricate telemetry or backup health.

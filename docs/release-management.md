@@ -1,3 +1,3 @@
 # Release management
 
-Release records describe a version, environment, notes, approval, and rollback reference. The current API is read-only for release history; deployment and rollback remain explicit operator actions through protected CI environments. Database rollback is never automatic.
+Release records are versioned and environment-scoped. Approval records are unique per approver and release. A release is not considered deployed merely because it is approved; deployment references and rollback evidence must be supplied by CI/CD.

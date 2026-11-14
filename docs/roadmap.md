@@ -29,6 +29,10 @@ Phase 15 adds additive operations records, incident lifecycle APIs, student feed
 ## Phase 30
 
 Phase 30 is an audit and remediation phase. See the `docs/phase-30-*.md` audit, matrix, defect register, test report, and release checklist. It is not a deployment approval.
+
+## Phase 31
+
+Phase 31 adds post-launch monitoring records, student feedback, bug reporting, alert deduplication, release approvals, feature flags, maintenance notices, public status, backup evidence, and operational reviews. External telemetry and provider health remain deployment responsibilities.
 # Phase 16 status
 
 Learning intelligence is implemented with evidence-based skill snapshots, rule-based recommendations, verified study-plan tracking, spaced repetition records, and an unavailable-safe AI coach surface. Background refresh and richer provider integrations remain operational follow-up work.
