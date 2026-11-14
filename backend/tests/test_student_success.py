@@ -32,7 +32,7 @@ def test_ticket_ownership_and_authorized_workflow(client):
 
 
 def test_learning_signals_respect_student_visibility(client):
-    csrf = student(client, "success-signals@example.com")
+    student(client, "success-signals@example.com")
     with client.session_factory() as db:
         user = db.query(User).filter(User.email_normalized == "success-signals@example.com").one()
         signal = StudentLearningSignal(user_id=user.id, signal_code="stalled_progress", explanation="No completed lesson in the observed period.", confidence_limit="This is an activity signal, not a diagnosis.")

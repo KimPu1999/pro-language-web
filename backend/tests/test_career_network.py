@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from app.auth import password_hasher
-from app.models import CareerRoleDefinition, DeveloperTalentProfile, User
+from app.models import CareerRoleDefinition, User
 
 def student(client,email="career-network@example.com"):
     r=client.post("/api/v1/auth/register",json={"full_name":"Career Student","email":email,"password":"strong-pwd12","confirm_password":"strong-pwd12","accept_terms":True}); assert r.status_code==201
@@ -21,6 +21,6 @@ def test_employer_and_job_require_platform_review(client):
     assert client.post("/api/v1/career-network/employer/jobs",json={"title":"Python Developer","description":"Build APIs","external_url":"https://example.org/jobs/1"},headers={"X-CSRF-Token":csrf}).status_code==403
     admin_csrf=admin(client); assert client.post(f"/api/v1/career-network/platform/employers/{created.json()['id']}/decision",json={"decision":"approve"},headers={"X-CSRF-Token":admin_csrf}).status_code==200
 def test_skill_gap_uses_published_roles_only(client):
-    csrf=student(client,"skill-gap@example.com")
+    student(client,"skill-gap@example.com")
     with client.session_factory() as db: db.add(CareerRoleDefinition(slug="backend",title="Backend Developer",status="published"));db.commit()
     result=client.get("/api/v1/career-network/skill-gap?role_slug=backend");assert result.status_code==200 and result.json()["evidence_based"] is True

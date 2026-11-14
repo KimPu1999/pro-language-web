@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from .admin_routes import full_admin
 from .auth import check_rate_limit, current_user, require_csrf, require_role, verified_user
 from .db import get_db
-from .models import (CommunityActivityEvent, CommunityAuditLog, CommunityClubMembership, CommunityCodingClub, CommunityDeveloperConnection, CommunityEvent, CommunityEventAttendance, CommunityEventRegistration, CommunityPeerLearningRequest, CommunityPeerSession, CommunityReputationEvent, CommunitySafetyReport, DeveloperPublicProfile, StudyGroup, StudyGroupMember, User, UserBlock)
+from .models import (CommunityActivityEvent, CommunityAuditLog, CommunityClubMembership, CommunityCodingClub, CommunityDeveloperConnection, CommunityEvent, CommunityEventRegistration, CommunityPeerLearningRequest, CommunityReputationEvent, CommunitySafetyReport, DeveloperPublicProfile, StudyGroup, StudyGroupMember, User, UserBlock)
 
 router=APIRouter(prefix="/api/v1/community-network",tags=["global community"])
 ADMIN={"admin","platform_admin","super_admin"}

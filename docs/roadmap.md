@@ -126,3 +126,10 @@ idempotent XP ledger, level-rule support, global challenge and competition
 catalog entry points, opt-in leaderboards, competition appeals, integrity-case
 storage, gamification analytics, and dedicated route surfaces. Live runner,
 competition scale, browser, and migration validation remain release checks.
+
+## Phase 40 — Enterprise audit
+
+Phase 40 inventory and remediation documents now classify the repository by
+evidence. Confirmed P1 defects were fixed, but the release remains NO-GO until
+staging infrastructure, backup restore, runner isolation, E2E, load, and
+security evidence are available.

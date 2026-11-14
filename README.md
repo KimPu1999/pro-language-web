@@ -223,3 +223,12 @@ Phase 37 adds evidence-based career readiness views, private-by-default develope
 ### Phase 38 global community
 
 Phase 38 adds additive global community and networking foundations. Existing forums, teams, live classes, hackathons, and collaboration remain the sources of truth. See `docs/phase-38-community-audit.md` and `docs/community-security.md`.
+
+### Phase 40 production audit
+
+Phase 40 repaired the assessment grading import defect and added regression
+coverage for the existing platform quality endpoint used by system health. Local static checks, unit tests, and
+production build checks are documented in `docs/phase-40-test-report.md`.
+Production launch remains **NO-GO** until live PostgreSQL, runner isolation,
+provider integrations, backup restore, staging E2E, load, and security evidence
+are completed.

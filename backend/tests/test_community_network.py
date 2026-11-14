@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from app.auth import password_hasher
-from app.models import CommunityEvent, DeveloperPublicProfile, User
+from app.models import DeveloperPublicProfile, User
 
 def user(client,email,name="Community User"):
     r=client.post("/api/v1/auth/register",json={"full_name":name,"email":email,"password":"strong-pwd12","confirm_password":"strong-pwd12","accept_terms":True});assert r.status_code==201
@@ -11,7 +11,7 @@ def admin(client,email="community-network-admin@example.com"):
     with client.session_factory() as db:db.add(User(email=email,email_normalized=email,password_hash=password_hasher.hash("Admin-pass12"),display_name="Community Admin",role="platform_admin",account_status="active",email_verified_at=datetime.now(timezone.utc)));db.commit()
     client.post("/api/v1/auth/login",json={"email":email,"password":"Admin-pass12"});return client.cookies.get("cm_csrf")
 def test_developer_discovery_is_public_profile_only(client):
-    csrf=user(client,"community-public@example.com","Public Developer")
+    user(client,"community-public@example.com","Public Developer")
     with client.session_factory() as db:
         row=db.query(User).filter(User.email_normalized=="community-public@example.com").one();db.add(DeveloperPublicProfile(user_id=row.id,username="public-developer",headline="Python builder",visibility="public"));db.commit()
     result=client.get("/api/v1/community-network/developers");assert result.status_code==200 and result.json()[0]["username"]=="public-developer" and "email" not in result.text

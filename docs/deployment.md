@@ -22,3 +22,11 @@ PYTHONPATH=. python3 -m alembic upgrade head
 ```
 
 No deployment or migration is run automatically by this project change.
+
+## Phase 40 release gate
+
+The current recommendation is **NO-GO**. Before deployment, run the migration
+rehearsal against a backed-up staging database, execute the secure-runner and
+tenant-isolation suites, verify configured Redis/AI/storage/email services,
+complete Playwright smoke tests, perform a restore drill, and approve rollback.
+No production deployment is authorized by this repository change.

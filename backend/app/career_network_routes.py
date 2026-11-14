@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from urllib.parse import urlparse
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import check_rate_limit, current_user, require_csrf, require_role, verified_user
 from .db import get_db
-from .models import (CareerApplicationEvent, CareerAuditLog, CareerEmployerOrganization, CareerEmployerVerification, CareerFraudReport, CareerJobPosting, CareerProfile, CareerProfileVisibility, CareerRoleDefinition, CareerRoleSkillRequirement, CareerSavedJob, CareerSkillGapSnapshot, CareerTalentContactRequest, DeveloperTalentProfile, IssuedCertificate, JobApplication, SkillDefinition, StudentProject, StudentSkillEvidence, User)
+from .models import (CareerApplicationEvent, CareerAuditLog, CareerEmployerOrganization, CareerEmployerVerification, CareerFraudReport, CareerJobPosting, CareerProfile, CareerProfileVisibility, CareerRoleDefinition, CareerRoleSkillRequirement, CareerSavedJob, CareerTalentContactRequest, DeveloperTalentProfile, IssuedCertificate, JobApplication, SkillDefinition, StudentSkillEvidence, User)
 
 router=APIRouter(prefix="/api/v1/career-network",tags=["career network"])
 ADMIN={"admin","platform_admin","super_admin"}

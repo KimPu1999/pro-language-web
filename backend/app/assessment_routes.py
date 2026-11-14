@@ -14,9 +14,8 @@ from .db import get_db
 from .models import (
     AssessmentAppeal, AssessmentAttempt, AssessmentAttemptAnswer, AssessmentAttemptEvent,
     AssessmentAuditLog, AssessmentDefinition, AssessmentGradingJob, AssessmentGradingResult,
-    AssessmentIntegrityCase, AssessmentIntegritySignal, AssessmentQuestion,
-    AssessmentQuestionVersion, AssessmentVersion, CompetencyDefinition, CompetencyEvidence,
-    CredentialAward, CredentialStatusEvent, IssuedCertificate, StudentCompetencyRecord, User,
+    AssessmentGradeRevision, AssessmentIntegrityCase, AssessmentQuestion,
+    AssessmentQuestionVersion, AssessmentVersion, CompetencyDefinition, CredentialAward, CredentialStatusEvent, IssuedCertificate, StudentCompetencyRecord, User,
     Course,
 )
 

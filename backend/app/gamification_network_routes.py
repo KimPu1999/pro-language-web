@@ -7,9 +7,9 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .admin_routes import full_admin, admin_user
-from .auth import current_user, require_csrf, verified_user, check_rate_limit
+from .auth import current_user, require_csrf, verified_user
 from .db import get_db
-from .models import (Challenge, CompetitionAppeal, CompetitionIntegrityCase, CompetitionParticipant, CompetitionRanking, CodingCompetition, GamificationAchievementAward, GamificationLevelRule, GamificationQuestAssignment, GamificationQuestCompletion, GamificationQuestDefinition, GamificationQuestVersion, GamificationStreakRecord, GamificationXPLedger, LeaderboardPreference, LearningStreak, StudentAchievement, StudentChallengeProgress, StudentXPBalance, User)
+from .models import (Challenge, CompetitionAppeal, CompetitionIntegrityCase, CodingCompetition, GamificationLevelRule, GamificationQuestAssignment, GamificationQuestCompletion, GamificationQuestDefinition, GamificationQuestVersion, GamificationStreakRecord, GamificationXPLedger, LeaderboardPreference, LearningStreak, StudentAchievement, StudentChallengeProgress, StudentXPBalance, User)
 
 router=APIRouter(prefix="/api/v1/gamification-network",tags=["gamification network"])
 class QuestIn(BaseModel): slug:str=Field(pattern=r"^[a-z0-9-]+$"); title:str=Field(min_length=2,max_length=180); description:str=Field(min_length=1,max_length=5000); quest_type:str=Field(pattern="^(daily|weekly|learning_path|skill|community|team)$"); rule_type:str=Field(pattern="^(challenge_solved|verified_event)$"); rule:dict={}; xp_reward:int=Field(ge=0,le=10000)

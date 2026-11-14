@@ -48,6 +48,16 @@ def test_monitoring_and_alert_deduplication_are_platform_only(client):
         assert db.query(PlatformAlertEvent).count() == 1
 
 
+def test_system_quality_endpoint_is_platform_only_and_truthful(client):
+    assert client.get("/api/v1/platform/quality").status_code == 401
+    admin(client, "phase31-quality-admin@example.com")
+    response = client.get("/api/v1/platform/quality")
+    assert response.status_code == 200
+    payload = response.json()
+    assert {check["name"] for check in payload["checks"]} >= {"api", "database", "secure_runner", "ai_provider"}
+    assert payload["checks"][-1]["name"] == "observability"
+
+
 def test_bug_attachment_scope_and_feature_flag_evaluation(client):
     csrf = verified_student(client, "phase31-bug@example.com")
     bug = client.post("/api/v1/support/report-bug", json={"title": "Broken button", "description": "The button does not submit.", "affected_page": "/feedback"}, headers={"X-CSRF-Token": csrf})

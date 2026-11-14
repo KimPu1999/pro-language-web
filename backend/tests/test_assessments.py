@@ -44,7 +44,7 @@ def test_published_attempt_is_versioned_and_submission_is_idempotent(client):
 
 
 def test_credentials_require_verified_competency_and_platform_role(client):
-    csrf = student(client, "credential-student@example.com")
+    student(client, "credential-student@example.com")
     with client.session_factory() as db:
         user = db.query(User).filter(User.email_normalized == "credential-student@example.com").one(); user_id = user.id; competency = CompetencyDefinition(slug="python-syntax", title="Python syntax", description="Verified syntax competency"); db.add(competency); db.flush(); record = StudentCompetencyRecord(user_id=user.id, competency_id=competency.id, level="proficient", verified=True); db.add(record); db.commit(); record_id = record.id
     assert client.get("/api/v1/assessments/platform/credentials").status_code == 403
