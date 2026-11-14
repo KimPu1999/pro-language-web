@@ -23,6 +23,12 @@ class CourseDetailOut(CourseOut):
     modules: list[ModuleOut]=Field(default_factory=list)
 class PageOut(BaseModel):
     items: list[CourseOut]; page: int; page_size: int; total: int; pages: int
+class QuizAnswerIn(BaseModel):
+    answers: dict[str, str] = Field(default_factory=dict)
+class QuizQuestionOut(BaseModel):
+    id: UUID; prompt: str; question_type: str; options: list[str] = Field(default_factory=list); position: int
+class QuizOut(BaseModel):
+    id: UUID; lesson_id: UUID; title: str; explanation: str; questions: list[QuizQuestionOut] = Field(default_factory=list); latest_attempt: dict|None = None
 class PathOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; description: str
 class RegisterIn(BaseModel):

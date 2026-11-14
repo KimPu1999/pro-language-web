@@ -1,10 +1,11 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException, Response, Cookie
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, current_user, require_csrf, verified_user, hash_token, now
 from .db import get_db
-from .models import AuthSession, Course, CourseModule, Enrollment, Lesson, LessonBookmark, LessonProgress, User, UserProfile
-from .schemas import DashboardOut, EnrollmentOut, ProfileIn, ProgressIn, UserOut
+from .models import AuthSession, Course, CourseModule, Enrollment, Lesson, LessonBookmark, LessonProgress, LessonQuiz, QuizAttempt, QuizQuestion, User, UserProfile
+from .schemas import DashboardOut, EnrollmentOut, ProfileIn, ProgressIn, QuizAnswerIn, QuizOut, UserOut
 router=APIRouter(prefix="/api/v1/me", tags=["student"])
 def course_base(): return select(Course).options(selectinload(Course.language),selectinload(Course.category)).where(Course.published.is_(True))
 def profile_payload(user, profile): return {"id":user.id,"email":user.email,"full_name":user.display_name,"role":user.role,"email_verified":bool(user.email_verified_at),"email_verified_at":user.email_verified_at,"profile":{"bio":profile.bio if profile else None,"learning_interests":profile.learning_interests.split("|") if profile and profile.learning_interests else [],"preferred_language":profile.preferred_language if profile else None,"learning_level":profile.learning_level if profile else None,"show_myanmar":profile.show_myanmar if profile else False,"avatar_url":profile.avatar_url if profile else None}}
@@ -34,6 +35,26 @@ def update_progress(lesson_id, payload: ProgressIn, user: User=Depends(verified_
     course_id=db.scalar(select(CourseModule.course_id).where(CourseModule.id==lesson.module_id)); enrollment=db.scalar(select(Enrollment).where(Enrollment.user_id==user.id,Enrollment.course_id==course_id))
     if not enrollment: raise HTTPException(403,"Enroll in this course first")
     progress=db.scalar(select(LessonProgress).where(LessonProgress.user_id==user.id,LessonProgress.lesson_id==lesson_id)) or LessonProgress(user_id=user.id,lesson_id=lesson_id); progress.completed=payload.completed; progress.last_visited_at=now(); db.add(progress); db.commit(); return {"lesson_id":lesson_id,"completed":progress.completed}
+def quiz_for_lesson(lesson_id, db):
+    lesson=db.scalar(select(Lesson).join(CourseModule).join(Course).where(Lesson.id==lesson_id,Lesson.published.is_(True),Course.published.is_(True)))
+    if not lesson: raise HTTPException(404,"Published lesson not found")
+    quiz=db.scalar(select(LessonQuiz).where(LessonQuiz.lesson_id==lesson.id,LessonQuiz.status=="published"))
+    if not quiz: raise HTTPException(404,"Quiz not available for this lesson")
+    questions=db.scalars(select(QuizQuestion).where(QuizQuestion.quiz_id==quiz.id).order_by(QuizQuestion.position)).all()
+    return quiz, questions
+@router.get("/lessons/{lesson_id}/quiz", response_model=QuizOut)
+def lesson_quiz(lesson_id, user: User=Depends(current_user), db: Session=Depends(get_db)):
+    quiz, questions=quiz_for_lesson(lesson_id,db)
+    latest=db.scalar(select(QuizAttempt).where(QuizAttempt.quiz_id==quiz.id,QuizAttempt.user_id==user.id).order_by(QuizAttempt.created_at.desc()))
+    return {"id":quiz.id,"lesson_id":quiz.lesson_id,"title":quiz.title,"explanation":quiz.explanation,"questions":[{"id":q.id,"prompt":q.prompt,"question_type":q.question_type,"options":json.loads(q.options_json),"position":q.position} for q in questions],"latest_attempt":{"score":latest.score,"total":latest.total,"created_at":latest.created_at} if latest else None}
+@router.post("/lessons/{lesson_id}/quiz", response_model=dict)
+def submit_lesson_quiz(lesson_id, payload: QuizAnswerIn, user: User=Depends(verified_user), __: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    quiz, questions=quiz_for_lesson(lesson_id,db)
+    course_id=db.scalar(select(CourseModule.course_id).join(Lesson,Lesson.module_id==CourseModule.id).where(Lesson.id==lesson_id))
+    if not db.scalar(select(Enrollment).where(Enrollment.user_id==user.id,Enrollment.course_id==course_id)): raise HTTPException(403,"Enroll in this course first")
+    answers={str(key): str(value) for key,value in payload.answers.items()}; correct=sum(1 for q in questions if answers.get(str(q.id)) == q.correct_answer)
+    attempt=QuizAttempt(quiz_id=quiz.id,user_id=user.id,answers_json=json.dumps(answers),score=correct,total=len(questions)); db.add(attempt); db.commit()
+    return {"attempt_id":attempt.id,"score":correct,"total":len(questions),"passed":bool(questions) and correct==len(questions),"feedback":[{"question_id":q.id,"correct":answers.get(str(q.id))==q.correct_answer,"explanation":q.explanation} for q in questions]}
 @router.post("/lessons/{lesson_id}/bookmark")
 def toggle_bookmark(lesson_id, user: User=Depends(verified_user), __: None=Depends(require_csrf), db: Session=Depends(get_db)):
     lesson=db.scalar(select(Lesson).join(CourseModule).join(Course).where(Lesson.id==lesson_id,Lesson.published.is_(True),Course.published.is_(True)))

@@ -48,6 +48,21 @@ def test_course_filters_sort_and_published_scope(client):
     assert [item["slug"] for item in sorted_response.json()["items"]] == ["javascript-basics", "python-foundations", "python-apis"]
 
     assert client.get("/api/v1/courses?difficulty=beginner&level=advanced").status_code == 422
+
+def test_c_curriculum_seed_is_complete_and_idempotent(client):
+    from app.c_course_content import seed_c_curriculum
+    from app.models import Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage
+
+    with client.session_factory() as db:
+        language = ProgrammingLanguage(name="C", slug="c")
+        category = CourseCategory(name="Programming Languages", slug="programming-languages")
+        db.add_all([language, category]); db.flush()
+        course = Course(language_id=language.id, category_id=category.id, title="C Programming", slug="c-programming", description="Beginner C", level="beginner", duration_minutes=0, published=True, status="draft")
+        db.add(course); db.flush(); seed_c_curriculum(db, course); db.commit()
+        seed_c_curriculum(db, course); db.commit()
+        assert db.query(CourseModule).filter_by(course_id=course.id).count() == 20
+        assert db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 40
+        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 40
 def test_course_detail_and_lesson(client):
     course=client.get("/api/v1/courses/python-foundations"); assert course.status_code==200; assert course.json()["modules"][0]["lessons"][0]["content_en"]=="Hello lesson"
 def test_missing_and_unpublished(client):

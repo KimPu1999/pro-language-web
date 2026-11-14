@@ -1,6 +1,7 @@
 export type Language = { id: string; name: string; slug: string; color: string };
 export type Course = { id: string; title: string; slug: string; description: string; level: string; status: string; category: { id: string; name: string; slug: string }; duration_minutes: number; language: Language; outcomes: string[]; requirements?: string[]; module_count?: number };
 export type Lesson = { id: string; title: string; slug: string; content_en: string; content_mm?: string | null; order_index: number; duration_minutes?: number; code_examples: { id: string; title: string; language: string; code: string; filename?: string | null; description?: string }[] };
+export type LessonQuiz = { id: string; lesson_id: string; title: string; explanation: string; questions: { id: string; prompt: string; question_type: string; options: string[]; position: number }[]; latest_attempt?: { score: number; total: number; created_at: string } | null };
 export type Module = { id: string; title: string; order_index: number; lessons: Lesson[] };
 export type CourseDetail = Course & { modules: Module[] };
 export type Paginated<T> = { items: T[]; page: number; page_size: number; total: number; pages: number };

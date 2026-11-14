@@ -12,6 +12,7 @@ from .models import (Challenge, ChallengeCategory, ChallengeHint, ChallengeLangu
                      ChallengeTestCase, ChallengeTopic, ChallengeTopicLink, Course,
                      CourseCategory, ProgrammingLanguage, ProjectCategory,
                      ProjectMilestone, ProjectTemplate)
+from .c_course_content import seed_c_curriculum
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -212,6 +213,9 @@ def main():
             course.status = "curriculum_pending"
             course.published = True
         db.flush()
+        c_course = db.scalar(select(Course).where(Course.slug == "c-programming"))
+        if c_course:
+            seed_c_curriculum(db, c_course)
         seed_challenges(db)
         seed_projects(db)
 
