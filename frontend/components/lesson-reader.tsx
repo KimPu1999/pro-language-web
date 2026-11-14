@@ -9,6 +9,7 @@ import { LessonTranslationToggle } from "@/components/translation";
 import { HtmlPlayground } from "@/components/html-playground";
 import { CssPlayground } from "@/components/css-playground";
 import { JavascriptPlayground } from "@/components/javascript-playground";
+import { PythonPlayground } from "@/components/python-playground";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -187,6 +188,13 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
         <JavascriptPlayground
           title={`${lesson.title} practice`}
           code={lesson.code_examples.find(item => item.language.toLowerCase() === "javascript")?.code ?? ""}
+        />
+      )}
+
+      {courseSlug === "python" && lesson.code_examples.some(item => item.language.toLowerCase() === "python") && (
+        <PythonPlayground
+          title={`${lesson.title} practice`}
+          code={lesson.code_examples.find(item => item.language.toLowerCase() === "python")?.code ?? ""}
         />
       )}
 
