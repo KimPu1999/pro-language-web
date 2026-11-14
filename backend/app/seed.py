@@ -23,6 +23,7 @@ from .advanced_java_course_content import seed_advanced_java_course
 from .jquery_course_content import seed_jquery_course
 from .bootstrap_course_content import seed_bootstrap_course
 from .typescript_course_content import seed_typescript_course
+from .php_course_content import seed_php_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -47,7 +48,7 @@ COURSES = [
     ("Advanced Java — Enterprise Backend Engineering", "advanced-java", "java", "#E76F51", "backend-development"), ("Python", "python", "python", "#3776AB", "programming"),
     ("C#", "c-sharp", "c-sharp", "#512BD4", "programming-languages"), ("Go", "go", "go", "#00ADD8", "programming-languages"),
     ("Rust", "rust", "rust", "#DEA584", "programming-languages"), ("Node.js", "node-js", "javascript", "#339933", "backend-development"),
-    ("Express.js", "express-js", "javascript", "#F8FAFC", "backend-development"), ("PHP", "php", "php", "#777BB4", "backend-development"),
+    ("Express.js", "express-js", "javascript", "#F8FAFC", "backend-development"), ("PHP Programming — From Zero to Advanced", "php", "php", "#777BB4", "backend-development"),
     ("Laravel", "laravel", "php", "#FF2D20", "backend-development"), ("FastAPI", "fastapi", "python", "#009688", "backend-development"),
     ("Django", "django", "python", "#092E20", "backend-development"), ("Spring Boot", "spring-boot", "java", "#6DB33F", "backend-development"),
     ("SQL", "sql", "sql", "#22C55E", "database-development"), ("MySQL", "mysql", "sql", "#4479A1", "database-development"),
@@ -285,6 +286,9 @@ def main():
         typescript_course = db.scalar(select(Course).where(Course.slug == "typescript"))
         if typescript_course:
             seed_typescript_course(db, typescript_course)
+        php_course = db.scalar(select(Course).where(Course.slug == "php"))
+        if php_course:
+            seed_php_course(db, php_course)
         seed_challenges(db)
         seed_projects(db)
 
