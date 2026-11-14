@@ -58,3 +58,7 @@ Migration `0029_cybersecurity_training` adds published lab definitions, ownershi
 ## Phase 28 mobile/offline
 
 Migration `0030_mobile_offline` adds mobile devices, push subscriptions/preferences, offline content versions/manifests/policies, sync events/conflicts, learning activity, bookmarks, preferences, delivery events, and platform audit records. It is additive and preserves existing course and progress data.
+
+## Phase 29 AI companion
+
+Migration `0031_ai_companion` adds companion profiles/conversations/messages, study sessions and activities, evidence-labelled recommendations, versioned revision items/reviews, goals, plans, insights, voice session metadata, feedback, usage, security events, and audit logs. Existing AI tutor, learning intelligence, revision, and study-plan tables remain intact.

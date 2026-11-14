@@ -115,3 +115,21 @@ Mutations require an authenticated verified user and CSRF token. Evaluation acce
 - `GET /api/v1/mobile/platform/operations`
 
 Manifests and content are ownership-scoped and published-only. Sync is idempotent per user/event ID and returns explicit conflicts for deleted content or version mismatch. Push delivery reports `not_configured` until a provider is installed.
+
+## Phase 29 AI companion API
+
+- `GET|PUT /api/v1/ai-companion/profile`
+- `GET /api/v1/ai-companion/dashboard`
+- `GET|POST /api/v1/ai-companion/study-sessions`
+- `PATCH /api/v1/ai-companion/study-sessions/{id}`
+- `GET /api/v1/ai-companion/revision`
+- `POST /api/v1/ai-companion/revision/{id}/review`
+- `GET /api/v1/ai-companion/recommendations`
+- `GET|POST /api/v1/ai-companion/goals`
+- `GET /api/v1/ai-companion/insights` and `/planner`
+- `GET|POST /api/v1/ai-companion/voice/status` and `/voice/sessions`
+- `DELETE /api/v1/ai-companion/privacy`
+- `GET /api/v1/ai-companion/instructor/insights`
+- `GET /api/v1/ai-companion/platform/operations`
+
+Existing `/api/v1/ai/conversations` and `/stream` provide user-owned SSE chat. Companion mutations require verified authentication and CSRF; provider availability is never inferred from UI state.

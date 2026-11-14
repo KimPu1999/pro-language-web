@@ -49,3 +49,7 @@ Cybersecurity routes are a policy and learning boundary over approved lab defini
 ## Phase 28 mobile boundary
 
 The PWA service worker caches only static assets and an explicit offline shell. Published lesson packages are fetched through authenticated mobile APIs and stored in account-scoped IndexedDB records. Sync writes durable, unique server events and reports conflicts rather than silently overwriting progress. Offline code is local practice only; secure execution and verified grading remain online runner responsibilities.
+
+## Phase 29 AI companion boundary
+
+The companion is an orchestration layer over the existing AI provider/SSE and learning-intelligence services. It stores adaptive state separately, retrieves only authorized learner context, and keeps verified evidence authoritative. Provider-disabled, voice-disabled, and insufficient-evidence states are returned explicitly.

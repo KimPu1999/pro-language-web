@@ -69,3 +69,7 @@ The cybersecurity catalog, learning-path surfaces, approved lab records, ownersh
 ## Phase 28 status
 
 The mobile dashboard, PWA shell, offline library/reader, IndexedDB event queue, authenticated sync boundary, preferences, push subscription records, instructor status, and platform operations surface are implemented. Browser offline installation, push delivery, accessibility automation, and PostgreSQL migration execution require environment-level verification and are not claimed as complete here.
+
+## Phase 29 status
+
+The companion dashboard, authorized adaptive records, deterministic revision v1, evidence-labelled recommendations, optional goals/plans, privacy controls, instructor privacy-threshold status, and platform operations are implemented. AI provider responses, voice delivery, provider-side deletion, cost/latency telemetry, and end-to-end streaming/browser verification remain configuration or environment prerequisites.
