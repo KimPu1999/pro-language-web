@@ -16,6 +16,7 @@ from .c_course_content import seed_c_curriculum
 from .cpp_course_content import seed_cpp_course
 from .html_course_content import seed_html_course
 from .css_course_content import seed_css_course
+from .javascript_course_content import seed_javascript_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -31,7 +32,7 @@ CATEGORIES = [
 ]
 COURSES = [
     ("HTML", "html", "html", "#E34F26", "web-development"), ("CSS", "css", "css", "#264DE4", "web-development"),
-    ("JavaScript", "javascript", "javascript", "#F7DF1E", "frontend-development"), ("TypeScript", "typescript", "typescript", "#3178C6", "frontend-development"),
+    ("JavaScript", "javascript", "javascript", "#F7DF1E", "web-development"), ("TypeScript", "typescript", "typescript", "#3178C6", "frontend-development"),
     ("React", "react", "javascript", "#61DAFB", "frontend-development"), ("Next.js", "next-js", "javascript", "#F8FAFC", "frontend-development"),
     ("jQuery", "jquery", "javascript", "#0769AD", "frontend-development"), ("Tailwind CSS", "tailwind-css", "css", "#06B6D4", "frontend-development"),
     ("Bootstrap", "bootstrap", "css", "#7952B3", "frontend-development"), ("C Programming", "c-programming", "c", "#A8B9CC", "programming-languages"),
@@ -256,6 +257,9 @@ def main():
         css_course = db.scalar(select(Course).where(Course.slug == "css"))
         if css_course:
             seed_css_course(db, css_course)
+        javascript_course = db.scalar(select(Course).where(Course.slug == "javascript"))
+        if javascript_course:
+            seed_javascript_course(db, javascript_course)
         seed_challenges(db)
         seed_projects(db)
 
