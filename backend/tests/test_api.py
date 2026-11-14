@@ -61,8 +61,8 @@ def test_c_curriculum_seed_is_complete_and_idempotent(client):
         db.add(course); db.flush(); seed_c_curriculum(db, course); db.commit()
         seed_c_curriculum(db, course); db.commit()
         assert db.query(CourseModule).filter_by(course_id=course.id).count() == 20
-        assert db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 40
-        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 40
+        assert db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 44
+        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 44
 def test_course_detail_and_lesson(client):
     course=client.get("/api/v1/courses/python-foundations"); assert course.status_code==200; assert course.json()["modules"][0]["lessons"][0]["content_en"]=="Hello lesson"
 def test_missing_and_unpublished(client):

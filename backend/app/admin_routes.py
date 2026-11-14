@@ -5,9 +5,9 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import current_user, require_csrf
 from .db import get_db
-from .models import AdminAuditLog, Course, CourseCategory, CourseInstructor, CourseModule, CourseRevision, Lesson, CodeExample, ProgrammingLanguage, PublishingReview, User
+from .models import AdminAuditLog, Course, CourseCategory, CourseInstructor, CourseModule, CourseRevision, Lesson, CodeExample, LessonQuiz, QuizQuestion, ProgrammingLanguage, PublishingReview, User
 from .rbac import PLATFORM_ADMIN_ROLES, require_platform_admin
-from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, PublishDecisionIn
+from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, PublishDecisionIn
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
 def admin_user(user: User=Depends(current_user)):
@@ -27,6 +27,15 @@ def require_edit(course_id, user, db):
     if not course: raise HTTPException(404,"Course not found")
     if not can_edit(course,user,db): raise HTTPException(403,"Course ownership required")
     return course
+def quiz_question_out(row):
+    return {"id": row.id, "prompt": row.prompt, "question_type": row.question_type, "options": json.loads(row.options_json or "[]"), "correct_answer": row.correct_answer, "explanation": row.explanation, "position": row.position}
+def lesson_for_edit(lesson_id, user, db):
+    lesson=db.get(Lesson, lesson_id)
+    if not lesson: raise HTTPException(404,"Lesson not found")
+    module=db.get(CourseModule, lesson.module_id)
+    if not module: raise HTTPException(404,"Course module not found")
+    require_edit(module.course_id, user, db)
+    return lesson
 @router.get("/dashboard")
 def dashboard(user: User=Depends(full_admin), db: Session=Depends(get_db)):
     return {"total_courses":db.scalar(select(func.count(Course.id))) or 0,"published_courses":db.scalar(select(func.count(Course.id)).where(Course.published.is_(True))) or 0,"draft_courses":db.scalar(select(func.count(Course.id)).where(Course.status.in_(["draft","in_review"]))) or 0,"total_students":db.scalar(select(func.count(User.id)).where(User.role=="student")) or 0,"total_instructors":db.scalar(select(func.count(User.id)).where(User.role=="instructor")) or 0,"recent_courses":[course_out(x) for x in db.scalars(select(Course).order_by(Course.updated_at.desc()).limit(5)).all()],"pending_reviews":db.scalar(select(func.count(PublishingReview.id)).where(PublishingReview.decision=="pending")) or 0,"recent_activity":[]}
@@ -125,6 +134,34 @@ def create_example(lesson_id:UUID,payload:AdminCodeExampleIn,user:User=Depends(a
     lesson=db.get(Lesson,lesson_id)
     if not lesson: raise HTTPException(404,"Lesson not found")
     module=db.get(CourseModule,lesson.module_id); require_edit(module.course_id,user,db); row=CodeExample(lesson_id=lesson.id,title=payload.title,language=payload.language,filename=payload.filename,code=payload.source_code,description=payload.description,position=payload.position); db.add(row); db.commit(); return {"id":row.id,"title":row.title}
+@router.get("/lessons/{lesson_id}/quiz")
+def admin_quiz(lesson_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    lesson=lesson_for_edit(lesson_id,user,db)
+    quiz=db.scalar(select(LessonQuiz).where(LessonQuiz.lesson_id==lesson.id))
+    if not quiz: return {"id":None,"lesson_id":lesson.id,"title":f"{lesson.title} quiz","explanation":"","questions":[]}
+    questions=db.scalars(select(QuizQuestion).where(QuizQuestion.quiz_id==quiz.id).order_by(QuizQuestion.position)).all()
+    return {"id":quiz.id,"lesson_id":lesson.id,"title":quiz.title,"explanation":quiz.explanation,"questions":[quiz_question_out(q) for q in questions]}
+@router.post("/lessons/{lesson_id}/quiz/questions",status_code=201)
+def create_quiz_question(lesson_id:UUID,payload:AdminQuizQuestionIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    lesson=lesson_for_edit(lesson_id,user,db)
+    quiz=db.scalar(select(LessonQuiz).where(LessonQuiz.lesson_id==lesson.id))
+    if not quiz:
+        quiz=LessonQuiz(lesson_id=lesson.id,title=f"{lesson.title} quiz",explanation="",status="published"); db.add(quiz); db.flush()
+    if db.scalar(select(QuizQuestion).where(QuizQuestion.quiz_id==quiz.id,QuizQuestion.position==payload.position)):
+        raise HTTPException(409,"A question already exists at that position")
+    row=QuizQuestion(quiz_id=quiz.id,prompt=payload.prompt,question_type=payload.question_type,options_json=json.dumps(payload.options),correct_answer=payload.correct_answer,explanation=payload.explanation,position=payload.position)
+    db.add(row); audit(db,user,"quiz_question_created","quiz_question",row.id); db.commit(); return quiz_question_out(row)
+@router.patch("/quiz/questions/{question_id}")
+def update_quiz_question(question_id:UUID,payload:AdminQuizQuestionIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    row=db.get(QuizQuestion,question_id)
+    if not row: raise HTTPException(404,"Quiz question not found")
+    quiz=db.get(LessonQuiz,row.quiz_id)
+    if not quiz: raise HTTPException(404,"Quiz not found")
+    lesson_for_edit(quiz.lesson_id,user,db)
+    duplicate=db.scalar(select(QuizQuestion).where(QuizQuestion.quiz_id==quiz.id,QuizQuestion.position==payload.position,QuizQuestion.id!=row.id))
+    if duplicate: raise HTTPException(409,"A question already exists at that position")
+    row.prompt=payload.prompt; row.question_type=payload.question_type; row.options_json=json.dumps(payload.options); row.correct_answer=payload.correct_answer; row.explanation=payload.explanation; row.position=payload.position
+    audit(db,user,"quiz_question_updated","quiz_question",row.id); db.commit(); return quiz_question_out(row)
 @router.post("/courses/{course_id}/publish")
 def publish(course_id:UUID,payload:PublishDecisionIn,user:User=Depends(full_admin),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=require_edit(course_id,user,db); published_lessons=db.scalar(select(func.count(Lesson.id)).join(CourseModule).where(CourseModule.course_id==row.id,Lesson.published.is_(True),func.length(func.trim(Lesson.content_en))>0)) or 0; modules=db.scalar(select(func.count(CourseModule.id)).where(CourseModule.course_id==row.id)) or 0

@@ -85,8 +85,76 @@ MODULES = [
     ]),
 ]
 
+MODULE_ONE_LESSONS = [
+    {
+        "title": "What Is Programming?", "theory": "Programming is the process of writing precise instructions that a computer can follow. A program receives input, processes it using an algorithm, and produces output. An algorithm is a finite, ordered method for solving a problem; pseudocode describes that method in everyday language, while a flowchart shows decisions and steps visually. Making a cup of tea is an everyday algorithm: gather ingredients, boil water, steep tea, and serve. A program needs the same precision: ambiguous instructions cannot be executed reliably.",
+        "code": '#include <stdio.h>\n\nint main(void) {\n    int minutes = 5;\n    printf("Steep for %d minutes.\\n", minutes);\n    return 0;\n}', "output": "Steep for 5 minutes.", "explanation": "stdio.h declares printf. main is the entry point. minutes stores the input-like value, printf produces output, and return 0 ends successfully.",
+        "mm": "Programming ဆိုတာ ကွန်ပျူတာက လိုက်နာနိုင်သော တိကျသည့် ညွှန်ကြားချက်များကို ရေးသားခြင်း ဖြစ်သည်။ Algorithm သည် ပြဿနာဖြေရှင်းရန် အဆင့်လိုက်နည်းလမ်း ဖြစ်ပြီး input ကို process လုပ်ကာ output ထုတ်ပေးသည်။ C code နှင့် keyword များကို မပြောင်းလဲထားပါ။",
+        "questions": [("Which sequence best describes a basic program?", ["Input, process, output", "Output, guess, delete", "Compile, sleep, print"], "Input, process, output", "A program commonly accepts input, processes it, and produces output."), ("True or false: An algorithm is an ordered method for solving a problem.", ["True", "False"], "True", "An algorithm is a finite, ordered procedure."), ("What is pseudocode for?", ["Planning logic in readable language", "Replacing the compiler", "Storing binary files"], "Planning logic in readable language", "Pseudocode lets you clarify steps before choosing C syntax.")]
+    },
+    {
+        "title": "What Is C Programming?", "theory": "C is a compiled, general-purpose programming language designed at Bell Labs by Dennis Ritchie in the early 1970s. It grew from systems programming needs and influenced many later languages, including C++, Java, and C#. C offers direct control over memory and hardware while retaining portable standard-library facilities. It is used in operating systems, embedded devices, compilers, databases, and performance-sensitive tools. Its strengths are speed, portability, and a small core; its limitations include manual memory management and fewer safety checks than newer languages. Beginners learn C because its explicit types, expressions, and memory model make computer behavior visible.",
+        "code": '#include <stdio.h>\n\nint main(void) {\n    puts("C: portable, compiled, and close to the machine.");\n    return 0;\n}', "output": "C: portable, compiled, and close to the machine.", "explanation": "The standard I/O header provides puts. The string is passed to puts, which writes it followed by a newline.",
+        "mm": "C သည် Bell Labs တွင် Dennis Ritchie က ၁၉၇၀ ပြည့်နှစ်များအစောပိုင်းတွင် ဖန်တီးခဲ့သော compiled general-purpose language ဖြစ်သည်။ Operating systems၊ embedded devices နှင့် compiler များတွင် အသုံးများသည်။ မြန်ဆန်ပြီး hardware နှင့် နီးစပ်သော်လည်း memory ကို ကိုယ်တိုင် စီမံရနိုင်သည်။",
+        "questions": [("Who designed C at Bell Labs?", ["Dennis Ritchie", "Ada Lovelace", "James Gosling"], "Dennis Ritchie", "Dennis Ritchie designed C at Bell Labs."), ("Which is a common C use?", ["Embedded systems", "Only image editing", "Only spreadsheets"], "Embedded systems", "C is widely used where predictable performance and hardware control matter."), ("True or false: C automatically prevents every out-of-bounds array access.", ["True", "False"], "False", "C gives control but does not automatically provide every safety check.")]
+    },
+    {
+        "title": "How Computers Execute Programs", "theory": "A C source file is human-readable text. Preprocessing expands directives such as #include, compilation translates C into assembly-like instructions, and assembly produces machine-code object files. The linker combines object files and libraries into an executable program. At runtime the operating system loads that executable and starts main. A compiler error means translation stopped because the source violates syntax or type rules. A logical error compiles and runs but produces the wrong result, so tests and careful reasoning are still necessary.",
+        "code": '#include <stdio.h>\n\nint main(void) {\n    int width = 4;\n    int height = 3;\n    printf("area=%d\\n", width * height);\n    return 0;\n}', "output": "area=12", "explanation": "The preprocessor handles the include, the compiler checks and translates the declarations and expression, the linker supplies printf, and runtime execution evaluates width * height.",
+        "mm": "C source code ကို preprocessing၊ compilation၊ assembly နှင့် linking အဆင့်များဖြင့် executable အဖြစ် ပြောင်းလဲသည်။ Compiler error သည် ဘာသာပြန်ခြင်း မအောင်မြင်ခြင်း ဖြစ်ပြီး logical error သည် run ဖြစ်သော်လည်း ရလဒ်မှားခြင်း ဖြစ်သည်။",
+        "questions": [("Which step combines object files and libraries?", ["Linking", "Typing", "Printing"], "Linking", "The linker combines compiled objects with required libraries."), ("What is a logical error?", ["The program runs but gives a wrong result", "The computer has no power", "A missing keyboard"], "The program runs but gives a wrong result", "Logical errors require tests and reasoning because compilation may succeed."), ("True or false: Source code is normally the machine-code executable.", ["True", "False"], "False", "Source code must be translated and linked before execution.")]
+    },
+    {
+        "title": "Compiler, Interpreter & IDE", "theory": "A compiler translates a program before it runs and usually produces an executable; an interpreter executes instructions through a runtime as the program is read or loaded. C is normally compiled. GCC and Clang are popular C compilers. A code editor provides text editing, while an IDE combines editing, building, debugging, and project navigation. On Windows, install a supported GCC distribution such as MinGW-w64; on macOS, install Apple Command Line Tools and use clang; on Linux, install the distribution's build-essential or clang package. In a terminal, verify with `gcc --version` or `clang --version`.",
+        "code": '#include <stdio.h>\n\nint main(void) {\n    puts("The compiler is ready.");\n    return 0;\n}', "output": "The compiler is ready.", "explanation": "Save this as hello.c, compile with `gcc -std=c11 -Wall -Wextra -Wpedantic hello.c -o hello`, then run `./hello` on macOS/Linux or `hello.exe` on Windows.",
+        "mm": "Compiler သည် program ကို အရင်ဘာသာပြန်ပြီး executable ပြုလုပ်သည်။ Interpreter သည် run လုပ်နေစဉ် instruction များကို လုပ်ဆောင်သည်။ Windows၊ macOS နှင့် Linux တွင် GCC သို့မဟုတ် Clang ကို install လုပ်ပြီး version command ဖြင့် စစ်ဆေးနိုင်သည်။",
+        "questions": [("Which command verifies a GCC installation?", ["gcc --version", "gcc --delete", "gcc --sleep"], "gcc --version", "The version flag reports whether GCC is available."), ("What does an IDE commonly combine?", ["Editing, building, and debugging", "Only a web browser", "Only a calculator"], "Editing, building, and debugging", "An IDE combines common development tasks in one workspace."), ("True or false: C is normally compiled before execution.", ["True", "False"], "True", "C source is normally compiled and linked into an executable.")]
+    },
+    {
+        "title": "Basic Structure of a C Program", "theory": "A C source file commonly begins with header includes and preprocessor directives. The main function contains a body enclosed by braces. Statements usually end with semicolons. Comments use // for one line or /* */ for a block. printf formats output; return statements send a value back to the caller. Escape sequences such as `\\n` create a newline and `\\t` create a tab. C is case-sensitive, braces must balance, identifiers cannot contain spaces, and every used function should have a visible declaration through an appropriate header or prototype.",
+        "code": '#include <stdio.h>\n\nint main(void) {\n    // printf writes formatted output.\n    printf("Hello\\nC programming\\n");\n    return 0;\n}', "output": "Hello\nC programming", "explanation": "The include declares printf, main contains the body, the comment is ignored by the compiler, \\n creates a new line, and return 0 reports success.",
+        "mm": "C program တွင် header file၊ preprocessor directive၊ main() function၊ braces အတွင်း body နှင့် semicolon ဖြင့်ဆုံးသော statement များ ပါဝင်သည်။ C သည် စာလုံးအကြီးအသေး ခွဲခြားပြီး `\\n` သည် newline ဖြစ်သည်။",
+        "questions": [("Which header declares printf?", ["stdio.h", "memory.h only", "screen.h"], "stdio.h", "printf is declared by the standard input/output header."), ("What does \\n do in a string?", ["Start a new line", "Delete the program", "Compile twice"], "Start a new line", "\\n is the newline escape sequence."), ("True or false: C identifiers and keywords are case-sensitive.", ["True", "False"], "True", "For example, main and Main are different identifiers.")]
+    },
+    {
+        "title": "Your First C Program", "theory": "Create a file named hello.c and write a small Hello World program. Compile it with GCC or Clang, read any diagnostics, and execute the resulting program. The source includes stdio.h so puts is declared. `int main(void)` is the program entry point, braces delimit the function body, puts prints the message and a newline, and return 0 indicates success. Common errors include saving the file with the wrong extension, compiling from the wrong directory, missing a quote or semicolon, and typing `printf` without including stdio.h. After it works, modify the message and add a second output line.",
+        "code": '#include <stdio.h>\n\nint main(void) {\n    puts("Hello, World!");\n    puts("I am learning C.");\n    return 0;\n}', "output": "Hello, World!\nI am learning C.", "explanation": "Line 1 imports the declaration for puts. Lines 3–6 define main. Each puts call prints one complete line, and line 7 returns success.",
+        "mm": "hello.c ဖိုင်ကို ဖန်တီးပြီး Hello World program ကို ရေးပါ။ GCC သို့မဟုတ် Clang ဖြင့် compile လုပ်ပြီး executable ကို run ပါ။ puts သည် စာကြောင်းတစ်ကြောင်းစီကို output ထုတ်ပေးပြီး return 0 သည် အောင်မြင်စွာ ပြီးဆုံးကြောင်း ပြသည်။",
+        "questions": [("Which command compiles hello.c with GCC and warnings?", ["gcc -std=c11 -Wall -Wextra -Wpedantic hello.c -o hello", "gcc hello.txt --read", "run hello.c"], "gcc -std=c11 -Wall -Wextra -Wpedantic hello.c -o hello", "This command compiles and links hello.c into an executable named hello."), ("What does puts add after its text?", ["A newline", "A compiler", "A pointer"], "A newline", "puts writes the string followed by a newline."), ("What will the second program line print?", ["I am learning C.", "Hello, World!", "Nothing"], "I am learning C.", "The second puts call contains that exact message." )]
+    },
+]
+
 def lesson_content(title, topic, theory, code, output, explanation):
     return f"Introduction\n{theory}\n\nLearning objectives\n- Explain {title.lower()} in your own words.\n- Read and modify a complete, portable C program.\n- Predict the output before compiling.\n\nPrerequisites\nComplete the previous lesson in this course and be comfortable reading the basic shape of main.\n\nSyntax and theory\nThe topic is {topic}. Work from the declaration and control flow outward: identify the types, the inputs, the expressions, and the statements that produce the result. Compile with -std=c11 -Wall -Wextra -Wpedantic and treat warnings as questions to answer.\n\nComplete example\n```c\n{code}\n```\n\nExpected output\n```text\n{output}\n```\n\nLine-by-line explanation\n{explanation} The include supplies the standard library declaration used by the program. main owns the execution flow, and return 0 communicates success.\n\nCommon beginner mistakes\n- Forgetting a semicolon or a matching brace.\n- Using a format specifier that does not match the value.\n- Reading or writing outside an array's valid bounds.\n- Assuming input, memory allocation, or a file operation always succeeds.\n\nExercises\n1. Change one input value and predict the output before compiling.\n2. Add one validation check relevant to this lesson.\n3. Explain one design choice in a short comment without changing the C syntax.\n\nSummary\nYou practiced {title.lower()} and saw how a small, complete program turns the idea into observable output.\n"
+
+def module_one_content(title, theory, code, output, explanation, mm):
+    return f"Introduction\n{theory}\n\nLearning objectives\n- Define the key terms in {title.lower()}.\n- Explain the idea using a beginner-friendly example.\n- Predict the output of a complete C program.\n\nPrerequisites\nNo prior programming experience is required. Read the course welcome and keep a C11 compiler available for practice.\n\nDetailed theory and real-world example\n{theory}\n\nDiagram\nInput or source text -> processing or translation -> output or executable behavior.\n\nComplete C example\n```c\n{code}\n```\n\nExpected output\n```text\n{output}\n```\n\nLine-by-line explanation\n{explanation} The header or declaration makes the library operation known to the compiler. main controls the example, each statement performs one deliberate step, and return 0 reports success.\n\nCommon beginner mistakes\n- Skipping the theory and copying code without predicting its output.\n- Confusing a compiler error with a logical error.\n- Omitting quotes, semicolons, braces, or the required header.\n- Assuming a program is correct because it compiles once.\n\nExercises\n1. Explain the example to a study partner using the key terms from this lesson.\n2. Change the input or message, predict the output, then compile with -std=c11 -Wall -Wextra -Wpedantic.\n3. Draw the input/process/output or source/compile/link/runtime flow in your notes.\n\nMyanmar explanation\n{mm}\n\nSummary\nYou can now describe {title.lower()}, read the complete example, and test a small change safely.\n"
+
+def seed_module_one(db, module):
+    from .models import CodeExample, Lesson, LessonQuiz, QuizQuestion
+    for position, item in enumerate(MODULE_ONE_LESSONS, 1):
+        slug = f"01-{item['title'].lower().replace(' ', '-')}"
+        lesson = db.scalar(select(Lesson).where(Lesson.module_id == module.id, Lesson.order_index == position))
+        if not lesson:
+            lesson = Lesson(module_id=module.id, title=item["title"], slug=slug, description=item["theory"][:240], content_en="", order_index=position, duration_minutes=30, status="published", published=True)
+            db.add(lesson); db.flush()
+        lesson.title = item["title"]; lesson.slug = slug; lesson.description = item["theory"][:240]
+        lesson.content_en = module_one_content(item["title"], item["theory"], item["code"], item["output"], item["explanation"], item["mm"])
+        lesson.content_mm = item["mm"]; lesson.duration_minutes = 30; lesson.status = "published"; lesson.published = True
+        example = db.scalar(select(CodeExample).where(CodeExample.lesson_id == lesson.id, CodeExample.position == 1))
+        if not example:
+            example = CodeExample(lesson_id=lesson.id, position=1); db.add(example)
+        example.title = f"{item['title']} — complete example"; example.language = "c"; example.filename = "hello.c"; example.code = item["code"]; example.description = f"Expected output:\n{item['output']}\n\nLine-by-line explanation:\n{item['explanation']}"
+        quiz = db.scalar(select(LessonQuiz).where(LessonQuiz.lesson_id == lesson.id))
+        if not quiz:
+            quiz = LessonQuiz(lesson_id=lesson.id, title=f"Review quiz: {item['title']}", explanation="Try every question, read the explanation, and then revisit the lesson before repeating the quiz."); db.add(quiz); db.flush()
+        quiz.title = f"Review quiz: {item['title']}"; quiz.explanation = "Try every question, read the explanation, and then revisit the lesson before repeating the quiz."
+        existing = {q.position: q for q in db.scalars(select(QuizQuestion).where(QuizQuestion.quiz_id == quiz.id)).all()}
+        for question_position, (prompt, options, answer, question_explanation) in enumerate(item["questions"], 1):
+            question = existing.get(question_position)
+            if not question:
+                question = QuizQuestion(quiz_id=quiz.id, position=question_position); db.add(question)
+            question.prompt = prompt; question.question_type = "true_false" if options == ["True", "False"] else ("code_output" if "output" in prompt.lower() else "multiple_choice"); question.options_json = json.dumps(options); question.correct_answer = answer; question.explanation = question_explanation
 
 def seed_c_curriculum(db, course):
     from .models import CodeExample, CourseModule, Lesson, LessonQuiz, QuizQuestion
@@ -95,6 +163,11 @@ def seed_c_curriculum(db, course):
         if not module:
             module = CourseModule(course_id=course.id, title=f"{module_position:02d} {module_title}", order_index=module_position)
             db.add(module); db.flush()
+        else:
+            module.title = f"{module_position:02d} {module_title}"
+        if module_position == 1:
+            seed_module_one(db, module)
+            continue
         for lesson_position, (title, theory, code, output, explanation) in enumerate(lessons, 1):
             lesson_slug = f"{module_position:02d}-{title.lower().replace(' ', '-')[:50]}"
             lesson = db.scalar(select(Lesson).where(Lesson.module_id == module.id, Lesson.order_index == lesson_position))
@@ -108,7 +181,8 @@ def seed_c_curriculum(db, course):
                 quiz = LessonQuiz(lesson_id=lesson.id, title=f"Check your understanding: {title}", explanation="Review the lesson and try the exercises before repeating the quiz.")
                 db.add(quiz); db.flush()
                 db.add(QuizQuestion(quiz_id=quiz.id, prompt=f"Which idea is central to {title.lower()}?", options_json=json.dumps([title, "Ignoring compiler warnings", "Writing code without testing"]), correct_answer=title, explanation=f"The correct answer is {title}, because it is the focus of this lesson.", position=1))
-    course.duration_minutes = len(MODULES) * 2 * 25
+    total_lessons = len(MODULE_ONE_LESSONS) + sum(len(lessons) for _, _, lessons in MODULES[1:])
+    course.duration_minutes = total_lessons * 30
     course.outcomes = "Understand C program structure|Write and explain portable C programs|Use types, control flow, functions, arrays, pointers, and files safely|Plan and test beginner C projects"
     course.requirements = "No prior programming experience|A C11 compiler such as GCC or Clang|A text editor"
     course.status = "published"

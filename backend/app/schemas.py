@@ -29,6 +29,13 @@ class QuizQuestionOut(BaseModel):
     id: UUID; prompt: str; question_type: str; options: list[str] = Field(default_factory=list); position: int
 class QuizOut(BaseModel):
     id: UUID; lesson_id: UUID; title: str; explanation: str; questions: list[QuizQuestionOut] = Field(default_factory=list); latest_attempt: dict|None = None
+class AdminQuizQuestionIn(BaseModel):
+    prompt: str = Field(min_length=1, max_length=4000)
+    options: list[str] = Field(default_factory=list, max_length=10)
+    correct_answer: str = Field(min_length=1, max_length=255)
+    explanation: str = Field(default="", max_length=4000)
+    question_type: str = Field(default="multiple_choice", pattern=r"^(multiple_choice|true_false|code_output)$")
+    position: int = Field(ge=1)
 class PathOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; description: str
 class RegisterIn(BaseModel):

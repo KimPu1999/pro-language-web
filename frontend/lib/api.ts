@@ -1,4 +1,4 @@
-import type { AdminCourse, AdminDashboard, AdminPage, Challenge, ChallengeCategory, ChallengePage, ChallengeProgress, Course, CourseDetail, Dashboard, Enrollment, Language, Lesson, LessonQuiz, Module, Paginated, RunnerJob, RunnerLanguage, SkillDashboard, User, LearningIntelligence, LearningPlan, RevisionItem } from "./types";
+import type { AdminCourse, AdminDashboard, AdminPage, AdminQuiz, Challenge, ChallengeCategory, ChallengePage, ChallengeProgress, Course, CourseDetail, Dashboard, Enrollment, Language, Lesson, LessonQuiz, Module, Paginated, RunnerJob, RunnerLanguage, SkillDashboard, User, LearningIntelligence, LearningPlan, RevisionItem } from "./types";
 
 // Browser requests use the same-origin Next rewrite. Server rendering may use the private internal URL.
 const base = process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === "undefined" ? process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000" : "");
@@ -331,4 +331,10 @@ export const gamificationNetworkApi = {
   appeal: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/gamification-network/competitions/${id}/appeals`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
   integrity: () => request<any[]>("/api/v1/gamification-network/platform/integrity"),
   analytics: () => request<any>("/api/v1/gamification-network/platform/analytics"),
+};
+
+export const adminQuizApi = {
+  get: (lessonId: string) => request<AdminQuiz>(`/api/v1/admin/lessons/${lessonId}/quiz`),
+  createQuestion: (lessonId: string, body: unknown, csrf: string) => request<AdminQuiz["questions"][number]>(`/api/v1/admin/lessons/${lessonId}/quiz/questions`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  updateQuestion: (questionId: string, body: unknown, csrf: string) => request<AdminQuiz["questions"][number]>(`/api/v1/admin/quiz/questions/${questionId}`, { method: "PATCH", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
 };
