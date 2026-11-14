@@ -106,3 +106,11 @@ Migration `0038_career_network` adds talent privacy, employer verification, role
 ## Phase 38
 
 Migration `0039_community_network` adds clubs, club memberships, connections, peer requests/sessions, events, registrations, attendance, activity, shared resources, verified reputation, safety reports, moderation actions, and audit logs. Existing study groups, teams, projects, forums, live classes, and collaboration records are reused.
+
+## Phase 39
+
+Migration `0040_gamification_network` adds quest definitions/versions/assignments,
+verified completions, an XP ledger, level rules, mission evidence, competition
+integrity cases, appeals, and gamification audit records. Existing XP balances,
+achievements, streaks, challenges, competitions, and leaderboard preferences are
+reused.

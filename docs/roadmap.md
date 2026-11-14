@@ -118,3 +118,11 @@ Implemented additively: career dashboard entry points, private talent profiles, 
 ## Phase 38 — Global learning community
 
 Implemented foundations include community hub, coding clubs, opt-in developer discovery, peer-learning requests, moderated events, capacity-aware registration, public feed, verified reputation summary, safety reports, and platform analytics.
+
+## Phase 39 — Learning gamification
+
+Implemented foundations include verified quest assignments/completions, an
+idempotent XP ledger, level-rule support, global challenge and competition
+catalog entry points, opt-in leaderboards, competition appeals, integrity-case
+storage, gamification analytics, and dedicated route surfaces. Live runner,
+competition scale, browser, and migration validation remain release checks.

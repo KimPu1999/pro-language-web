@@ -310,3 +310,15 @@ export const communityNetworkApi = {
   moderation: () => request<any[]>("/api/v1/community-network/moderation"),
   analytics: () => request<any>("/api/v1/community-network/analytics"),
 };
+
+export const gamificationNetworkApi = {
+  dashboard: () => request<any>("/api/v1/gamification-network/dashboard"),
+  quests: () => request<any[]>("/api/v1/gamification-network/quests"),
+  completeQuest: (id: string, csrf: string) => request<any>(`/api/v1/gamification-network/quests/${id}/complete`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  challenges: (search = "") => request<any[]>(`/api/v1/gamification-network/challenges/global${search ? `?search=${encodeURIComponent(search)}` : ""}`),
+  competitions: () => request<any[]>("/api/v1/gamification-network/competitions"),
+  leaderboards: (period = "all_time") => request<any>(`/api/v1/gamification-network/leaderboards?period=${period}`),
+  appeal: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/gamification-network/competitions/${id}/appeals`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  integrity: () => request<any[]>("/api/v1/gamification-network/platform/integrity"),
+  analytics: () => request<any>("/api/v1/gamification-network/platform/analytics"),
+};

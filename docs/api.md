@@ -207,3 +207,11 @@ The additive `/api/v1/career-network` API provides private-by-default talent pro
 ## Phase 38 community network
 
 `/api/v1/community-network` provides the additive community hub, coding clubs, opt-in developer networking, peer-learning requests, published events and capacity-aware registration, public feed, reputation summary, safety reports, moderation queue, and privacy-aware analytics. Existing `/api/v1/community`, `/api/v1`, live-class, collaboration, and hackathon routes remain authoritative for their domains.
+
+## Phase 39 gamification API
+
+`/api/v1/gamification-network` provides the verified dashboard, assigned quests,
+server-evidence quest completion, published challenge/competition catalogs,
+opt-in leaderboards, competition appeals, platform integrity cases, and
+privacy-aware analytics. Admin mutation endpoints retain server-side RBAC and
+CSRF requirements.

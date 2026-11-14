@@ -101,3 +101,10 @@ Career network data is served by an additive FastAPI router. Existing career and
 ## Global community network
 
 Community-network capabilities are additive to the existing community, teams, live classes, marketplace, and collaboration services. Visibility and membership are evaluated server-side; real-time collaboration remains truthful about gateway configuration.
+
+## Phase 39 gamification boundary
+
+Gamification adds versioned quest assignments, verified completion evidence, an
+append-only XP ledger, level rules, competition integrity cases, appeals, and
+opt-in leaderboard presentation. Existing challenges, achievements, streaks,
+competitions, and secure runner services remain authoritative.
