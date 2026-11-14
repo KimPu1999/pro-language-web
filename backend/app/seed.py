@@ -18,6 +18,7 @@ from .html_course_content import seed_html_course
 from .css_course_content import seed_css_course
 from .javascript_course_content import seed_javascript_course
 from .python_course_content import seed_python_course
+from .java_course_content import seed_java_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -38,7 +39,7 @@ COURSES = [
     ("React", "react", "javascript", "#61DAFB", "frontend-development"), ("Next.js", "next-js", "javascript", "#F8FAFC", "frontend-development"),
     ("jQuery", "jquery", "javascript", "#0769AD", "frontend-development"), ("Tailwind CSS", "tailwind-css", "css", "#06B6D4", "frontend-development"),
     ("Bootstrap", "bootstrap", "css", "#7952B3", "frontend-development"), ("C Programming", "c-programming", "c", "#A8B9CC", "programming-languages"),
-    ("C++ Programming — Beginner to Professional Foundations", "cpp-programming", "cpp", "#00599C", "programming-languages"), ("Java", "java", "java", "#ED8B00", "programming-languages"),
+    ("C++ Programming — Beginner to Professional Foundations", "cpp-programming", "cpp", "#00599C", "programming-languages"), ("Java", "java", "java", "#E76F51", "programming"),
     ("Advanced Java", "advanced-java", "java", "#ED8B00", "programming-languages"), ("Python", "python", "python", "#3776AB", "programming"),
     ("C#", "c-sharp", "c-sharp", "#512BD4", "programming-languages"), ("Go", "go", "go", "#00ADD8", "programming-languages"),
     ("Rust", "rust", "rust", "#DEA584", "programming-languages"), ("Node.js", "node-js", "javascript", "#339933", "backend-development"),
@@ -265,6 +266,9 @@ def main():
         python_course = db.scalar(select(Course).where(Course.slug == "python"))
         if python_course:
             seed_python_course(db, python_course)
+        java_course = db.scalar(select(Course).where(Course.slug == "java"))
+        if java_course:
+            seed_java_course(db, java_course)
         seed_challenges(db)
         seed_projects(db)
 
