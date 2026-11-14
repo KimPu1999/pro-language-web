@@ -103,3 +103,6 @@ existing course or enrollment records.
 ## Phase 37
 
 Migration `0038_career_network` adds talent privacy, employer verification, role requirements, skill-gap snapshots, resume sections, reviewed job postings, saved jobs, contact requests, fraud reports, and application event history. Existing `career_profiles`, `career_roadmaps`, `resume_documents`, `resume_versions`, `interview_sessions`, and `job_applications` are reused.
+## Phase 38
+
+Migration `0039_community_network` adds clubs, club memberships, connections, peer requests/sessions, events, registrations, attendance, activity, shared resources, verified reputation, safety reports, moderation actions, and audit logs. Existing study groups, teams, projects, forums, live classes, and collaboration records are reused.

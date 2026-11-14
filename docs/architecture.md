@@ -98,3 +98,6 @@ from unverified analytics.
 ## Career network
 
 Career network data is served by an additive FastAPI router. Existing career and credential sources remain authoritative; network exposure is governed by explicit privacy flags and administrator verification.
+## Global community network
+
+Community-network capabilities are additive to the existing community, teams, live classes, marketplace, and collaboration services. Visibility and membership are evaluated server-side; real-time collaboration remains truthful about gateway configuration.

@@ -115,3 +115,6 @@ and full rubric scoring require additional verified evidence and configuration.
 ## Phase 37 — Career readiness
 
 Implemented additively: career dashboard entry points, private talent profiles, evidence-based skill gaps, employer verification gates, reviewed job discovery, opt-in talent contact, and audit/report controls. Remaining work is provider/infrastructure validation for production job workflows and resume rendering.
+## Phase 38 — Global learning community
+
+Implemented foundations include community hub, coding clubs, opt-in developer discovery, peer-learning requests, moderated events, capacity-aware registration, public feed, verified reputation summary, safety reports, and platform analytics.

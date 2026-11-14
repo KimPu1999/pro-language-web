@@ -204,3 +204,6 @@ evidence-driven.
 ## Phase 37 career network
 
 The additive `/api/v1/career-network` API provides private-by-default talent profiles and visibility controls, evidence-based skill gaps, reviewed jobs, employer verification, opt-in talent discovery, contact requests, fraud reports, and platform overview counts. Existing `/api/v1/career` endpoints remain authoritative for roadmaps, resumes, interviews, mentorship, portfolios, and the private application tracker.
+## Phase 38 community network
+
+`/api/v1/community-network` provides the additive community hub, coding clubs, opt-in developer networking, peer-learning requests, published events and capacity-aware registration, public feed, reputation summary, safety reports, moderation queue, and privacy-aware analytics. Existing `/api/v1/community`, `/api/v1`, live-class, collaboration, and hackathon routes remain authoritative for their domains.

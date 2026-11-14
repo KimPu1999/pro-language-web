@@ -220,3 +220,6 @@ paywalls. Draft resources require human moderation before publication.
 ### Phase 37 career network
 
 Phase 37 adds evidence-based career readiness views, private-by-default developer talent profiles, reviewed free job listings, employer verification, opt-in discovery, and platform audit controls. See `docs/phase-37-career-audit.md` and `docs/career-security.md`.
+### Phase 38 global community
+
+Phase 38 adds additive global community and networking foundations. Existing forums, teams, live classes, hackathons, and collaboration remain the sources of truth. See `docs/phase-38-community-audit.md` and `docs/community-security.md`.

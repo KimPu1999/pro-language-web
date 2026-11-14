@@ -291,3 +291,22 @@ export const careerNetworkApi = {
   jobDecision: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/career-network/platform/jobs/${id}/decision`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
   report: (body: unknown, csrf: string) => request<any>("/api/v1/career-network/reports", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
 };
+
+export const communityNetworkApi = {
+  hub: () => request<any>("/api/v1/community-network/hub"),
+  clubs: (technology = "") => request<any[]>(`/api/v1/community-network/clubs${technology ? `?technology=${encodeURIComponent(technology)}` : ""}`),
+  createClub: (body: unknown, csrf: string) => request<any>("/api/v1/community-network/clubs", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  joinClub: (id: string, csrf: string) => request<any>(`/api/v1/community-network/clubs/${id}/join`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  developers: (search = "") => request<any[]>(`/api/v1/community-network/developers${search ? `?search=${encodeURIComponent(search)}` : ""}`),
+  connect: (body: unknown, csrf: string) => request<any>("/api/v1/community-network/connections", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  peer: (body: unknown, csrf: string) => request<any>("/api/v1/community-network/peer-learning", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  peerRequests: () => request<any[]>("/api/v1/community-network/peer-learning"),
+  events: () => request<any[]>("/api/v1/community-network/events"),
+  createEvent: (body: unknown, csrf: string) => request<any>("/api/v1/community-network/events", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  registerEvent: (id: string, csrf: string) => request<any>(`/api/v1/community-network/events/${id}/register`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  feed: () => request<any[]>("/api/v1/community-network/feed"),
+  reputation: () => request<any>("/api/v1/community-network/reputation"),
+  report: (body: unknown, csrf: string) => request<any>("/api/v1/community-network/reports", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  moderation: () => request<any[]>("/api/v1/community-network/moderation"),
+  analytics: () => request<any>("/api/v1/community-network/analytics"),
+};
