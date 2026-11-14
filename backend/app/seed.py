@@ -26,6 +26,7 @@ from .typescript_course_content import seed_typescript_course
 from .php_course_content import seed_php_course
 from .csharp_course_content import seed_csharp_course
 from .dart_course_content import seed_dart_course
+from .data_analysis_course_content import seed_data_analysis_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -39,6 +40,7 @@ CATEGORIES = [
     ("Mobile Development", "mobile-development"),
     ("AI & Data Science", "ai-data-science"),
     ("Computer Science", "computer-science"),
+    ("Data Science & Analytics", "data-analytics"),
 ]
 COURSES = [
     ("HTML", "html", "html", "#E34F26", "web-development"), ("CSS", "css", "css", "#264DE4", "web-development"),
@@ -65,7 +67,7 @@ COURSES = [
     ("Dart Programming — From Zero to Advanced", "dart", "dart", "#0175C2", "mobile-development"), ("Flutter", "flutter", "dart", "#54C5F8", "mobile-development"),
     ("React Native", "react-native", "javascript", "#61DAFB", "mobile-development"), ("Kotlin", "kotlin", "kotlin", "#7F52FF", "mobile-development"),
     ("Python for AI", "python-for-ai", "python", "#3776AB", "ai-data-science"), ("Machine Learning", "machine-learning", "python", "#10B981", "ai-data-science"),
-    ("Data Analysis", "data-analysis", "python", "#F59E0B", "ai-data-science"), ("Data Structures", "data-structures", "computer-science", "#6366F1", "computer-science"),
+    ("Data Analysis — From Zero to Professional Data Analyst", "data-analysis", "python", "#0D9488", "data-analytics"), ("Data Structures", "data-structures", "computer-science", "#6366F1", "computer-science"),
     ("Algorithms", "algorithms", "computer-science", "#8B5CF6", "computer-science"), ("Operating Systems", "operating-systems", "computer-science", "#64748B", "computer-science"),
 ]
 
@@ -316,6 +318,10 @@ def main():
         if dart_course:
             dart_course.category_id = categories["mobile-development"].id
             seed_dart_course(db, dart_course)
+        data_analysis_course = db.scalar(select(Course).where(Course.slug == "data-analysis"))
+        if data_analysis_course:
+            data_analysis_course.category_id = categories["data-analytics"].id
+            seed_data_analysis_course(db, data_analysis_course)
         seed_challenges(db)
         seed_projects(db)
 

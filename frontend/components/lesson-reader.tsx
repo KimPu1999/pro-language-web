@@ -18,6 +18,7 @@ import { TypescriptPlayground } from "@/components/typescript-playground";
 import { PhpPlayground } from "@/components/php-playground";
 import { CsharpPlayground } from "@/components/csharp-playground";
 import { DartPlayground } from "@/components/dart-playground";
+import { DataAnalysisLab } from "@/components/data-analysis-lab";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -259,6 +260,10 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
           title={`${lesson.title} practice`}
           code={lesson.code_examples.find(item => item.language.toLowerCase() === "dart")?.code ?? ""}
         />
+      )}
+
+      {courseSlug === "data-analysis" && (
+        <DataAnalysisLab title={`${lesson.title} dataset lab`} />
       )}
 
       {!quizLoading && quiz && (

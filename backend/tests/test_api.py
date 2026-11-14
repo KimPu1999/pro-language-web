@@ -517,6 +517,43 @@ def test_dart_curriculum_is_published_and_idempotent(client):
     assert response.json()["title"] == "Dart Programming — From Zero to Advanced"
     assert len(response.json()["modules"]) == 32
 
+def test_data_analysis_curriculum_is_published_and_idempotent(client):
+    from app.data_analysis_course_content import MODULES, MODULE_ONE, seed_data_analysis_course
+    from app.models import CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
+    import json
+
+    with client.session_factory() as db:
+        language = db.query(ProgrammingLanguage).filter_by(slug="python").one_or_none()
+        if language is None:
+            language = ProgrammingLanguage(name="Python", slug="python", color="#3776AB")
+            db.add(language)
+        category = db.query(CourseCategory).filter_by(slug="data-analytics").one_or_none()
+        if category is None:
+            category = CourseCategory(name="Data Science & Analytics", slug="data-analytics")
+            db.add(category)
+        db.flush()
+        course = Course(language_id=language.id, category_id=category.id, title="Data Analysis", slug="data-analysis", description="Analyst foundations", level="beginner", duration_minutes=0, published=True, status="draft")
+        db.add(course); db.flush(); seed_data_analysis_course(db, course); db.commit()
+        seed_data_analysis_course(db, course); db.commit()
+        modules = db.query(CourseModule).filter_by(course_id=course.id).order_by(CourseModule.order_index).all()
+        lessons = db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).order_by(CourseModule.order_index, Lesson.order_index).all()
+        assert [module.title for module in modules] == MODULES
+        assert len(modules) == 36
+        assert len(lessons) == 42
+        assert len(db.query(Lesson).filter_by(module_id=modules[0].id).all()) == len(MODULE_ONE)
+        assert all(lesson.published and "Business problem" in lesson.content_en and "Interpretation of findings" in lesson.content_en for lesson in lessons)
+        assert all(lesson.content_mm for lesson in lessons)
+        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 42
+        assert db.query(CodeExample).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id, CodeExample.language == "python").count() == 42
+        for question in db.query(QuizQuestion).join(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all():
+            assert question.correct_answer in json.loads(question.options_json)
+        assert course.title == "Data Analysis — From Zero to Professional Data Analyst"
+
+    response = client.get("/api/v1/courses/data-analysis")
+    assert response.status_code == 200
+    assert response.json()["title"] == "Data Analysis — From Zero to Professional Data Analyst"
+    assert len(response.json()["modules"]) == 36
+
 def test_course_detail_and_lesson(client):
     course=client.get("/api/v1/courses/python-foundations"); assert course.status_code==200; assert course.json()["modules"][0]["lessons"][0]["content_en"]=="Hello lesson"
     learning=client.get("/api/v1/courses/python-foundations/learning"); assert learning.status_code==200
