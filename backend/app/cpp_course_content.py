@@ -11,7 +11,7 @@ from .models import CourseModule, Lesson, LessonQuiz, QuizQuestion, CodeExample
 
 
 MODULES = [
-    "Introduction to C++", "C++ Environment Setup", "First C++ Program",
+    "Introduction to C++ Programming", "C++ Environment Setup", "First C++ Program",
     "Variables & Data Types", "Input & Output", "Operators & Expressions",
     "Conditional Statements", "Loops & Iteration", "Functions",
     "Arrays, Strings & Vectors", "References & Pointers", "Scope, Lifetime & Memory",
@@ -68,6 +68,16 @@ LESSONS = [
     (22, "Testing and CMake Foundations", "build tools", '#include <iostream>\n\nint add(int a, int b) { return a + b; }\nint main() { std::cout << add(2, 3) << "\\n"; }', "A small testable function separates behavior from I/O. CMake describes a portable build and can enforce the C++20 standard for a project.", "add_executable(app main.cpp); target_compile_features(app PRIVATE cxx_std_20)", "Testable function နှင့် CMake build configuration သည် project ကို maintain လုပ်လွယ်စေသည်။"),
 ]
 
+MODULE_ONE_LESSONS = [
+    ("What Is Programming?", "programming as a sequence of instructions", '#include <iostream>\n\nint main() {\n    std::cout << "A program follows steps.\\n";\n    std::cout << "The result is repeatable.\\n";\n}', "Programming is the process of describing data, decisions, and actions precisely enough for a computer to perform them. A program has inputs, processing steps, and observable outputs. The same source and input should produce a predictable result.", "input -> process -> output; statements execute in order", "Programming ဆိုသည်မှာ computer နားလည်နိုင်အောင် data၊ decision နှင့် action များကို အစီအစဉ်တကျ ဖော်ပြခြင်းဖြစ်သည်။"),
+    ("Introduction to C++", "the C++ language and standard library", '#include <iostream>\n\nint main() {\n    std::cout << "Modern C++20\\n";\n}', "C++ is a compiled, general-purpose language used for applications, games, embedded systems, browsers, and high-performance services. C++20 adds modern language and library features while keeping control over performance and resources.", "#include <iostream>; int main(); std::cout << expression", "C++ သည် application၊ game၊ embedded system နှင့် performance လိုအပ်သော software များတွင် အသုံးများသော compiled language ဖြစ်သည်။"),
+    ("C++ vs C", "language relationship and differences", '#include <iostream>\n#include <string>\n\nint main() {\n    std::string message{"C++ adds expressive abstractions"};\n    std::cout << message << "\\n";\n}', "C and C++ share many low-level ideas and both can produce fast native programs, but C++ adds classes, references, templates, the standard library, and RAII. C++ code should not be treated as automatically safe; correctness still depends on clear ownership and validation.", "C uses stdio-style APIs; C++ commonly uses iostream, std::string, containers, and classes", "C နှင့် C++ တွင် အခြေခံအယူအဆတူသော်လည်း C++ တွင် class၊ reference၊ template၊ standard library နှင့် RAII များ ပါဝင်သည်။"),
+    ("How C++ Programs Work", "source, compiler, linker, and runtime", '#include <iostream>\n\nint main() {\n    std::cout << "Source -> compiler -> executable -> output\\n";\n}', "A C++ program begins as source text. The preprocessor handles directives, the compiler translates source into object code, the linker combines object code and libraries, and the operating system starts the executable.", "preprocess -> compile -> link -> run", "C++ program သည် source text မှ preprocess၊ compile၊ link အဆင့်များဖြတ်ပြီး executable ဖြစ်လာသည်။"),
+    ("C++ Programming Tools", "compiler, editor, debugger, and build tool", '#include <iostream>\n\nint main() {\n    std::cout << "Tools make feedback faster.\\n";\n}', "A compiler translates code and reports diagnostics. An editor helps write source, a debugger helps inspect state, and a build tool records repeatable commands. Use strict warnings during learning.", "c++ -std=c++20 -Wall -Wextra -Wpedantic main.cpp -o main", "Compiler၊ editor၊ debugger နှင့် build tool များသည် code ရေးခြင်းနှင့် error ရှာခြင်းကို မြန်ဆန်စေသည်။"),
+    ("Your First C++ Program", "main, headers, and console output", '#include <iostream>\n\nint main() {\n    std::cout << "Hello, C++ learner!\\n";\n    return 0;\n}', "The first complete program demonstrates a header, the main entry point, stream output, and a successful return status. Save it as hello.cpp and compile it with the C++20 standard.", "int main() { ... }; std::cout << \"text\"; return 0;", "ပထမဆုံး C++ program တွင် header၊ main၊ std::cout နှင့် return status ပါဝင်သည်။"),
+    ("Programming Concepts & Assessment", "variables, decisions, repetition, and review", '#include <iostream>\n\nint main() {\n    int lessons{7};\n    if (lessons >= 5) std::cout << "Foundation ready\\n";\n}', "Programs combine sequence, selection, and repetition. Variables hold values, conditions select paths, and loops repeat work. This assessment reviews the vocabulary and the edit-compile-run workflow before Module 2.", "type name{value}; if (condition) { ... }; for (...) { ... }", "Program များသည် sequence၊ selection နှင့် repetition ကို ပေါင်းစပ်အသုံးပြုသည်။ Module 2 မတိုင်မီ အခြေခံ vocabulary နှင့် workflow ကို ပြန်လည်စစ်ဆေးပါ။"),
+]
+
 PROJECTS = [
     ("Simple Calculator", "Read two numbers, validate the operator, and calculate a result.", '#include <iostream>\nint main() { double a{12}, b{4}; char op{42}; if (op == 42) std::cout << a * b << "\\n"; }'),
     ("Number Guessing Game", "Compare a deterministic guess with a target and report the result.", '#include <iostream>\nint main() { const int target{7}; int guess{7}; std::cout << (guess == target ? "Correct\\n" : "Try again\\n"); }'),
@@ -96,6 +106,13 @@ def _content(title: str, topic: str, code: str, theory: str, syntax: str, mm: st
 
 
 def _output(code: str) -> str:
+    if "A program follows steps" in code: return "A program follows steps.\nThe result is repeatable."
+    if "Modern C++20" in code: return "Modern C++20"
+    if "C++ adds expressive abstractions" in code: return "C++ adds expressive abstractions"
+    if "Source -> compiler" in code: return "Source -> compiler -> executable -> output"
+    if "Tools make feedback faster" in code: return "Tools make feedback faster."
+    if "Hello, C++ learner!" in code: return "Hello, C++ learner!"
+    if "Foundation ready" in code: return "Foundation ready"
     if "C++ is ready" in code: return "C++ is ready"
     if "Hello, learner!" in code: return "Hello, learner!"
     if "Lessons: " in code: return "Lessons: 2"
@@ -165,8 +182,49 @@ def _questions(title: str, topic: str):
     ]
 
 
+def _module_one_questions(title: str):
+    question_bank = {
+        "What Is Programming?": [
+            ("Which sequence best describes a simple program?", ["Input, process, output", "Output, delete, guess", "Compile, sleep, repeat"], "Input, process, output", "A useful model is to identify inputs, processing, and observable outputs."),
+            ("True or false: A program should have predictable behavior for the same input.", ["True", "False"], "True", "Predictability makes software easier to test and explain."),
+            ("Which is a programming mistake?", ["Changing code without testing the result", "Naming a value clearly", "Writing a small test"], "Changing code without testing the result", "Untested changes can hide logic errors."),
+        ],
+        "Introduction to C++": [
+            ("Which library provides std::cout?", ["<iostream>", "<vector>", "<memory>"], "<iostream>", "iostream declares the standard stream objects used for console I/O."),
+            ("True or false: C++20 is a language standard version.", ["True", "False"], "True", "C++20 names a published version of the C++ language and library standard."),
+            ("What does std::cout usually do?", ["Writes formatted output", "Allocates a database", "Starts a debugger"], "Writes formatted output", "std::cout is the standard output stream."),
+        ],
+        "C++ vs C": [
+            ("Which feature is commonly associated with modern C++?", ["RAII and classes", "Only preprocessor macros", "No standard library"], "RAII and classes", "C++ adds abstractions such as classes, references, templates, and RAII."),
+            ("True or false: C++ code is automatically safe just because it uses a newer language.", ["True", "False"], "False", "Safety still requires correct ownership, validation, and careful design."),
+            ("Which type manages text in the example?", ["std::string", "int", "bool"], "std::string", "std::string is the standard library text type used in the example."),
+        ],
+        "How C++ Programs Work": [
+            ("Which stage combines object code and libraries?", ["Linking", "Typing", "Scrolling"], "Linking", "The linker combines compiled pieces into an executable."),
+            ("True or false: The operating system runs C++ source text directly in the normal compiled workflow.", ["True", "False"], "False", "The usual workflow produces an executable before runtime."),
+            ("What is the first artifact a developer edits?", ["Source code", "A CPU register", "A hidden binary"], "Source code", "The developer starts with human-readable source text."),
+        ],
+        "C++ Programming Tools": [
+            ("Which tool reports compiler diagnostics?", ["Compiler", "Calculator", "Image viewer"], "Compiler", "The compiler translates source and reports syntax and type diagnostics."),
+            ("True or false: -Wall -Wextra -Wpedantic are useful learning flags.", ["True", "False"], "True", "Warnings help identify suspicious or non-portable code early."),
+            ("What is a debugger used for?", ["Inspecting program state", "Replacing all tests", "Formatting a hard drive"], "Inspecting program state", "A debugger can pause execution and inspect values and call paths."),
+        ],
+        "Your First C++ Program": [
+            ("Where does a hosted C++ program begin?", ["main", "std::vector", "README"], "main", "The main function is the program entry point."),
+            ("True or false: #include <iostream> supplies declarations for stream I/O.", ["True", "False"], "True", "The header declares facilities used by std::cout."),
+            ("What does return 0 from main communicate?", ["Successful completion", "A loop", "A compiler installation"], "Successful completion", "Zero is the conventional successful process status."),
+        ],
+        "Programming Concepts & Assessment": [
+            ("Which construct selects between paths?", ["if", "std::string", "#include"], "if", "A condition selects a branch at runtime."),
+            ("True or false: Opening a lesson automatically proves its concepts were mastered.", ["True", "False"], "False", "Completion should come from an explicit lesson action and quiz/progress evidence."),
+            ("What should you do before changing a working example?", ["Predict and record the expected result", "Delete all tests", "Disable warnings"], "Predict and record the expected result", "Prediction makes the change observable and testable."),
+        ],
+    }
+    return question_bank.get(title, _questions(title, "the lesson topic"))
+
+
 def seed_cpp_course(db, course):
-    course.title = "C++ Programming — Beginner to Professional Foundations"
+    course.title = "C++ Programming — From Zero to Modern C++"
     course.short_description = "A free, theory-first C++20 foundation with practical programs, projects, quizzes, and safe modern practices."
     course.description = "Learn Modern C++20 from first principles through console programs, standard library techniques, object-oriented design, debugging, and guided projects."
     course.level = "beginner"
@@ -183,7 +241,9 @@ def seed_cpp_course(db, course):
             db.add(module); db.flush()
         else:
             module.title = module_title
-        if module_index == 23:
+        if module_index == 1:
+            specs = MODULE_ONE_LESSONS
+        elif module_index == 23:
             specs = [(name, "guided project", code, requirements, "Break the project into requirements, implementation, tests, and an extension.", "Project တစ်ခုချင်းစီကို requirements၊ implementation၊ test နှင့် extension အဖြစ် ခွဲလုပ်ပါ။") for name, requirements, code in PROJECTS]
         elif module_index == 24:
             specs = [("Capstone Requirements and Architecture", "capstone planning", '#include <iostream>\nint main() { std::cout << "Capstone plan\\n"; }', "Choose a useful problem, write requirements, define types and functions, and plan tests before implementation.", "Requirements -> design -> implementation -> tests", "Capstone ကို code မရေးမီ requirements နှင့် tests ကို အရင်ရေးပါ။"), ("Final C++20 Assessment", "final assessment", '#include <iostream>\n#include <vector>\n#include <numeric>\nint main() { std::vector<int> values{2, 4, 6}; std::cout << std::accumulate(values.begin(), values.end(), 0) << "\\n"; }', "The final assessment combines types, functions, containers, algorithms, error handling, and explanation. A score is earned through the existing quiz and progress systems, not by opening the page.", "combine verified concepts; explain trade-offs; test edge cases", "Final assessment တွင် concept များကို ပေါင်းစပ်ပြီး edge case များကို test လုပ်ပါ။")]
@@ -215,10 +275,11 @@ def seed_cpp_course(db, course):
             if not quiz:
                 quiz = LessonQuiz(lesson_id=lesson.id, title=f"{title} knowledge check", explanation="Answer all questions, review the explanations, and retry after studying any missed concept.", status="published")
                 db.add(quiz); db.flush()
-            questions = _questions(title, topic)
+            questions = _module_one_questions(title) if module_index == 1 else _questions(title, topic)
             for position, (prompt, options, answer, explanation) in enumerate(questions, 1):
                 question = db.scalar(select(QuizQuestion).where(QuizQuestion.quiz_id == quiz.id, QuizQuestion.position == position))
-                values = dict(prompt=prompt, question_type="multiple_choice", options_json=json.dumps(options), correct_answer=answer, explanation=explanation)
+                question_type = "true_false" if options == ["True", "False"] else "multiple_choice"
+                values = dict(prompt=prompt, question_type=question_type, options_json=json.dumps(options), correct_answer=answer, explanation=explanation)
                 if not question: db.add(QuizQuestion(quiz_id=quiz.id, position=position, **values))
                 else:
                     for key, value in values.items(): setattr(question, key, value)

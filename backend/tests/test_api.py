@@ -100,16 +100,16 @@ def test_cpp_curriculum_is_separate_complete_and_idempotent(client):
         modules = db.query(CourseModule).filter_by(course_id=course.id).order_by(CourseModule.order_index).all()
         lessons = db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all()
         assert len(modules) == 24
-        assert len(lessons) == 58
+        assert len(lessons) == 63
         assert all(lesson.content_en and "Complete C++20 example" in lesson.content_en for lesson in lessons)
         assert all(lesson.content_mm for lesson in lessons)
-        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 58
+        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 63
         for question in db.query(QuizQuestion).join(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all():
             assert question.correct_answer in json.loads(question.options_json)
-        assert db.query(CodeExample).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id, CodeExample.language == "cpp").count() == 58
+        assert db.query(CodeExample).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id, CodeExample.language == "cpp").count() == 63
         response = client.get("/api/v1/courses/cpp-programming")
         assert response.status_code == 200
-        assert response.json()["title"] == "C++ Programming — Beginner to Professional Foundations"
+        assert response.json()["title"] == "C++ Programming — From Zero to Modern C++"
         assert len(response.json()["modules"]) == 24
 
 def test_course_detail_and_lesson(client):
