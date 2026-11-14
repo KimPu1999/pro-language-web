@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .auth import current_user, now, require_csrf, verified_user
+from .auth import current_user, require_csrf, verified_user
 from .config import settings
 from .db import get_db
 from .models import (

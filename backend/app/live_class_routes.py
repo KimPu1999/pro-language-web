@@ -9,7 +9,6 @@ from .auth import current_user,require_csrf,require_role
 from .config import settings
 from .db import get_db
 from .models import User,LiveClass,LiveClassSession,LiveClassRegistration,LiveClassWaitlist,LiveClassAttendance,LiveClassPresenceEvent,LiveClassChatMessage,LiveClassQuestion
-from .admin_routes import full_admin
 router=APIRouter(prefix="/api/v1/live-classes",tags=["live-classes"])
 class ClassIn(BaseModel):title:str=Field(min_length=3,max_length=200);description_en:str=Field(min_length=1,max_length=20000);description_mm:str|None=None;difficulty:str="beginner";capacity:int=Field(default=30,ge=1,le=1000)
 class SessionIn(BaseModel):starts_at:datetime;ends_at:datetime;timezone:str="UTC"

@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf, verified_user
 from .db import get_db
-from .models import (CareerRoadmap, Challenge, ChallengeSubmission, Course, CourseModule, Enrollment, Lesson, LessonProgress, ProjectTemplate, RoadmapPrerequisite, RoadmapRevision, RoadmapStage, RoadmapStep, RoadmapStepResource, StudentLearningGoal, StudentProject, StudentRoadmap, StudentRoadmapBookmark, StudentRoadmapProgress, User)
+from .models import (CareerRoadmap, ChallengeSubmission, Course, CourseModule, Lesson, LessonProgress, RoadmapPrerequisite, RoadmapStage, RoadmapStep, RoadmapStepResource, StudentLearningGoal, StudentProject, StudentRoadmap, StudentRoadmapBookmark, User)
 from .admin_routes import admin_user, full_admin, audit
 
 router=APIRouter(prefix="/api/v1",tags=["roadmaps"])

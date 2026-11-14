@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 
 from test_organizations import student
 

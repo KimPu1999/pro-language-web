@@ -7,18 +7,15 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .ai_service import get_provider, ProviderUnavailable
-from .auth import current_user, require_csrf, verified_user, now, require_role
+from .auth import require_csrf, now, require_role
 from .config import settings
 from .db import get_db
 from .models import (
     AIContentAuditLog, AIContentProject, AIContentQualityCheck, AIContentPublication,
     AIContentReviewDecision, AIContentReviewRequest, AIContentRevision,
-    AIContentTranslation, AIGenerationJob, AIGenerationOutput, AIChallengeDraft,
-    AICurriculumPlan, AILessonDraft, AIProjectDraft, AIQuizDraft,
-    AIContentUsageRecord, Organization, OrganizationMembership, User,
+    AIContentTranslation, AIGenerationJob, AILessonDraft, AIContentUsageRecord, User,
 )
-from .organization_routes import check_role, org_context
+from .organization_routes import org_context
 
 router = APIRouter(prefix="/api/v1", tags=["content-studio"])
 CONTENT_MANAGERS = {"owner", "admin", "instructor"}

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from sqlalchemy import select
-from app.models import LessonProgress, SkillDefinition, StudentSkillEvidence, User
+from app.models import SkillDefinition, User
 
 def login_student(client, email="intelligence@example.com", verified=False):
     response = client.post("/api/v1/auth/register", json={"full_name":"Intelligence Student","email":email,"password":"strong-pwd12","confirm_password":"strong-pwd12","accept_terms":True})

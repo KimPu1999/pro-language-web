@@ -1,6 +1,5 @@
 import hashlib
 import json
-from datetime import timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -8,17 +7,17 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .auth import current_user, require_csrf, verified_user, now
+from .auth import require_csrf, now
 from .config import settings
 from .db import get_db
 from .models import (
     AutomationAgentDefinition, AutomationAgentToolPermission, AutomationApprovalDecision,
     AutomationApprovalRequest, AutomationAuditLog, AutomationIdempotencyKey,
-    AutomationRecommendation, AutomationSecurityEvent, AutomationStepRun,
+    AutomationRecommendation, AutomationStepRun,
     AutomationTemplate, AutomationTrigger, AutomationUsageRecord, AutomationWorkflow,
     AutomationWorkflowEdge, AutomationWorkflowNode, AutomationWorkflowRun,
     AutomationWorkflowVersion,
-    Organization, OrganizationMembership, User,
+    User,
 )
 from .organization_routes import check_role, org_context
 

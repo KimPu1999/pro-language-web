@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
-from sqlalchemy import select
 from app.auth import password_hasher
-from app.models import Course, CourseCategory, ProgrammingLanguage, User
+from app.models import User
 def admin_login(client):
     with client.session_factory() as db:
         user=User(email="admin@example.com",email_normalized="admin@example.com",password_hash=password_hasher.hash("admin-pass-123"),display_name="Admin",role="admin",account_status="active",email_verified_at=datetime.now(timezone.utc)); db.add(user); db.commit()

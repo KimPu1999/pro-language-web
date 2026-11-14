@@ -174,3 +174,7 @@ Mobile learning routes include `/dashboard/mobile`, `/offline/library`, `/offlin
 ## Phase 29 AI learning companion
 
 AI companion routes include `/dashboard/ai-companion`, `/ai-companion/chat`, `/ai-companion/study`, `/ai-companion/revision`, `/ai-companion/practice`, `/ai-companion/goals`, `/ai-companion/insights`, `/ai-companion/planner`, `/ai-companion/voice`, `/settings/ai-companion`, `/instructor/ai-learning-insights`, and `/platform/ai-companion`. Migration `0031_ai_companion` adds adaptive sessions, goals, recommendations, revision records, privacy metadata, and operations records. Existing AI chat/SSE remains provider-gated; voice is `Not Configured` by default.
+
+## Phase 30 quality and launch readiness
+
+The quality center is available at `/platform/quality-center` and reuses the server-protected platform quality API. The Phase 30 recommendation is currently NO-GO for production until staging migration, restore, browser, isolation, accessibility, performance, provider, and rollback evidence is attached. See `docs/phase-30-release-readiness.md`.

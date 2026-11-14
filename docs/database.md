@@ -21,6 +21,10 @@ Migration `0008_ai_tutor` adds conversations, messages, message context referenc
 Migration `0010_community` adds community categories/posts/tags, answers, bounded-depth comments, unique votes and bookmarks, snippets, study groups and memberships, reports, user blocks, and user-scoped notifications. Existing users and learning records are preserved.
 
 Migration `0011_live_classes` adds classes, sessions, instructors, registrations, waitlists, attendance, idempotent presence events, private recording metadata, resources, Q&A, chat messages, code snapshots, and audit logs. Timestamps are timezone-aware and schedules are stored in UTC.
+
+## Phase 30 database release control
+
+The migration chain currently has one head, `0031_ai_companion`. Production upgrades require an encrypted backup, isolated restore rehearsal, migration application, smoke tests, and rollback evidence before approval.
 Migration `0013_operations` adds post-launch incidents, incident events, student feedback, engineering issues, release records, service health history, maintenance windows, and improvement items. It is additive and preserves all existing learning data.
 # Phase 16 additions
 

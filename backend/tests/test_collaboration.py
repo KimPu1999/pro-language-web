@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from sqlalchemy import select
-from app.models import DeveloperTeam, DeveloperTeamMember, User
+from app.models import User
 
 def verified_student(client, email="team@example.com"):
     response=client.post("/api/v1/auth/register",json={"full_name":"Team Student","email":email,"password":"strong-pwd12","confirm_password":"strong-pwd12","accept_terms":True}); assert response.status_code==201

@@ -8,10 +8,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf, require_role, verified_user
 from .db import get_db
-from .models import (CareerGoal, CareerProfile, CareerReadinessSnapshot, CareerRoadmap, Course,
-    InterviewAttempt, InterviewEvaluation, InterviewQuestion, InterviewSession, JobApplication,
-    MentorAvailability, MentorProfile, MentorshipFeedback, MentorshipRequest, MentorshipSession,
-    PortfolioReviewFeedback, PortfolioReviewRequest, ResumeDocument, ResumeVersion, StudentPortfolio,
+from .models import (CareerGoal, CareerProfile, CareerRoadmap, InterviewAttempt, InterviewEvaluation, InterviewQuestion, InterviewSession, JobApplication,
+    MentorAvailability, MentorProfile, MentorshipRequest, MentorshipSession,
+    PortfolioReviewRequest, ResumeDocument, ResumeVersion, StudentPortfolio,
     StudentProject, User)
 
 router=APIRouter(prefix="/api/v1/career",tags=["career development"])

@@ -73,7 +73,7 @@ def test_cloud_workspace_creation_and_file_path_protection(client):
 
 def test_cloud_workspace_isolation(client):
     owner = user(client, "cloud-owner@example.com")
-    other = user(client, "cloud-other@example.com")
+    user(client, "cloud-other@example.com")
     lab_id = lab(client, owner)
     csrf = login(client, "cloud-owner@example.com")
     created = client.post(f"/api/v1/cloud-labs/{lab_id}/workspaces", headers={"X-CSRF-Token": csrf})

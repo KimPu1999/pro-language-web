@@ -1,7 +1,6 @@
-import hashlib, json, secrets
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -9,7 +8,7 @@ from .auth import current_user, hash_token, new_token, require_csrf, require_rol
 from .db import get_db
 from .models import (CodingCompetition, CompetitionParticipant, CompetitionRanking, DeveloperTeam,
     DeveloperTeamInvitation, DeveloperTeamMember, HackathonEvent, HackathonRegistration,
-    HackathonSubmission, HackathonTeam, TeamActivityEvent, TeamProject, TeamProjectTask, User)
+    HackathonSubmission, TeamActivityEvent, TeamProject, TeamProjectTask, User)
 
 router=APIRouter(prefix="/api/v1",tags=["collaboration"])
 ADMIN={"admin","platform_admin","super_admin"}
@@ -54,7 +53,7 @@ def team_detail(team_id:UUID,user:User=Depends(current_user),db:Session=Depends(
     return {"id":team.id,"name":team.name,"slug":team.slug,"description":team.description,"visibility":team.visibility,"role":me.role if me else None,"members":members,"projects":projects}
 @router.post("/teams/{team_id}/invite")
 def invite(team_id:UUID,payload:InviteIn,user:User=Depends(current_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
-    team=team_or_404(db,team_id); me=member(db,team_id,user.id)
+    team_or_404(db,team_id); me=member(db,team_id,user.id)
     if not can_manage(me):raise HTTPException(403,"Team admin permission required")
     invited=db.get(User,payload.user_id) if payload.user_id else (db.scalar(select(User).where(User.email_normalized==payload.email.strip().lower())) if payload.email else None)
     if not invited or member(db,team_id,invited.id):raise HTTPException(400,"Supported user identity is required and must not already be a member")

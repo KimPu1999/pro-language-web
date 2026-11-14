@@ -1,5 +1,4 @@
 import base64, json
-from datetime import timedelta
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
@@ -9,8 +8,7 @@ from .auth import SESSION_COOKIE, current_user, now, require_csrf, require_role,
 from .config import settings
 from .db import SessionLocal, get_db
 from .models import (CollaborationAuditLog, CollaborationChatMessage, CollaborationDocument,
-    CollaborationDocumentUpdate, CollaborationExecutionJob, CollaborationInvitation,
-    CollaborationPairRoleEvent, CollaborationPairSession, CollaborationPresenceEvent,
+    CollaborationDocumentUpdate, CollaborationExecutionJob, CollaborationPairRoleEvent, CollaborationPairSession, CollaborationPresenceEvent,
     CollaborationRecordingConsent, CollaborationRoom, CollaborationRoomMember,
     CollaborationSession, CollaborationSnapshot, OrganizationMembership, User)
 

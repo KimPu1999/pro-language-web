@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from sqlalchemy import select
-from app.models import ProjectCategory, ProjectMilestone, ProjectTemplate, StudentProject, User
+from app.models import ProjectCategory, ProjectMilestone, ProjectTemplate, User
 def verified_client(client,email="project@example.com"):
     response=client.post("/api/v1/auth/register",json={"full_name":"Project Student","email":email,"password":"strong-pwd12","confirm_password":"strong-pwd12","accept_terms":True});assert response.status_code==201
     with client.session_factory() as db:

@@ -2,14 +2,14 @@ from datetime import timedelta
 import logging
 import time
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, Cookie
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
-from .auth import CSRF_COOKIE, SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, new_token, normalize_email, now, password_hasher, require_csrf, set_auth_cookies, validate_password, verify_password
+from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, new_token, normalize_email, now, password_hasher, require_csrf, set_auth_cookies, validate_password, verify_password
 from .config import settings
 from .db import get_db
 from .mailer import mailer
 from .models import AuthSession, EmailVerificationToken, PasswordResetToken, SecurityAuditLog, User, UserProfile
-from .schemas import ChangePasswordIn, ForgotPasswordIn, LoginIn, ProfileIn, RegisterIn, ResetPasswordIn, UserOut
+from .schemas import ChangePasswordIn, ForgotPasswordIn, LoginIn, RegisterIn, ResetPasswordIn, UserOut
 router=APIRouter(prefix="/api/v1/auth", tags=["auth"])
 logger = logging.getLogger("codemaster.auth")
 def profile_payload(user: User, db: Session):

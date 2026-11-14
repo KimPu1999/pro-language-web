@@ -4,7 +4,6 @@ The existing `/api/v1/ai` provider and SSE implementation remains the chat
 transport. These routes add authorized learning context, deterministic study
 state, privacy controls, and truthful provider/voice status around it.
 """
-import json
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
@@ -18,12 +17,11 @@ from .config import settings
 from .db import get_db
 from .models import (
     AICompanionAuditLog, AICompanionConversation, AICompanionLearningGoal,
-    AICompanionLearningInsight, AICompanionProfile, AICompanionRevisionItem,
+    AICompanionProfile, AICompanionRevisionItem,
     AICompanionRevisionReview, AICompanionSecurityEvent, AICompanionStudyPlan,
     AICompanionStudyPlanItem, AICompanionUsageRecord, AICompanionVoiceSession,
-    AIConversation, AIMessage, AIStudySession, AIStudySessionActivity, AIUsageRecord, Course, CourseModule, Enrollment,
-    LearningRevisionItem, Lesson, LessonProgress, SkillDefinition,
-    StudentSkillAssessment, StudentSkillEvidence, User,
+    AIConversation, AIStudySession, AIStudySessionActivity, AIUsageRecord, Course, CourseModule, Enrollment,
+    Lesson, LessonProgress, StudentSkillAssessment, StudentSkillEvidence, User,
 )
 from .rbac import require_platform_admin
 

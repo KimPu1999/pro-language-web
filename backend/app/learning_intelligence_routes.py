@@ -1,16 +1,16 @@
 import json
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf, verified_user
 from .config import settings
 from .db import get_db
-from .models import (CareerRoadmap, Course, CourseModule, Enrollment, LearningCoachInteraction,
+from .models import (Course, CourseModule, Enrollment, LearningCoachInteraction,
     LearningRecommendation, LearningRecommendationFeedback, LearningRevisionAttempt,
-    LearningRevisionItem, LearningRiskIndicator, LearningSkillSnapshot, LearningStudyPlan,
+    LearningRevisionItem, LearningSkillSnapshot, LearningStudyPlan,
     LearningStudyPlanItem, Lesson, LessonProgress, SkillDefinition, StudentLearningGoal,
     StudentSkillAssessment, StudentSkillEvidence, User)
 

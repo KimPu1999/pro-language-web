@@ -5,11 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-from .auth import current_user, require_csrf, verified_user, now
+from .auth import current_user, require_csrf, verified_user
 from .config import settings
 from .db import get_db
 from .models import LearningLab, LearningLabVersion, LearningLabWorkspace, LearningLabWorkspaceFile, LearningLabSnapshot, LearningLabRun, LearningLabProgress, LearningLabAuditLog, User
-from .organization_routes import org_context
 router=APIRouter(prefix="/api/v1",tags=["learning-labs"])
 PATH=re.compile(r"^[A-Za-z0-9_./-]+$"); ROLES={"owner","admin","instructor"}
 class LabIn(BaseModel): title:str=Field(min_length=2,max_length=180); slug:str=Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=180); description_en:str=Field(min_length=1,max_length=10000); description_mm:str|None=None; category:str="coding"; difficulty:str="beginner"; language:str="python"; estimated_minutes:int=Field(default=30,ge=1,le=1000)

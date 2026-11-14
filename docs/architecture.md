@@ -29,6 +29,10 @@ Phase 21 adds an enterprise security boundary under `/api/v1/organizations/{slug
 
 AI content is isolated in draft records. The provider boundary is server-side and generated output is untrusted. Human review binds to a specific revision; only an approved revision can be published. Tenant membership is resolved server-side before every content operation, and the secure runner remains the only allowed execution boundary for future challenge validation.
 
+## Phase 30 quality boundary
+
+The platform quality center reports runtime configuration and database probes only. CI, staging, backup, runner-isolation, accessibility, load, and rollback evidence remain external release artifacts and are not inferred by the application.
+
 Phase 24 keeps application services separate from code, SQL, and API execution services. The FastAPI layer validates lab ownership and persists durable run state; it does not execute student code. Provider and sandbox absence are explicit unavailable states.
 ## Phase 25 collaboration boundary
 

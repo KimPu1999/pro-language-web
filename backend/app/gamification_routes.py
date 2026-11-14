@@ -1,13 +1,11 @@
 from datetime import datetime, timezone
-from uuid import UUID
-import secrets
 from fastapi import APIRouter, Depends, HTTPException, Response, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf
 from .db import get_db
-from .models import IssuedCertificate, CertificateRevocation, LeaderboardPreference, StudentAchievement, AchievementDefinition, StudentXPBalance, XPEvent, LearningStreak, StreakActivityDay, User
+from .models import IssuedCertificate, CertificateRevocation, LeaderboardPreference, StudentAchievement, StudentXPBalance, LearningStreak, User
 from .admin_routes import full_admin
 router=APIRouter(prefix="/api/v1/gamification",tags=["gamification"])
 class PreferenceIn(BaseModel): opted_in: bool=False; display_name: str|None=Field(default=None,max_length=120)

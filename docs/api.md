@@ -2,6 +2,8 @@
 
 Public routes are under `/api/v1`:
 
+The platform quality endpoint is `GET /api/v1/platform/quality`. It is server-protected by platform RBAC and returns observed configuration/database signals. It intentionally reports unavailable or not-run checks instead of fabricating CI, provider, backup, or isolation success.
+
 - `GET /health`
 - `GET /languages`
 - `GET /categories`

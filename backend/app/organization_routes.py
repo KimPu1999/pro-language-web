@@ -7,10 +7,10 @@ from sqlalchemy.orm import Session
 from .auth import current_user, hash_token, new_token, normalize_email, require_csrf, require_role, verified_user, now
 from .db import get_db
 from .mailer import mailer
-from .models import (Course, Enrollment, LessonProgress, Organization, OrganizationAssessment,
+from .models import (Course, Organization, OrganizationAssessment,
     OrganizationAssessmentAttempt, OrganizationAuditLog, OrganizationCourse,
     OrganizationInvitation, OrganizationMembership, OrganizationReportExport,
-    OrganizationSecurityEvent, OrganizationSetting, OrganizationSkillSnapshot,
+    OrganizationSecurityEvent, OrganizationSetting, OrganizationSupportAccess,
     OrganizationTeam, OrganizationTeamMember, OrganizationTrainingAssignment,
     OrganizationTrainingItem, OrganizationTrainingProgram, User)
 

@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from uuid import UUID
 import secrets
 from sqlalchemy import select

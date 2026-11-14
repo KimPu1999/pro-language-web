@@ -6,9 +6,9 @@ and lesson completion is reconciled as ordinary progress, never as grading.
 """
 import json
 from datetime import datetime, timezone
-from uuid import UUID, uuid4
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
@@ -17,9 +17,8 @@ from .auth import current_user, require_csrf, verified_user
 from .db import get_db
 from .models import (
     Course, CourseModule, Lesson, LessonProgress, MobileDeviceRegistration,
-    MobileLearningPreference, MobileNotificationPreference, MobilePlatformAuditLog,
-    MobilePushSubscription, OfflineContentBookmark, OfflineContentManifest,
-    OfflineContentVersion, OfflineDownloadPolicy, OfflineLearningActivity,
+    MobileLearningPreference, MobileNotificationPreference, MobilePushSubscription, OfflineContentBookmark, OfflineContentManifest,
+    OfflineDownloadPolicy, OfflineLearningActivity,
     OfflineSyncConflict, OfflineSyncEvent, User,
 )
 from .rbac import require_platform_admin

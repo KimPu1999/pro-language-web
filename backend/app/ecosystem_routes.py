@@ -1,4 +1,4 @@
-import hashlib,hmac,json
+import hashlib,hmac
 from datetime import datetime,timezone
 from uuid import UUID
 from fastapi import APIRouter,Depends,Header,HTTPException,Request
@@ -9,9 +9,9 @@ from .auth import current_user,require_csrf,require_role,verified_user
 from .rbac import PLATFORM_ADMIN_ROLES
 from .config import settings
 from .db import get_db
-from .models import (CodeReviewFeedback,CodeReviewRequest,CollaborationRequest,ContributionRecord,
-    DeveloperEcosystemAuditLog,DeveloperPublicProfile,GithubConnection,GithubWebhookEvent,
-    OpenSourceOpportunity,OpenSourceProject,OpenSourceProjectMember,User)
+from .models import (CodeReviewRequest,CollaborationRequest,ContributionRecord,
+    DeveloperPublicProfile,GithubConnection,GithubWebhookEvent,
+    OpenSourceOpportunity,OpenSourceProject,User)
 
 router=APIRouter(prefix="/api/v1",tags=["developer ecosystem"]);ADMIN=PLATFORM_ADMIN_ROLES
 class ProfileIn(BaseModel):username:str=Field(pattern=r"^[a-zA-Z0-9_-]{3,80}$");headline:str="";bio:str="";visibility:str="private";show_contributions:bool=False

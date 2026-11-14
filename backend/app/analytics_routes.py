@@ -2,11 +2,11 @@ import csv, io, json, math
 from datetime import date, datetime, time, timedelta, timezone
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, case, func, or_, select, union
+from sqlalchemy import func, or_, select, union
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf
 from .db import get_db
-from .models import (AnalyticsAuditLog, AnalyticsReportExport, Challenge, ChallengeSubmission, CommunityAnswer,
+from .models import (AnalyticsAuditLog, AnalyticsReportExport, ChallengeSubmission, CommunityAnswer,
     CommunityPost, Course, CourseInstructor, CourseModule, Enrollment, IssuedCertificate, Lesson, LessonProgress,
     StudentAchievement, User)
 from .config import settings

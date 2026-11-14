@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf, verified_user
 from .db import get_db
-from .models import (AchievementDefinition, Challenge, ChallengeCategory, ChallengeHint, ChallengeLanguageConfig, ChallengeSubmission, ChallengeTestCase, ChallengeTopic, ChallengeTopicLink, CodeExecutionJob, CodeExecutionResult, DailyChallenge, StudentAchievement, StudentChallengeProgress, StudentSkillStatistic, User)
+from .models import (AchievementDefinition, Challenge, ChallengeCategory, ChallengeHint, ChallengeLanguageConfig, ChallengeSubmission, ChallengeTestCase, ChallengeTopic, ChallengeTopicLink, CodeExecutionJob, CodeExecutionResult, DailyChallenge, StudentAchievement, StudentChallengeProgress, User)
 from .runner_queue import queue
 from .runner_registry import get_runtime
 from .admin_routes import admin_user, full_admin, audit
