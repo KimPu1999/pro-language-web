@@ -65,8 +65,8 @@ def test_c_curriculum_seed_is_complete_and_idempotent(client):
         first_ids = {lesson.order_index: lesson.id for lesson in db.query(Lesson).filter_by(module_id=module_three.id).all()}
         seed_c_curriculum(db, course); db.commit()
         assert db.query(CourseModule).filter_by(course_id=course.id).count() == 20
-        assert db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 58
-        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 58
+        assert db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 75
+        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 75
         assert module_three.title == "03 Your First C Program & C Syntax Fundamentals"
         lessons = db.query(Lesson).filter_by(module_id=module_three.id).order_by(Lesson.order_index).all()
         assert [lesson.title for lesson in lessons] == [item["title"] for item in MODULE_THREE_LESSONS]

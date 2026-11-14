@@ -3,6 +3,7 @@ import json
 from sqlalchemy import select
 
 from .c_module_three import MODULE_THREE_LESSONS, seed_module_three
+from .c_modules_4_20 import MODULES_4_TO_20, seed_modules_4_to_20
 
 MODULES = [
     ("Introduction to Programming & C", "programming", [
@@ -303,6 +304,9 @@ def seed_c_curriculum(db, course):
         if module_position == 3:
             seed_module_three(db, module)
             continue
+        if module_position in MODULES_4_TO_20:
+            seed_modules_4_to_20(db, {module_position: module})
+            continue
         for lesson_position, (title, theory, code, output, explanation) in enumerate(lessons, 1):
             lesson_slug = f"{module_position:02d}-{title.lower().replace(' ', '-')[:50]}"
             lesson = db.scalar(select(Lesson).where(Lesson.module_id == module.id, Lesson.order_index == lesson_position))
@@ -316,7 +320,7 @@ def seed_c_curriculum(db, course):
                 quiz = LessonQuiz(lesson_id=lesson.id, title=f"Check your understanding: {title}", explanation="Review the lesson and try the exercises before repeating the quiz.")
                 db.add(quiz); db.flush()
                 db.add(QuizQuestion(quiz_id=quiz.id, prompt=f"Which idea is central to {title.lower()}?", options_json=json.dumps([title, "Ignoring compiler warnings", "Writing code without testing"]), correct_answer=title, explanation=f"The correct answer is {title}, because it is the focus of this lesson.", position=1))
-    total_lessons = len(MODULE_ONE_LESSONS) + len(MODULE_TWO_LESSONS) + len(MODULE_THREE_LESSONS) + sum(len(lessons) for _, _, lessons in MODULES[3:])
+    total_lessons = len(MODULE_ONE_LESSONS) + len(MODULE_TWO_LESSONS) + len(MODULE_THREE_LESSONS) + sum(len(items) for items in MODULES_4_TO_20.values())
     course.duration_minutes = total_lessons * 30
     course.outcomes = "Understand C program structure|Write and explain portable C programs|Read and write printf format strings and escape sequences|Compile with GCC or Clang using strict C11 warnings|Use types, control flow, functions, arrays, pointers, and files safely|Plan and test beginner C projects"
     course.requirements = "No prior programming experience|A C11 compiler such as GCC or Clang|A text editor"
