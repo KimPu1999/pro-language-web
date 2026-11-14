@@ -167,3 +167,16 @@ export const operationsApi = {
   backups: () => request<any>("/api/v1/platform/backups"),
   reviews: () => request<any[]>("/api/v1/platform/reviews"),
 };
+
+export const scalabilityApi = {
+  dashboard: () => request<any>("/api/v1/platform/scalability"),
+  database: () => request<any>("/api/v1/platform/scalability/database"),
+  workers: () => request<any>("/api/v1/platform/scalability/workers"),
+  runners: () => request<any>("/api/v1/platform/scalability/runners"),
+  cdn: () => request<any>("/api/v1/platform/scalability/cdn"),
+  ai: () => request<any>("/api/v1/platform/scalability/ai"),
+  costs: () => request<any>("/api/v1/platform/scalability/costs"),
+  policies: () => request<any[]>("/api/v1/platform/scalability/policies"),
+  events: () => request<any[]>("/api/v1/platform/scalability/events"),
+  recovery: () => request<any>("/api/v1/platform/scalability/recovery"),
+};

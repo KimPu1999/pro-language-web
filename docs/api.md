@@ -137,3 +137,15 @@ Manifests and content are ownership-scoped and published-only. Sync is idempoten
 - `GET /api/v1/ai-companion/platform/operations`
 
 Existing `/api/v1/ai/conversations` and `/stream` provide user-owned SSE chat. Companion mutations require verified authentication and CSRF; provider availability is never inferred from UI state.
+
+## Phase 32 scalability API
+
+- `GET /api/v1/platform/scalability`
+- `GET /api/v1/platform/scalability/{database|workers|runners|cdn|ai|costs}`
+- `GET|POST /api/v1/platform/scalability/policies`
+- `GET|POST /api/v1/platform/scalability/events`
+- `GET|POST /api/v1/platform/scalability/recovery`
+
+All scalability endpoints require platform-admin RBAC. Mutations require the
+existing CSRF token. Policy and event writes are evidence/policy records only;
+they do not invoke an autoscaler or change infrastructure.

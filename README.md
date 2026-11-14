@@ -182,3 +182,12 @@ The quality center is available at `/platform/quality-center` and reuses the ser
 ## Phase 31 operations
 
 Post-launch operations are available at `/platform/operations`, `/platform/monitoring`, `/platform/incidents`, `/platform/improvements`, `/platform/releases`, `/platform/feature-flags`, `/platform/maintenance`, and `/platform/backups`. Student feedback is available at `/feedback`, bug reporting at `/support/report-bug`, and public status at `/status`. These surfaces show recorded evidence and explicit unavailable states; they do not fabricate telemetry or backup health.
+
+## Phase 32 scalability
+
+Scalability evidence is available at `/platform/scalability` and its database,
+workers, runners, CDN, AI, costs, policies, events, and recovery subpages.
+Migration `0033_scalability` is additive. These surfaces record measurements,
+policies, and recovery evidence but do not provision paid resources or change
+production capacity. Local and provider-backed telemetry remain explicitly
+`not_tested` or `not_configured` until connected and verified.

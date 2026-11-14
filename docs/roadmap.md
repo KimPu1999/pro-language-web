@@ -81,3 +81,10 @@ The mobile dashboard, PWA shell, offline library/reader, IndexedDB event queue, 
 ## Phase 29 status
 
 The companion dashboard, authorized adaptive records, deterministic revision v1, evidence-labelled recommendations, optional goals/plans, privacy controls, instructor privacy-threshold status, and platform operations are implemented. AI provider responses, voice delivery, provider-side deletion, cost/latency telemetry, and end-to-end streaming/browser verification remain configuration or environment prerequisites.
+
+## Phase 32 status
+
+Scalability routes, platform-admin protection, capacity-policy records, and
+truthful dashboard states are implemented. Multi-instance load tests, paid
+autoscaling, read replicas, CDN integration, failover drills, restore evidence,
+and global deployment remain environment-level work and are not claimed here.

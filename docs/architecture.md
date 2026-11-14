@@ -61,3 +61,11 @@ The PWA service worker caches only static assets and an explicit offline shell. 
 ## Phase 29 AI companion boundary
 
 The companion is an orchestration layer over the existing AI provider/SSE and learning-intelligence services. It stores adaptive state separately, retrieves only authorized learner context, and keeps verified evidence authoritative. Provider-disabled, voice-disabled, and insufficient-evidence states are returned explicitly.
+
+## Phase 32 scalability boundary
+
+Scalability APIs are an authenticated evidence and policy plane. They expose
+persisted measurements when an external telemetry collector writes them, while
+returning explicit unavailable states otherwise. They never execute scaling
+actions, provision paid resources, expose private CDN content, or make Redis,
+runner, database, AI, or multi-region health claims without evidence.

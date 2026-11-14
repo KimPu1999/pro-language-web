@@ -68,3 +68,11 @@ Migration `0030_mobile_offline` adds mobile devices, push subscriptions/preferen
 ## Phase 29 AI companion
 
 Migration `0031_ai_companion` adds companion profiles/conversations/messages, study sessions and activities, evidence-labelled recommendations, versioned revision items/reviews, goals, plans, insights, voice session metadata, feedback, usage, security events, and audit logs. Existing AI tutor, learning intelligence, revision, and study-plan tables remain intact.
+
+## Phase 32 scalability
+
+Migration `0033_scalability` adds additive capacity snapshots, scaling policies
+and events, service-instance records, database/queue/runner/CDN/AI metrics,
+cost records, budget policies, recovery drills, failover events, and
+scalability audit logs. It does not alter existing learning data or provision
+infrastructure.

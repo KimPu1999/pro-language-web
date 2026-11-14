@@ -30,6 +30,7 @@ const links = [
   ["Feature Flags", "/platform/feature-flags"],
   ["Maintenance", "/platform/maintenance"],
   ["Backups", "/platform/backups"],
+  ["Scalability", "/platform/scalability"],
   ["Settings", "/platform/settings"],
 ] as const;
 
