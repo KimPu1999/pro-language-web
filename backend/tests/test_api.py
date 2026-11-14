@@ -18,6 +18,36 @@ def test_unhandled_errors_are_safe_and_correlated(client):
     assert response.json() == {"detail": "Internal server error", "request_id": "error-request"}
 def test_course_filter_and_pagination(client):
     response=client.get("/api/v1/courses?language=python&page=1&page_size=1"); assert response.status_code==200; assert response.json()["total"]==1
+
+def test_course_filters_sort_and_published_scope(client):
+    from app.models import Course, CourseCategory, ProgrammingLanguage
+
+    with client.session_factory() as db:
+        python = db.query(ProgrammingLanguage).filter_by(slug="python").one()
+        fundamentals = db.query(CourseCategory).filter_by(slug="fundamentals").one()
+        backend = CourseCategory(name="Backend", slug="backend")
+        javascript = ProgrammingLanguage(name="JavaScript", slug="javascript")
+        db.add_all([backend, javascript])
+        db.flush()
+        db.add_all([
+            Course(language_id=python.id, category_id=backend.id, title="Python APIs", slug="python-apis", description="Build backend services", level="Intermediate", duration_minutes=90, published=True),
+            Course(language_id=javascript.id, category_id=fundamentals.id, title="JavaScript Basics", slug="javascript-basics", description="Learn browser programming", level="Beginner", duration_minutes=30, published=True),
+            Course(language_id=python.id, category_id=fundamentals.id, title="Draft Python", slug="draft-python", description="Not publicly visible", level="Beginner", duration_minutes=15, published=False),
+        ])
+        db.commit()
+
+    response = client.get("/api/v1/courses?search=backend&category=backend&difficulty=intermediate&language=python&sort=duration_desc&page_size=10")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 1
+    assert [item["slug"] for item in payload["items"]] == ["python-apis"]
+    assert payload["page_size"] == 10
+
+    sorted_response = client.get("/api/v1/courses?sort=duration_asc&page_size=10")
+    assert sorted_response.status_code == 200
+    assert [item["slug"] for item in sorted_response.json()["items"]] == ["javascript-basics", "python-foundations", "python-apis"]
+
+    assert client.get("/api/v1/courses?difficulty=beginner&level=advanced").status_code == 422
 def test_course_detail_and_lesson(client):
     course=client.get("/api/v1/courses/python-foundations"); assert course.status_code==200; assert course.json()["modules"][0]["lessons"][0]["content_en"]=="Hello lesson"
 def test_missing_and_unpublished(client):

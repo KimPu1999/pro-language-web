@@ -11,6 +11,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const pending = key ? inflightGets.get(key) : undefined;
   if (pending) return pending as Promise<T>;
   const controller = new AbortController();
+  const abortFromCaller = () => controller.abort();
+  if (init?.signal) {
+    if (init.signal.aborted) controller.abort();
+    else init.signal.addEventListener("abort", abortFromCaller, { once: true });
+  }
   const timer = setTimeout(() => controller.abort(), 8000);
   const run = (async () => {
     const response = await fetch(`${base}${path}`, { ...init, credentials: "include", signal: controller.signal, headers: { Accept: "application/json", "Content-Type": "application/json", ...init?.headers } });
@@ -33,7 +38,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       throw new ApiError("The CodeMaster API is unavailable. Start FastAPI on port 8000 or check API_INTERNAL_URL.", "unavailable");
     }
     throw error;
-  }).finally(() => { clearTimeout(timer); if (key) inflightGets.delete(key); });
+  }).finally(() => { clearTimeout(timer); init?.signal?.removeEventListener("abort", abortFromCaller); if (key) inflightGets.delete(key); });
   if (key) inflightGets.set(key, run);
   return run;
 }
@@ -50,6 +55,7 @@ export const learningApi = {
   coach: (message:string, csrf:string) => request<{status:string;message:string}>("/api/v1/learning/coach", { ...json({message}), headers:{"X-CSRF-Token":csrf} }),
 };
 
+export const coursesApi = (query = "", signal?: AbortSignal) => request<Paginated<Course>>(`/api/v1/courses${query}`, signal ? { signal } : undefined);
 export type AutomationDashboard = { metrics: { workflows:number; active_workflows:number; queued_runs:number; failed_runs:number; pending_approvals:number }; execution:{status:string;detail:string}; ai:{status:string}; data_source:string };
 export type AutomationWorkflow = { id:string; name:string; slug:string; status:string; enabled:boolean };
 export const automationApi = {
