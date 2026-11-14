@@ -53,3 +53,11 @@ Phase 24 adds published learning labs, owned workspaces, path-safe files, snapsh
 ## Phase 25 — Advanced real-time collaboration
 
 Added the room and durable document foundation, authenticated WebSocket contract, pair-role authorization, chat, snapshots, consent records, collaboration dashboards, and security documentation. Multi-client Yjs fan-out and provider-backed execution/recording remain deployment work.
+## Phase 26 status
+
+Cloud catalog, dashboard, owned workspaces, Monaco editing, lifecycle state,
+file quota, snapshots, platform operations, and truthful execution-mode
+reporting are implemented. Isolated Docker/microVM execution, Kubernetes
+integration, public previews, and provider-backed AI remain deployment work,
+not claimed functionality. Phase 27 should not begin until those boundaries
+have independent security validation.

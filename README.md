@@ -152,3 +152,13 @@ Learning labs are available at `/labs` and `/dashboard/labs`; workspaces use `/l
 ## Phase 25 collaboration
 
 Phase 25 adds authenticated collaboration rooms, durable document/update/snapshot records, room chat, pair-role controls, consent records, and a disabled-by-default WebSocket gateway. Run `alembic upgrade head` to apply migration `0023_collaboration`. Real-time editing, isolated execution, AI assistance, and recordings show truthful unavailable states until their providers are configured.
+
+## Phase 26 cloud labs
+
+Cloud lab routes are available at `/cloud-labs`, `/dashboard/cloud-labs`,
+`/cloud-labs/workspaces/[workspaceId]`, `/instructor/cloud-labs`, and
+`/platform/cloud-labs`. Phase 26 reuses the Phase 24 learning-lab schema and
+adds migration `0028_cloud_lab_indexes` for dashboard, lifecycle, and audit
+queries. Docker, CI/CD, Kubernetes, and deployment are simulation-only until
+an isolated worker or preview service is separately configured. The FastAPI
+host never executes student commands and never exposes a Docker socket.

@@ -89,3 +89,15 @@ export const labsApi = {
   instructor:()=>request<unknown[]>('/api/v1/instructor/labs'),
   platform:()=>request<any>('/api/v1/platform/labs'),
 };
+export const cloudLabsApi = {
+  catalog: (query = "") => request<any>(`/api/v1/cloud-labs/catalog${query}`),
+  dashboard: () => request<any>("/api/v1/cloud-labs/dashboard"),
+  detail: (id: string) => request<any>(`/api/v1/cloud-labs/${id}`),
+  createWorkspace: (id: string, csrf: string) => request<any>(`/api/v1/cloud-labs/${id}/workspaces`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  workspace: (id: string) => request<any>(`/api/v1/cloud-labs/workspaces/${id}`),
+  lifecycle: (id: string, action: string, csrf: string) => request<any>(`/api/v1/cloud-labs/workspaces/${id}/lifecycle`, { method: "PATCH", body: JSON.stringify({ action }), headers: { "X-CSRF-Token": csrf } }),
+  saveFile: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/cloud-labs/workspaces/${id}/files`, { method: "PUT", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
+  snapshot: (id: string, csrf: string) => request<any>(`/api/v1/cloud-labs/workspaces/${id}/snapshots`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  modes: () => request<any>("/api/v1/cloud-labs/modes"),
+  operations: () => request<any>("/api/v1/cloud-labs/platform/operations"),
+};

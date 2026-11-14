@@ -33,6 +33,7 @@ from .automation_routes import router as automation_router
 from .content_studio_routes import router as content_studio_router
 from .lab_routes import router as lab_router
 from .realtime_collaboration_routes import router as realtime_collaboration_router
+from .cloud_lab_routes import router as cloud_lab_router
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger=logging.getLogger("codemaster.api")
 app=FastAPI(title="CodeMaster Academy API", version="1.0.0")
@@ -69,6 +70,7 @@ app.include_router(automation_router)
 app.include_router(content_studio_router)
 app.include_router(lab_router)
 app.include_router(realtime_collaboration_router)
+app.include_router(cloud_lab_router)
 @app.get("/api/v1/health")
 def health(db: Session=Depends(get_db)): db.execute(select(1)); return {"status":"ok","service":"codemaster-api"}
 @app.get("/api/v1/ready")

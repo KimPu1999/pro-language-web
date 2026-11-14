@@ -41,3 +41,12 @@ Migration `0022_learning_labs` adds lab definitions and versions, steps, files, 
 ## Phase 25 tables
 
 Migration `0023_collaboration` adds collaboration rooms, members, invitations, sessions, documents, updates, snapshots, presence, chat, pair sessions, execution jobs, debugging notes, AI interactions, recording consent/metadata, feedback and audit logs. Existing team and lab tables are preserved.
+
+## Phase 26 cloud labs
+
+Migration `0028_cloud_lab_indexes` extends the existing Phase 24 learning-lab
+tables with ownership/status, snapshot, run, and audit indexes. Cloud lab
+routes intentionally reuse `learning_labs`, `learning_lab_workspaces`,
+`learning_lab_workspace_files`, `learning_lab_snapshots`,
+`learning_lab_runs`, and `learning_lab_audit_logs`; no duplicate cloud
+workspace tables are created.

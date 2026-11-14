@@ -69,3 +69,18 @@ Lab APIs include `GET /api/v1/labs`, `GET /api/v1/labs/{id}`, `GET /api/v1/me/la
 ## Phase 25 collaboration APIs
 
 The collaboration API includes `/api/v1/collaboration/dashboard`, room CRUD and membership, documents, snapshots, chat, pair sessions, shared execution, recording consent, and `/api/v1/platform/collaboration`. The WebSocket endpoint is `/api/v1/ws/collaboration/{room_id}`. All room operations require authenticated active membership; mutations require CSRF validation.
+## Phase 26 cloud lab API
+
+- `GET /api/v1/cloud-labs/catalog`
+- `GET /api/v1/cloud-labs/dashboard`
+- `GET /api/v1/cloud-labs/{lab_id}`
+- `POST /api/v1/cloud-labs/{lab_id}/workspaces`
+- `GET /api/v1/cloud-labs/workspaces/{workspace_id}`
+- `PATCH /api/v1/cloud-labs/workspaces/{workspace_id}/lifecycle`
+- `PUT /api/v1/cloud-labs/workspaces/{workspace_id}/files`
+- `POST /api/v1/cloud-labs/workspaces/{workspace_id}/snapshots`
+- `GET /api/v1/cloud-labs/modes`
+- `GET /api/v1/cloud-labs/platform/operations`
+
+All mutating endpoints require an authenticated verified user and CSRF token.
+Workspace data is ownership-scoped. Operations requires platform RBAC.

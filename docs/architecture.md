@@ -33,3 +33,11 @@ Phase 24 keeps application services separate from code, SQL, and API execution s
 ## Phase 25 collaboration boundary
 
 Collaboration REST and WebSocket routes are separate from the existing team routes. PostgreSQL stores important document and audit state; Redis is not the durable source of truth. Untrusted code still crosses only the existing secure runner boundary.
+## Phase 26 cloud development
+
+The browser cloud IDE is an ownership-scoped facade over the existing learning
+lab service. PostgreSQL stores workspace metadata and files, Redis queues
+execution jobs, and an external isolated runner is the only permitted command
+execution boundary. Docker, CI/CD, Kubernetes, and deployment are simulation
+mode by default. See [cloud-workspace-architecture.md](cloud-workspace-architecture.md)
+and [workspace-security.md](workspace-security.md).
