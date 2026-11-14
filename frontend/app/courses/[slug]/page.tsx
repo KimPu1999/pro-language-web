@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, BookOpen, Clock, ListChecks } from "lucide-react";
+import { BookOpen, Clock, ListChecks } from "lucide-react";
 import { api } from "@/lib/api";
 import { Badge, Card } from "@/components/ui";
 import { EnrollButton } from "@/components/enroll-button";
+import { StartLearningButton } from "@/components/start-learning-button";
 
 export default async function CoursePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -26,6 +27,6 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
       {requirements.length > 0 && <><h2 className="mt-14 text-2xl font-bold">Prerequisites</h2><ul className="mt-5 space-y-2 text-sm text-slate-400">{requirements.map(requirement => <li key={requirement}>• {requirement}</li>)}</ul></>}
       <h2 className="mt-14 text-2xl font-bold">Curriculum</h2>{course.status === "curriculum_pending" && <Card className="mt-5 border-amber-400/20 p-5 text-amber-200">This course overview is available now. The reviewed curriculum is still being authored.</Card>}<div className="mt-5 space-y-3">{course.modules.map(module => <Card className="p-5" key={module.id}><h3 className="font-semibold">{module.order_index}. {module.title}</h3><p className="mt-2 text-sm text-slate-500">{module.lessons.length} lessons</p><div className="mt-4 space-y-2">{module.lessons.map(lesson => <Link className="block rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-white" href={`/courses/${course.slug}/learn/${lesson.slug}`} key={lesson.id}>{lesson.order_index}. {lesson.title}<span className="float-right text-xs text-slate-600">{lesson.duration_minutes} min</span></Link>)}</div></Card>)}</div>{!course.modules.length && <Card className="mt-5 p-6 text-slate-400">Lessons are not available yet. Check back after the curriculum review is complete.</Card>}
       {related.length > 0 && <><h2 className="mt-14 text-2xl font-bold">Related courses</h2><div className="mt-5 grid gap-4 sm:grid-cols-3">{related.map(item => <Link href={`/courses/${item.slug}`} key={item.id}><Card className="h-full p-4 hover:border-indigo-400/50"><Badge>{item.language.name}</Badge><h3 className="mt-3 font-semibold">{item.title}</h3><p className="mt-2 line-clamp-2 text-sm text-slate-500">{item.description}</p></Card></Link>)}</div></>}
-    </div><aside><Card className="sticky top-24 p-5"><p className="text-sm text-slate-400">{lessons.length ? "Ready to begin?" : "Course overview"}</p><div className="mt-4"><EnrollButton slug={course.slug}/></div>{lessons[0] && <Link href={`/courses/${course.slug}/learn/${lessons[0].slug}`} className="mt-4 block text-center text-sm text-indigo-300">Start learning <ArrowRight className="ml-1 inline" size={16}/></Link>}</Card></aside></div>
+    </div><aside><Card className="sticky top-24 p-5"><p className="text-sm text-slate-400">{lessons.length ? "Ready to begin?" : "Course overview"}</p><div className="mt-4">{lessons[0] ? <StartLearningButton courseSlug={course.slug} lessonSlug={lessons[0].slug}/> : <EnrollButton slug={course.slug}/>}</div>{lessons[0] && <p className="mt-3 text-center text-xs text-slate-500">Your enrollment and progress are saved to your account.</p>}</Card></aside></div>
   </section>;
 }
