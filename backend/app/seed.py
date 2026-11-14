@@ -19,6 +19,7 @@ from .css_course_content import seed_css_course
 from .javascript_course_content import seed_javascript_course
 from .python_course_content import seed_python_course
 from .java_course_content import seed_java_course
+from .advanced_java_course_content import seed_advanced_java_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -40,7 +41,7 @@ COURSES = [
     ("jQuery", "jquery", "javascript", "#0769AD", "frontend-development"), ("Tailwind CSS", "tailwind-css", "css", "#06B6D4", "frontend-development"),
     ("Bootstrap", "bootstrap", "css", "#7952B3", "frontend-development"), ("C Programming", "c-programming", "c", "#A8B9CC", "programming-languages"),
     ("C++ Programming — Beginner to Professional Foundations", "cpp-programming", "cpp", "#00599C", "programming-languages"), ("Java", "java", "java", "#E76F51", "programming"),
-    ("Advanced Java", "advanced-java", "java", "#ED8B00", "programming-languages"), ("Python", "python", "python", "#3776AB", "programming"),
+    ("Advanced Java — Enterprise Backend Engineering", "advanced-java", "java", "#E76F51", "backend-development"), ("Python", "python", "python", "#3776AB", "programming"),
     ("C#", "c-sharp", "c-sharp", "#512BD4", "programming-languages"), ("Go", "go", "go", "#00ADD8", "programming-languages"),
     ("Rust", "rust", "rust", "#DEA584", "programming-languages"), ("Node.js", "node-js", "javascript", "#339933", "backend-development"),
     ("Express.js", "express-js", "javascript", "#F8FAFC", "backend-development"), ("PHP", "php", "php", "#777BB4", "backend-development"),
@@ -269,6 +270,9 @@ def main():
         java_course = db.scalar(select(Course).where(Course.slug == "java"))
         if java_course:
             seed_java_course(db, java_course)
+        advanced_java_course = db.scalar(select(Course).where(Course.slug == "advanced-java"))
+        if advanced_java_course:
+            seed_advanced_java_course(db, advanced_java_course)
         seed_challenges(db)
         seed_projects(db)
 

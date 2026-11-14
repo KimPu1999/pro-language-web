@@ -270,6 +270,42 @@ def test_java_curriculum_is_published_and_idempotent(client):
     assert response.json()["title"] == "Java Programming — From Zero to Advanced"
     assert len(response.json()["modules"]) == 32
 
+def test_advanced_java_curriculum_is_published_and_idempotent(client):
+    from app.advanced_java_course_content import MODULES, MODULE_ONE, seed_advanced_java_course
+    from app.models import CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
+    import json
+
+    with client.session_factory() as db:
+        language = db.query(ProgrammingLanguage).filter_by(slug="java").one_or_none()
+        if language is None:
+            language = ProgrammingLanguage(name="Java", slug="java", color="#E76F51")
+            db.add(language); db.flush()
+        category = db.query(CourseCategory).filter_by(slug="backend").one_or_none()
+        if category is None:
+            category = CourseCategory(name="Backend", slug="backend")
+            db.add(category); db.flush()
+        course = Course(language_id=language.id, category_id=category.id, title="Advanced Java", slug="advanced-java", description="Advanced Java", level="advanced", duration_minutes=0, published=True, status="draft")
+        db.add(course); db.flush(); seed_advanced_java_course(db, course); db.commit()
+        seed_advanced_java_course(db, course); db.commit()
+        modules = db.query(CourseModule).filter_by(course_id=course.id).order_by(CourseModule.order_index).all()
+        lessons = db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).order_by(CourseModule.order_index, Lesson.order_index).all()
+        assert [module.title for module in modules] == MODULES
+        assert len(modules) == 36
+        assert len([lesson for lesson in lessons if lesson.module.order_index == 1]) == len(MODULE_ONE)
+        assert len(lessons) == 42
+        assert all(lesson.published and "Architecture explanation" in lesson.content_en and "Security considerations" in lesson.content_en for lesson in lessons)
+        assert all(lesson.content_mm for lesson in lessons)
+        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == len(lessons)
+        assert db.query(CodeExample).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id, CodeExample.language == "java").count() == len(lessons)
+        for question in db.query(QuizQuestion).join(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all():
+            assert question.correct_answer in json.loads(question.options_json)
+        assert course.title == "Advanced Java — Enterprise Backend Engineering"
+
+    response = client.get("/api/v1/courses/advanced-java")
+    assert response.status_code == 200
+    assert response.json()["title"] == "Advanced Java — Enterprise Backend Engineering"
+    assert len(response.json()["modules"]) == 36
+
 def test_course_detail_and_lesson(client):
     course=client.get("/api/v1/courses/python-foundations"); assert course.status_code==200; assert course.json()["modules"][0]["lessons"][0]["content_en"]=="Hello lesson"
     learning=client.get("/api/v1/courses/python-foundations/learning"); assert learning.status_code==200
