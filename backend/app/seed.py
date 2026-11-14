@@ -22,6 +22,7 @@ from .java_course_content import seed_java_course
 from .advanced_java_course_content import seed_advanced_java_course
 from .jquery_course_content import seed_jquery_course
 from .bootstrap_course_content import seed_bootstrap_course
+from .typescript_course_content import seed_typescript_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -38,7 +39,7 @@ CATEGORIES = [
 ]
 COURSES = [
     ("HTML", "html", "html", "#E34F26", "web-development"), ("CSS", "css", "css", "#264DE4", "web-development"),
-    ("JavaScript", "javascript", "javascript", "#F7DF1E", "web-development"), ("TypeScript", "typescript", "typescript", "#3178C6", "frontend-development"),
+    ("JavaScript", "javascript", "javascript", "#F7DF1E", "web-development"), ("TypeScript", "typescript", "typescript", "#3178C6", "web-development"),
     ("React", "react", "javascript", "#61DAFB", "frontend-development"), ("Next.js", "next-js", "javascript", "#F8FAFC", "frontend-development"),
     ("jQuery", "jquery", "javascript", "#0769AD", "web-development"), ("Tailwind CSS", "tailwind-css", "css", "#06B6D4", "frontend-development"),
     ("Bootstrap 5 — From Zero to Professional Responsive Web Design", "bootstrap", "css", "#7952B3", "web-development"), ("C Programming", "c-programming", "c", "#A8B9CC", "programming-languages"),
@@ -281,6 +282,9 @@ def main():
         bootstrap_course = db.scalar(select(Course).where(Course.slug == "bootstrap"))
         if bootstrap_course:
             seed_bootstrap_course(db, bootstrap_course)
+        typescript_course = db.scalar(select(Course).where(Course.slug == "typescript"))
+        if typescript_course:
+            seed_typescript_course(db, typescript_course)
         seed_challenges(db)
         seed_projects(db)
 
