@@ -69,3 +69,10 @@ persisted measurements when an external telemetry collector writes them, while
 returning explicit unavailable states otherwise. They never execute scaling
 actions, provision paid resources, expose private CDN content, or make Redis,
 runner, database, AI, or multi-region health claims without evidence.
+
+## Phase 33 marketplace boundary
+
+Marketplace discovery is a public read boundary over published courses and
+published public resources. Contributor content remains private until an
+authorized review decision publishes it. Course enrollment and identity remain
+owned by existing models; new resource records do not duplicate course data.

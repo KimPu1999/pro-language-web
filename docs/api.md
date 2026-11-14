@@ -149,3 +149,20 @@ Existing `/api/v1/ai/conversations` and `/stream` provide user-owned SSE chat. C
 All scalability endpoints require platform-admin RBAC. Mutations require the
 existing CSRF token. Policy and event writes are evidence/policy records only;
 they do not invoke an autoscaler or change infrastructure.
+
+## Phase 33 marketplace API
+
+- `GET /api/v1/marketplace`
+- `GET /api/v1/marketplace/search`
+- `GET /api/v1/marketplace/resources` and `/resources/{slug}`
+- `GET /api/v1/marketplace/instructors/{slug}`
+- `GET /api/v1/marketplace/recommended`
+- `POST /api/v1/marketplace/resources`; `PATCH /resources/{id}`; `POST /resources/{id}/submit`
+- `POST /api/v1/marketplace/resources/{id}/reviews` and `/report`
+- `GET|POST /api/v1/marketplace/collections`; `POST /collections/{id}/items`
+- `GET /api/v1/marketplace/moderation/queue`; `POST /moderation/reviews/{id}`
+- `GET /api/v1/marketplace/analytics` and `/instructor/analytics`
+
+Public endpoints filter published/public content server-side. Mutations require
+verified authentication, CSRF, ownership or moderation authorization, and
+resource-specific rate limits.

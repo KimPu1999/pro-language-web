@@ -39,6 +39,7 @@ from .mobile_routes import router as mobile_router
 from .ai_companion_routes import router as ai_companion_router
 from .phase31_routes import router as phase31_router
 from .scalability_routes import router as scalability_router
+from .marketplace_routes import router as marketplace_router
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger=logging.getLogger("codemaster.api")
 app=FastAPI(title="CodeMaster Academy API", version="1.0.0")
@@ -81,6 +82,7 @@ app.include_router(mobile_router)
 app.include_router(ai_companion_router)
 app.include_router(phase31_router)
 app.include_router(scalability_router)
+app.include_router(marketplace_router)
 @app.get("/api/v1/health")
 def health(db: Session=Depends(get_db)): db.execute(select(1)); return {"status":"ok","service":"codemaster-api"}
 @app.get("/api/v1/ready")

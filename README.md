@@ -191,3 +191,12 @@ Migration `0033_scalability` is additive. These surfaces record measurements,
 policies, and recovery evidence but do not provision paid resources or change
 production capacity. Local and provider-backed telemetry remain explicitly
 `not_tested` or `not_configured` until connected and verified.
+
+## Phase 33 learning marketplace
+
+The free marketplace is available at `/marketplace`, `/marketplace/search`,
+`/marketplace/resources`, `/marketplace/recommended`, `/marketplace/collections`,
+and `/contributor/studio`. It reuses published courses and instructor profiles,
+while community resources use additive migration `0034_marketplace`. There are
+no paid courses, checkout, subscriptions, payment gateways, commissions, or
+paywalls. Draft resources require human moderation before publication.

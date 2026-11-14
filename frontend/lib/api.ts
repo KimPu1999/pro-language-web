@@ -180,3 +180,26 @@ export const scalabilityApi = {
   events: () => request<any[]>("/api/v1/platform/scalability/events"),
   recovery: () => request<any>("/api/v1/platform/scalability/recovery"),
 };
+
+export const marketplaceApi = {
+  home: () => request<any>("/api/v1/marketplace"),
+  search: (query = "") => request<any>(`/api/v1/marketplace/search${query}`),
+  resources: () => request<any>("/api/v1/marketplace/resources"),
+  resource: (slug: string) => request<any>(`/api/v1/marketplace/resources/${slug}`),
+  instructors: (slug: string) => request<any>(`/api/v1/marketplace/instructors/${encodeURIComponent(slug)}`),
+  contributors: () => request<any[]>("/api/v1/marketplace/contributors"),
+  requestVerification: (body: unknown, csrf: string) => request<any>("/api/v1/marketplace/instructors/verification", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  recommended: () => request<any>("/api/v1/marketplace/recommended"),
+  collections: () => request<any[]>("/api/v1/marketplace/collections"),
+  createCollection: (body: unknown, csrf: string) => request<any>("/api/v1/marketplace/collections", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  createResource: (body: unknown, csrf: string) => request<any>("/api/v1/marketplace/resources", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  submit: (id: string, csrf: string) => request<any>(`/api/v1/marketplace/resources/${id}/submit`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  review: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/marketplace/resources/${id}/reviews`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  report: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/marketplace/resources/${id}/report`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  moderation: () => request<any>("/api/v1/marketplace/moderation/queue"),
+  verificationQueue: () => request<any[]>("/api/v1/marketplace/moderation/verification"),
+  decideVerification: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/marketplace/moderation/verification/${id}`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  decide: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/marketplace/moderation/reviews/${id}`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  analytics: () => request<any>("/api/v1/marketplace/analytics"),
+  instructorAnalytics: () => request<any>("/api/v1/marketplace/instructor/analytics"),
+};

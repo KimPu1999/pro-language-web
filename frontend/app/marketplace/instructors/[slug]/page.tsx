@@ -1,0 +1,3 @@
+import { ResourceCard } from "@/components/marketplace-pages";
+import { marketplaceApi } from "@/lib/api";
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) { const data = await marketplaceApi.instructors((await params).slug); return <section className="mx-auto max-w-6xl px-5 py-12"><h1 className="text-4xl font-bold">{data.display_name}</h1><p className="mt-3 text-slate-400">{data.bio || "Public instructor profile"}</p><p className="mt-3 text-sm text-indigo-300">{data.verified ? "Verified contributor" : "Contributor verification pending"}</p><div className="mt-10 grid gap-5 md:grid-cols-2">{data.resources.map((x: any) => <ResourceCard key={x.id} item={x}/>)}</div></section>; }

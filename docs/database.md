@@ -76,3 +76,11 @@ and events, service-instance records, database/queue/runner/CDN/AI metrics,
 cost records, budget policies, recovery drills, failover events, and
 scalability audit logs. It does not alter existing learning data or provision
 infrastructure.
+
+## Phase 33 marketplace
+
+Migration `0034_marketplace` adds resource types, resources, versions, assets,
+tags, reviews, collections, contributions, review requests/decisions, reports,
+moderation actions, contributor verification/reputation, license metadata,
+recommendation/search events, and audit logs. It is additive and does not alter
+existing course or enrollment records.
