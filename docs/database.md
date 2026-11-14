@@ -77,6 +77,10 @@ cost records, budget policies, recovery drills, failover events, and
 scalability audit logs. It does not alter existing learning data or provision
 infrastructure.
 
+## Phase 35 student success
+
+Migration `0036_student_success` adds student success profiles, learning signal evidence, support plans/items, support tickets/messages/events/attachments, assignments, mentor escalations, versioned knowledge articles, feedback links, outcome snapshots, privacy preferences, and audit logs. It preserves existing learning, feedback, mentorship, and course records.
+
 ## Phase 34 Instructor Academy
 
 Migration `0035_instructor_academy` adds onboarding/application reviews,

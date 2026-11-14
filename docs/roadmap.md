@@ -97,6 +97,10 @@ metadata, reports, moderation queue, and persisted analytics surfaces are
 implemented. External full-text indexing, media scanning, rich asset delivery,
 and production engagement telemetry remain deployment work.
 
+## Phase 35 status
+
+The student success dashboard, private ticket lifecycle, evidence-backed signal visibility, student-controlled support plans, consent-gated mentor escalation, published help lookup, persisted outcomes, privacy controls, and aggregate platform overview are implemented. Attachment storage/scanning, automated signal generation, and complete staff knowledge authoring remain follow-up work.
+
 ## Phase 34 status
 
 Instructor onboarding, approval records, teaching standards, training

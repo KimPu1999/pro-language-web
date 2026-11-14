@@ -167,6 +167,15 @@ Public endpoints filter published/public content server-side. Mutations require
 verified authentication, CSRF, ownership or moderation authorization, and
 resource-specific rate limits.
 
+## Phase 35 student success API
+
+- `GET /api/v1/student-success/dashboard|tickets|learning-signals|support-plans|guidance|help|feedback|outcomes|privacy`
+- `POST /api/v1/student-success/tickets`, ticket messages, transitions, signal dismissal, plans, and mentor escalations
+- `PUT /api/v1/student-success/privacy`
+- `GET /api/v1/student-success/staff/tickets|instructor/tickets|platform/overview`
+
+Ticket ownership, staff scope, CSRF, rate limits, mentor consent, and privacy preferences are enforced server-side.
+
 ## Phase 34 Instructor Academy API
 
 - `GET|POST /api/v1/instructor-academy/onboarding`

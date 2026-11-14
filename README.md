@@ -192,6 +192,10 @@ policies, and recovery evidence but do not provision paid resources or change
 production capacity. Local and provider-backed telemetry remain explicitly
 `not_tested` or `not_configured` until connected and verified.
 
+## Phase 35 student success
+
+Student success routes include `/dashboard/student-success`, `/support`, private support tickets, learning signals, support plans, mentorship escalation, guidance, outcomes, privacy settings, staff support, instructor support, and `/platform/student-success`. Migration `0036_student_success` is additive. Signals are evidence-labelled and non-punitive; mentor sharing requires explicit consent; outcome counts use persisted learning records only.
+
 ## Phase 34 Instructor Academy
 
 Instructor development routes include `/instructor/academy`, `/instructor/onboarding`,

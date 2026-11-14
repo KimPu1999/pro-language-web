@@ -223,3 +223,28 @@ export const instructorAcademyApi = {
   applications: () => request<any[]>("/api/v1/instructor-academy/platform/applications"),
   decideApplication: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/instructor-academy/platform/applications/${id}`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
 };
+
+export const studentSuccessApi = {
+  dashboard: () => request<any>("/api/v1/student-success/dashboard"),
+  tickets: () => request<any[]>("/api/v1/student-success/tickets"),
+  createTicket: (body: unknown, csrf: string) => request<any>("/api/v1/student-success/tickets", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  ticket: (id: string) => request<any>(`/api/v1/student-success/tickets/${id}`),
+  message: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/student-success/tickets/${id}/messages`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  transition: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/student-success/tickets/${id}/transition`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  signals: () => request<any>("/api/v1/student-success/learning-signals"),
+  dismissSignal: (id: string, csrf: string) => request<any>(`/api/v1/student-success/learning-signals/${id}/dismiss`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  plans: () => request<any[]>("/api/v1/student-success/support-plans"),
+  createPlan: (body: unknown, csrf: string) => request<any>("/api/v1/student-success/support-plans", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  updatePlan: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/student-success/support-plans/${id}`, { method: "PATCH", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
+  escalateMentor: (body: unknown, csrf: string) => request<any>("/api/v1/student-success/mentorship/escalations", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  guidance: () => request<any>("/api/v1/student-success/guidance"),
+  help: (search = "") => request<any[]>(`/api/v1/student-success/help${search ? `?search=${encodeURIComponent(search)}` : ""}`),
+  feedback: () => request<any[]>("/api/v1/student-success/feedback"),
+  outcomes: () => request<any>("/api/v1/student-success/outcomes"),
+  privacy: () => request<any>("/api/v1/student-success/privacy"),
+  updatePrivacy: (body: unknown, csrf: string) => request<any>("/api/v1/student-success/privacy", { method: "PUT", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
+  staffTickets: () => request<any[]>("/api/v1/student-success/staff/tickets"),
+  assignTicket: (id: string, staffId: string, csrf: string) => request<any>(`/api/v1/student-success/staff/tickets/${id}/assign?staff_id=${encodeURIComponent(staffId)}`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  instructorTickets: () => request<any[]>("/api/v1/student-success/instructor/tickets"),
+  platform: () => request<any>("/api/v1/student-success/platform/overview"),
+};

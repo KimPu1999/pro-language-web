@@ -77,6 +77,14 @@ published public resources. Contributor content remains private until an
 authorized review decision publishes it. Course enrollment and identity remain
 owned by existing models; new resource records do not duplicate course data.
 
+## Phase 35 student success boundary
+
+Student Success is an authorized support boundary over existing learning,
+feedback, mentorship, and course records. Tickets are owner/staff scoped,
+signals require transparent evidence, mentor sharing is consent-gated, and
+platform analytics are aggregate-only. It does not create grades or punitive
+student rankings.
+
 ## Phase 34 instructor quality boundary
 
 Instructor Academy is an approval and evidence boundary over existing course,
