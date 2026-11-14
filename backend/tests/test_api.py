@@ -665,6 +665,43 @@ def test_aws_curriculum_is_published_and_idempotent(client):
     assert response.json()["title"] == "AWS Cloud Computing & Architecture — Zero to Advanced"
     assert len(response.json()["modules"]) == 40
 
+def test_ci_cd_curriculum_is_published_and_idempotent(client):
+    from app.ci_cd_course_content import MODULES, MODULE_ONE, seed_ci_cd_course
+    from app.models import CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
+    import json
+
+    with client.session_factory() as db:
+        language = db.query(ProgrammingLanguage).filter_by(slug="ci-cd").one_or_none()
+        if language is None:
+            language = ProgrammingLanguage(name="CI/CD", slug="ci-cd", color="#2563EB")
+            db.add(language)
+        category = db.query(CourseCategory).filter_by(slug="devops-ci-cd").one_or_none()
+        if category is None:
+            category = CourseCategory(name="DevOps & CI/CD", slug="devops-ci-cd")
+            db.add(category)
+        db.flush()
+        course = Course(language_id=language.id, category_id=category.id, title="CI/CD", slug="ci-cd", description="CI/CD", level="beginner", duration_minutes=0, published=True, status="draft")
+        db.add(course); db.flush(); seed_ci_cd_course(db, course); db.commit()
+        seed_ci_cd_course(db, course); db.commit()
+        modules = db.query(CourseModule).filter_by(course_id=course.id).order_by(CourseModule.order_index).all()
+        lessons = db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).order_by(CourseModule.order_index, Lesson.order_index).all()
+        assert [module.title for module in modules] == MODULES
+        assert len(modules) == 40
+        assert len(lessons) == 46
+        assert len(db.query(Lesson).filter_by(module_id=modules[0].id).all()) == len(MODULE_ONE)
+        assert all(lesson.published and "Pipeline diagram" in lesson.content_en and "Security considerations" in lesson.content_en and "rollback" in lesson.content_en.lower() for lesson in lessons)
+        assert all(lesson.content_mm for lesson in lessons)
+        assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 46
+        assert db.query(CodeExample).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 46
+        for question in db.query(QuizQuestion).join(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all():
+            assert question.correct_answer in json.loads(question.options_json)
+        assert course.title == "CI/CD & DevOps Engineering — From Zero to Professional"
+
+    response = client.get("/api/v1/courses/ci-cd")
+    assert response.status_code == 200
+    assert response.json()["title"] == "CI/CD & DevOps Engineering — From Zero to Professional"
+    assert len(response.json()["modules"]) == 40
+
 def test_course_detail_and_lesson(client):
     course=client.get("/api/v1/courses/python-foundations"); assert course.status_code==200; assert course.json()["modules"][0]["lessons"][0]["content_en"]=="Hello lesson"
     learning=client.get("/api/v1/courses/python-foundations/learning"); assert learning.status_code==200
