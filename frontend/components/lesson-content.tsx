@@ -14,15 +14,26 @@ const SECTION_HEADINGS = new Set([
   "Learning objectives",
   "Prerequisites",
   "Detailed theory",
+  "Detailed theory and real-world example",
+  "Detailed theory and syntax",
   "Visual explanation",
+  "Diagram",
   "Key definitions",
+  "Technical definitions",
   "Syntax example",
+  "Syntax and theory",
+  "Complete example",
+  "Step-by-step setup",
+  "Portable VS Code workspace examples",
+  "Troubleshooting",
   "Expected output",
   "Line-by-line explanation",
   "Additional complete example",
   "Explanation",
   "Common mistakes",
   "Practice exercises",
+  "Exercises",
+  "Myanmar explanation",
   "Summary",
   "Next lesson",
 ]);
@@ -227,7 +238,10 @@ export function CodeSample({ code, language = "c", output = false, label }: { co
 
 
 export function LessonContent({ content, className = "" }: { content: string; className?: string }) {
-  const blocks = parseLessonContent(content);
+  // Myanmar is rendered by the explicit Show MM control in LessonReader.
+  // Older seeded lessons also contain a legacy inline translation section;
+  // hide that duplicate so the toggle remains authoritative for all 75 lessons.
+  const blocks = parseLessonContent(content).filter(block => block.section !== "Myanmar explanation");
   return (
     <div className={`lesson-content max-w-none text-slate-300 ${className}`}>
       {blocks.map((block, index) => {

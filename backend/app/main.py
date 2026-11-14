@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from .config import settings
 from .db import get_db
 from .models import ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseModule, LearningPath, Lesson, ProgrammingLanguage, StudentChallengeProgress, User
-from .schemas import CategoryOut, CourseDetailOut, ExampleOut, LanguageOut, LessonOut, ModuleOut, PageOut, PathOut
+from .schemas import CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut, LanguageOut, LessonOut, ModuleOut, PageOut, PathOut
 from .auth import current_user
 from .auth_routes import router as auth_router
 from .student_routes import router as student_router
@@ -149,6 +149,20 @@ def courses(search: str|None=None, language: str|None=None, level: str|None=None
 def course(slug: str, db: Session=Depends(get_db)):
     row=db.scalar(course_query().options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples)).where(Course.slug==slug))
     if not row: raise HTTPException(404,"Published course not found")
+    return row
+@app.get("/api/v1/courses/{slug}/learning",response_model=CourseLearningOut)
+def course_learning(slug: str, db: Session=Depends(get_db)):
+    """Return course structure without downloading all lesson bodies."""
+    row=db.scalar(course_query().options(selectinload(Course.modules).selectinload(CourseModule.lessons)).where(Course.slug==slug))
+    if not row: raise HTTPException(404,"Published course not found")
+    return row
+@app.get("/api/v1/courses/{slug}/lessons/{lesson_slug}",response_model=LessonOut)
+def course_lesson(slug: str, lesson_slug: str, db: Session=Depends(get_db)):
+    # Accept old links that encoded the punctuation from pre-sanitized lesson
+    # slugs. New links are generated without punctuation.
+    lesson_slug = lesson_slug.rstrip("?&#")
+    row=db.scalar(select(Lesson).join(CourseModule, Lesson.module_id==CourseModule.id).join(Course, CourseModule.course_id==Course.id).where(Course.slug==slug, Course.published.is_(True), Lesson.slug==lesson_slug, Lesson.published.is_(True)).options(selectinload(Lesson.code_examples)))
+    if not row: raise HTTPException(404,"Published lesson not found")
     return row
 @app.get("/api/v1/courses/{slug}/modules",response_model=list[ModuleOut])
 def modules(slug: str, db: Session=Depends(get_db)):

@@ -1,5 +1,6 @@
 """Authoritative, non-placeholder content for C course modules 4 through 20."""
 import json
+import re
 from sqlalchemy import select
 
 
@@ -113,6 +114,10 @@ MODULES_4_TO_20 = {
 ],
 }
 
+def lesson_slug(title: str, module_number: int) -> str:
+    value = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    return f"{module_number:02d}-{value}"
+
 
 def build_content(module_number, item, next_title):
     return (
@@ -152,7 +157,7 @@ def seed_modules_4_to_20(db, modules_by_position):
         items = MODULES_4_TO_20[module_number]
         for position, item in enumerate(items, 1):
             next_title = items[position]["title"] if position < len(items) else "Continue to the next module."
-            slug = f"{module_number:02d}-{item['title'].lower().replace(' ', '-')[:70]}"
+            slug = lesson_slug(item["title"], module_number)
             lesson = db.scalar(select(Lesson).where(Lesson.module_id == module.id, Lesson.order_index == position))
             if not lesson:
                 lesson = Lesson(module_id=module.id, title=item["title"], slug=slug, description=item["theory"][:240], content_en="", order_index=position, duration_minutes=30, status="published", published=True)

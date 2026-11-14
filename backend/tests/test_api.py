@@ -67,6 +67,7 @@ def test_c_curriculum_seed_is_complete_and_idempotent(client):
         assert db.query(CourseModule).filter_by(course_id=course.id).count() == 20
         assert db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 75
         assert db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).count() == 75
+        assert all(not any(character in lesson.slug for character in "?&#/") for lesson in db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all())
         assert module_three.title == "03 Your First C Program & C Syntax Fundamentals"
         lessons = db.query(Lesson).filter_by(module_id=module_three.id).order_by(Lesson.order_index).all()
         assert [lesson.title for lesson in lessons] == [item["title"] for item in MODULE_THREE_LESSONS]
@@ -86,5 +87,12 @@ def test_c_curriculum_seed_is_complete_and_idempotent(client):
 
 def test_course_detail_and_lesson(client):
     course=client.get("/api/v1/courses/python-foundations"); assert course.status_code==200; assert course.json()["modules"][0]["lessons"][0]["content_en"]=="Hello lesson"
+    learning=client.get("/api/v1/courses/python-foundations/learning"); assert learning.status_code==200
+    assert learning.json()["modules"][0]["lessons"][0]["title"] == "Hello"
+    assert "content_en" not in learning.json()["modules"][0]["lessons"][0]
+    lesson=client.get("/api/v1/courses/python-foundations/lessons/hello"); assert lesson.status_code==200
+    assert lesson.json()["content_en"] == "Hello lesson"
+    assert client.get("/api/v1/courses/python-foundations/lessons/hello%3F").status_code==200
+    assert client.get("/api/v1/courses/python-foundations/lessons/missing").status_code==404
 def test_missing_and_unpublished(client):
     assert client.get("/api/v1/courses/missing").status_code==404

@@ -11,6 +11,10 @@ class LessonOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; content_en: str; content_mm: str|None; order_index: int; code_examples: list[ExampleOut]=Field(default_factory=list)
 class ModuleOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; order_index: int; lessons: list[LessonOut]=Field(default_factory=list)
+class LessonSummaryOut(BaseModel):
+    model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; order_index: int; duration_minutes: int
+class LearningModuleOut(BaseModel):
+    model_config=ConfigDict(from_attributes=True); id: UUID; title: str; order_index: int; lessons: list[LessonSummaryOut]=Field(default_factory=list)
 class CourseOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; description: str; level: str; duration_minutes: int; status: str; outcomes: list[str]=Field(default_factory=list); requirements: list[str]=Field(default_factory=list); language: LanguageOut; category: CategoryOut
     @field_validator("outcomes", mode="before")
@@ -21,6 +25,8 @@ class CourseOut(BaseModel):
     def split_requirements(cls, value): return value.split("|") if isinstance(value, str) else value
 class CourseDetailOut(CourseOut):
     modules: list[ModuleOut]=Field(default_factory=list)
+class CourseLearningOut(CourseOut):
+    modules: list[LearningModuleOut]=Field(default_factory=list)
 class PageOut(BaseModel):
     items: list[CourseOut]; page: int; page_size: int; total: int; pages: int
 class QuizAnswerIn(BaseModel):

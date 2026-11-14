@@ -1,20 +1,40 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { api } from "@/lib/api";
+import { api, courseLearningApi } from "@/lib/api";
+import type { CourseLearning, Lesson } from "@/lib/types";
 import { LessonReader } from "@/components/lesson-reader";
 import { LearningSidebar } from "@/components/learning-sidebar";
 
 export default async function LessonPage({ params }: { params: Promise<{ courseSlug: string; lessonSlug: string }> }) {
   const { courseSlug, lessonSlug } = await params;
-  let course;
+  let course: CourseLearning;
+  let lesson: Lesson;
   try {
-    course = await api.course(courseSlug);
+    try {
+      [course, lesson] = await Promise.all([
+        courseLearningApi.course(courseSlug),
+        courseLearningApi.lesson(courseSlug, lessonSlug),
+      ]);
+    } catch {
+      // Compatibility with an already-running API process that has not been
+      // restarted with the lightweight endpoints yet. The fallback is slower,
+      // but keeps published lessons reachable until the service is restarted.
+      const fullCourse = await api.course(courseSlug);
+      const fullLesson = fullCourse.modules.flatMap(module => module.lessons).find(item => item.slug === lessonSlug);
+      if (!fullLesson) notFound();
+      course = {
+        ...fullCourse,
+        modules: fullCourse.modules.map(module => ({
+          ...module,
+          lessons: module.lessons.map(item => ({ id: item.id, title: item.title, slug: item.slug, order_index: item.order_index, duration_minutes: item.duration_minutes ?? 30 })),
+        })),
+      };
+      lesson = fullLesson;
+    }
   } catch {
     notFound();
   }
   const lessons = course.modules.flatMap(module => module.lessons);
-  const lesson = lessons.find(item => item.slug === lessonSlug);
-  if (!lesson) notFound();
   const index = lessons.findIndex(item => item.id === lesson.id);
   const currentModule = course.modules.find(module => module.lessons.some(item => item.id === lesson.id));
 

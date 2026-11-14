@@ -1,5 +1,6 @@
 """Reviewed, portable C curriculum content used by the idempotent catalog seed."""
 import json
+import re
 from sqlalchemy import select
 
 from .c_module_three import MODULE_THREE_LESSONS, seed_module_three
@@ -84,6 +85,11 @@ MODULES = [
         ("Assessment checklist", "Review syntax, types, control flow, functions, arrays, pointers, files, and testing. A correct solution is readable, bounded, and explains its assumptions.", '#include <stdio.h>\n\nint main(void) {\n    puts("Plan, implement, test, explain.");\n    return 0;\n}', "Plan, implement, test, explain.", "The checklist is a repeatable process for finishing a small C project responsibly."),
     ]),
 ]
+
+def lesson_slug(title: str, module_position: int) -> str:
+    """Create URL-safe, stable lesson slugs without punctuation delimiters."""
+    value = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    return f"{module_position:02d}-{value}"
 
 MODULE_ONE_LESSONS = [
     {
@@ -229,7 +235,7 @@ def module_two_content(item):
 def seed_module_two(db, module):
     from .models import CodeExample, Lesson, LessonQuiz, QuizQuestion
     for position, item in enumerate(MODULE_TWO_LESSONS, 1):
-        slug = f"02-{item['title'].lower().replace(' ', '-')}"
+        slug = lesson_slug(item["title"], 2)
         lesson = db.scalar(select(Lesson).where(Lesson.module_id == module.id, Lesson.order_index == position))
         if not lesson:
             lesson = Lesson(module_id=module.id, title=item["title"], slug=slug, description=item["theory"][:240], content_en="", order_index=position, duration_minutes=30, status="published", published=True)
@@ -263,7 +269,7 @@ def module_one_content(title, theory, code, output, explanation, mm):
 def seed_module_one(db, module):
     from .models import CodeExample, Lesson, LessonQuiz, QuizQuestion
     for position, item in enumerate(MODULE_ONE_LESSONS, 1):
-        slug = f"01-{item['title'].lower().replace(' ', '-')}"
+        slug = lesson_slug(item["title"], 1)
         lesson = db.scalar(select(Lesson).where(Lesson.module_id == module.id, Lesson.order_index == position))
         if not lesson:
             lesson = Lesson(module_id=module.id, title=item["title"], slug=slug, description=item["theory"][:240], content_en="", order_index=position, duration_minutes=30, status="published", published=True)
@@ -308,11 +314,12 @@ def seed_c_curriculum(db, course):
             seed_modules_4_to_20(db, {module_position: module})
             continue
         for lesson_position, (title, theory, code, output, explanation) in enumerate(lessons, 1):
-            lesson_slug = f"{module_position:02d}-{title.lower().replace(' ', '-')[:50]}"
+            lesson_url_slug = lesson_slug(title, module_position)
             lesson = db.scalar(select(Lesson).where(Lesson.module_id == module.id, Lesson.order_index == lesson_position))
             if not lesson:
-                lesson = Lesson(module_id=module.id, title=title, slug=lesson_slug, description=theory[:240], content_en=lesson_content(title, topic, theory, code, output, explanation), content_mm=f"Myanmar explanation for {title} is available as an optional translation layer. The original C code remains unchanged.", order_index=lesson_position, duration_minutes=25, status="published", published=True)
+                lesson = Lesson(module_id=module.id, title=title, slug=lesson_url_slug, description=theory[:240], content_en=lesson_content(title, topic, theory, code, output, explanation), content_mm=f"Myanmar explanation for {title} is available as an optional translation layer. The original C code remains unchanged.", order_index=lesson_position, duration_minutes=25, status="published", published=True)
                 db.add(lesson); db.flush()
+            lesson.slug = lesson_url_slug
             if not db.scalar(select(CodeExample).where(CodeExample.lesson_id == lesson.id)):
                 db.add(CodeExample(lesson_id=lesson.id, title=f"{title} example", language="c", code=code, filename="main.c", description=f"Expected output:\n{output}\n\nExplanation:\n{explanation}", position=1))
             quiz = db.scalar(select(LessonQuiz).where(LessonQuiz.lesson_id == lesson.id))

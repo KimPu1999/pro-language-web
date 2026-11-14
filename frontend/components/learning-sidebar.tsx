@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
-import type { CourseProgress, Module } from "@/lib/types";
+import type { CourseProgress, LearningModule } from "@/lib/types";
 
 function ProgressBar({ value, label }: { value: number; label: string }) {
   return (
@@ -19,7 +19,7 @@ function ProgressBar({ value, label }: { value: number; label: string }) {
   );
 }
 
-export function LearningSidebar({ courseSlug, courseTitle, modules, currentLessonId }: { courseSlug: string; courseTitle: string; modules: Module[]; currentLessonId: string }) {
+export function LearningSidebar({ courseSlug, courseTitle, modules, currentLessonId }: { courseSlug: string; courseTitle: string; modules: LearningModule[]; currentLessonId: string }) {
   const [progress, setProgress] = useState<CourseProgress | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [openModules, setOpenModules] = useState<Record<string, boolean>>({});
