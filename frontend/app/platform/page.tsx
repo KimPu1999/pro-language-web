@@ -1,5 +1,2 @@
-import { redirect } from "next/navigation";
-
-export default function PlatformPage() {
-  redirect("/platform/analytics");
-}
+import { AnalyticsDashboard } from "@/components/analytics-dashboard";
+export default function PlatformPage() { return <AnalyticsDashboard/>; }

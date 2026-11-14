@@ -1,0 +1,3 @@
+import { PlatformSecurityPage } from "@/components/platform-admin-pages";
+export default function Page(){return <PlatformSecurityPage/>;}
+
