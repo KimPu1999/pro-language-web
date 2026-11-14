@@ -12,6 +12,7 @@ import { JavascriptPlayground } from "@/components/javascript-playground";
 import { PythonPlayground } from "@/components/python-playground";
 import { JavaPlayground } from "@/components/java-playground";
 import { AdvancedJavaLab } from "@/components/advanced-java-lab";
+import { JqueryPlayground } from "@/components/jquery-playground";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -210,6 +211,13 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
       {courseSlug === "advanced-java" && lesson.code_examples.some(item => item.language.toLowerCase() === "java") && (
         <AdvancedJavaLab
           files={lesson.code_examples.filter(item => item.language.toLowerCase() === "java").map(item => ({ filename: item.filename ?? "Main.java", code: item.code, language: item.language }))}
+        />
+      )}
+
+      {courseSlug === "jquery" && lesson.code_examples.some(item => item.language.toLowerCase() === "jquery") && (
+        <JqueryPlayground
+          title={`${lesson.title} practice`}
+          code={lesson.code_examples.find(item => item.language.toLowerCase() === "jquery")?.code ?? ""}
         />
       )}
 
