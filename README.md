@@ -196,6 +196,10 @@ production capacity. Local and provider-backed telemetry remain explicitly
 
 Student success routes include `/dashboard/student-success`, `/support`, private support tickets, learning signals, support plans, mentorship escalation, guidance, outcomes, privacy settings, staff support, instructor support, and `/platform/student-success`. Migration `0036_student_success` is additive. Signals are evidence-labelled and non-punitive; mentor sharing requires explicit consent; outcome counts use persisted learning records only.
 
+## Phase 36 assessment integrity
+
+Assessment routes include `/dashboard/assessments`, secure attempt and coding paths, `/dashboard/skill-passport`, `/dashboard/credentials`, instructor builder/grading, `/platform/assessment-integrity`, `/platform/credentials`, and public credential verification. Migration `0037_assessment_integrity` adds immutable versions, attempts, grading history, integrity review, competencies, and credential awards. Assessments and credentials remain free; hidden tests and private grading evidence are not exposed.
+
 ## Phase 34 Instructor Academy
 
 Instructor development routes include `/instructor/academy`, `/instructor/onboarding`,

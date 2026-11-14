@@ -176,6 +176,17 @@ resource-specific rate limits.
 
 Ticket ownership, staff scope, CSRF, rate limits, mentor consent, and privacy preferences are enforced server-side.
 
+## Phase 36 assessment API
+
+- `GET /api/v1/assessments`, `/competencies`, `/skill-passport`, `/credentials`
+- `POST /api/v1/assessments`, `/{id}/versions`, `/{id}/questions`, `/{id}/publish`
+- `GET /api/v1/assessments/{id}`; `POST /{id}/attempts`
+- `PUT /api/v1/assessments/attempts/{id}/answers`; `POST /attempts/{id}/submit|appeals`
+- `GET /api/v1/assessments/instructor/grading|integrity|analytics/{id}`
+- `GET|POST /api/v1/assessments/platform/credentials`; revoke and public verification endpoints
+
+Attempt ownership, timers, idempotent submission, hidden-answer filtering, reviewer scope, credential eligibility, and revocation are server-enforced.
+
 ## Phase 34 Instructor Academy API
 
 - `GET|POST /api/v1/instructor-academy/onboarding`

@@ -85,6 +85,10 @@ signals require transparent evidence, mentor sharing is consent-gated, and
 platform analytics are aggregate-only. It does not create grades or punitive
 student rankings.
 
+## Phase 36 assessment boundary
+
+Assessment attempts reference immutable published versions and are finalized server-side. Existing secure runner and certificate systems remain authoritative for their domains. New credentials require verified competency evidence and platform authorization; public verification reveals only minimal credential metadata.
+
 ## Phase 34 instructor quality boundary
 
 Instructor Academy is an approval and evidence boundary over existing course,

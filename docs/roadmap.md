@@ -101,6 +101,10 @@ and production engagement telemetry remain deployment work.
 
 The student success dashboard, private ticket lifecycle, evidence-backed signal visibility, student-controlled support plans, consent-gated mentor escalation, published help lookup, persisted outcomes, privacy controls, and aggregate platform overview are implemented. Attachment storage/scanning, automated signal generation, and complete staff knowledge authoring remain follow-up work.
 
+## Phase 36 status
+
+Assessment definitions, published version snapshots, secure attempt state, deterministic grading, integrity review records, appeals, competency records, credential verification, and platform credential controls are implemented. Project artifact validation, background runner grading, live PostgreSQL migration testing, and browser verification remain environment-dependent.
+
 ## Phase 34 status
 
 Instructor onboarding, approval records, teaching standards, training

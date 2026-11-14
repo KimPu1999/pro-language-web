@@ -81,6 +81,10 @@ infrastructure.
 
 Migration `0036_student_success` adds student success profiles, learning signal evidence, support plans/items, support tickets/messages/events/attachments, assignments, mentor escalations, versioned knowledge articles, feedback links, outcome snapshots, privacy preferences, and audit logs. It preserves existing learning, feedback, mentorship, and course records.
 
+## Phase 36 assessment integrity
+
+Migration `0037_assessment_integrity` adds assessment definitions/versions, questions, attempts, answers, events, grading jobs/results/revisions, integrity signals/cases, appeals, competency definitions/evidence/records, credential awards/status events, and assessment audit logs. Existing challenge, runner, skill, project, certificate, and course tables are preserved.
+
 ## Phase 34 Instructor Academy
 
 Migration `0035_instructor_academy` adds onboarding/application reviews,

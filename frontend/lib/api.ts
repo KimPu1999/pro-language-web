@@ -248,3 +248,27 @@ export const studentSuccessApi = {
   instructorTickets: () => request<any[]>("/api/v1/student-success/instructor/tickets"),
   platform: () => request<any>("/api/v1/student-success/platform/overview"),
 };
+
+export const assessmentApi = {
+  center: () => request<any>("/api/v1/assessments"),
+  detail: (id: string) => request<any>(`/api/v1/assessments/${id}`),
+  competencies: () => request<any>("/api/v1/assessments/competencies"),
+  passport: () => request<any>("/api/v1/assessments/skill-passport"),
+  credentials: () => request<any>("/api/v1/assessments/credentials"),
+  verify: (id: string) => request<any>(`/api/v1/assessments/credentials/verify/${encodeURIComponent(id)}`),
+  create: (body: unknown, csrf: string) => request<any>("/api/v1/assessments", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  version: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/assessments/${id}/versions`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  question: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/assessments/${id}/questions`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  publish: (id: string, csrf: string) => request<any>(`/api/v1/assessments/${id}/publish`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  start: (id: string, csrf: string) => request<any>(`/api/v1/assessments/${id}/attempts`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  answer: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/assessments/attempts/${id}/answers`, { method: "PUT", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
+  submit: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/assessments/attempts/${id}/submit`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  appeal: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/assessments/attempts/${id}/appeals`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  grading: () => request<any[]>("/api/v1/assessments/instructor/grading"),
+  grade: (id: string, body: unknown, csrf: string) => request<any>(`/api/v1/assessments/attempts/${id}/grade`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  integrity: () => request<any>("/api/v1/assessments/integrity"),
+  analytics: (id: string) => request<any>(`/api/v1/assessments/analytics/${id}`),
+  platformCredentials: () => request<any>("/api/v1/assessments/platform/credentials"),
+  issueCredential: (body: unknown, csrf: string) => request<any>("/api/v1/assessments/platform/credentials", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  revokeCredential: (id: string, reason: string, csrf: string) => request<any>(`/api/v1/assessments/platform/credentials/${id}/revoke?reason=${encodeURIComponent(reason)}`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+};
