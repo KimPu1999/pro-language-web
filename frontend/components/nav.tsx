@@ -6,9 +6,10 @@ import { Menu, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { api } from "@/lib/api";
+import { routes } from "@/lib/routes";
 import { LogoutButton } from "./auth-form";
 
-const links = [["Home", "/"], ["Courses", "/courses"], ["Learning Paths", "/learning-paths"], ["Challenges", "/challenges"], ["Projects", "/projects"], ["Community", "/community"]] as const;
+const links = [["Home", routes.home], ["Courses", routes.courses], ["Projects", routes.projects], ["Challenges", routes.challenges], ["Careers", routes.careers], ["Tools", routes.tools], ["About", routes.about], ["Contact", routes.contact]] as const;
 
 function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);

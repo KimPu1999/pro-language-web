@@ -1,0 +1,30 @@
+export const routes = {
+  home: "/",
+  about: "/about",
+  contact: "/contact",
+  privacy: "/privacy",
+  terms: "/terms",
+  courses: "/courses",
+  projects: "/projects",
+  challenges: "/challenges",
+  careers: "/careers",
+  careerPaths: "/careers/paths",
+  resumeBuilder: "/careers/resume-builder",
+  portfolioBuilder: "/careers/portfolio-builder",
+  interview: "/careers/interview",
+  careerDashboard: "/careers/dashboard",
+  jobs: "/careers/jobs",
+  tools: "/tools",
+  codePlayground: "/tools/code-playground",
+  dashboard: "/dashboard",
+  admin: "/admin",
+} as const;
+
+export const routeBuilders = {
+  course: (slug: string) => `/courses/${encodeURIComponent(slug)}`,
+  lesson: (courseSlug: string, lessonSlug: string) => `/courses/${encodeURIComponent(courseSlug)}/learn/${encodeURIComponent(lessonSlug)}`,
+  project: (slug: string) => `/projects/${encodeURIComponent(slug)}`,
+  challenge: (slug: string) => `/challenges/${encodeURIComponent(slug)}`,
+  careerPath: (slug: string) => `/careers/paths/${encodeURIComponent(slug)}`,
+  tool: (slug: string) => `/tools/${encodeURIComponent(slug)}`,
+} as const;
