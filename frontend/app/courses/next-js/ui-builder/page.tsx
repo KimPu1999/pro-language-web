@@ -1,0 +1,14 @@
+"use client";
+
+import Link from "next/link";
+import { RefreshCw, Sparkles } from "lucide-react";
+import { useState } from "react";
+
+const components = ["Button", "Card", "Navbar", "Form", "Table", "Tabs"];
+export default function NextJsUiBuilderPage() {
+  const [selected, setSelected] = useState("Button");
+  const [compact, setCompact] = useState(false);
+  const code = selected === "Button" ? "<button className=\"rounded-lg bg-indigo-500 px-4 py-2 font-semibold text-white\">Continue</button>" : selected === "Card" ? "<article className=\"rounded-xl bg-surface p-5\"><h2>Course</h2><p>Progress: 42%</p></article>" : "<div className=\"rounded-xl border border-line bg-surface p-4\">Predefined " + selected + " preview</div>";
+  return <section className="mx-auto max-w-6xl px-5 py-12 lg:px-8"><Link href="/courses/next-js" className="text-sm text-slate-300 hover:text-white">← Back to Next.js</Link><div className="mt-8 max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">UI component builder</p><h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">Compose a responsive component</h1><p className="mt-4 text-lg leading-8 text-slate-400">Choose a safe predefined component and inspect its Tailwind/TSX representation.</p></div><div className="mt-10 grid gap-6 lg:grid-cols-[.7fr_1.3fr]"><div className="rounded-2xl border border-line bg-surface p-5"><div className="space-y-2">{components.map(item => <button key={item} onClick={() => setSelected(item)} className={"block w-full rounded-lg px-3 py-2 text-left text-sm " + (selected === item ? "bg-white/15 text-white" : "bg-ink text-slate-300 hover:bg-white/5")}>{item}</button>)}</div><button onClick={() => { setSelected("Button"); setCompact(false); }} className="mt-5 inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm text-slate-300"><RefreshCw size={15}/> Reset design</button></div><div className="space-y-5"><div className={"rounded-2xl border border-white/20 bg-surface transition " + (compact ? "p-4" : "p-8")}><div className="flex items-center gap-3 text-slate-200"><Sparkles size={20}/><span className="font-semibold">Responsive preview</span></div><div className="mt-6 rounded-xl bg-ink/70 p-5"><h2 className="text-xl font-bold text-white">{selected}</h2><p className="mt-2 text-sm text-slate-400">Safe predefined component preview with compact={String(compact)}.</p><button onClick={() => setCompact(value => !value)} className="mt-4 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900">Toggle spacing</button></div></div><pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border border-white/20 bg-[#0b0e16] p-5 text-sm leading-7 text-slate-100"><code>{code}</code></pre></div></div><p className="mt-6 rounded-xl bg-amber-400/10 p-4 text-xs leading-5 text-amber-200">Predefined component builder only. It does not compile arbitrary TSX or write files.</p></section>;
+}
+

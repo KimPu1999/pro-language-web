@@ -49,6 +49,7 @@ from .web_security_course_content import seed_web_security_course
 from .mongodb_course_content import seed_mongodb_course
 from .mysql_course_content import seed_mysql_course
 from .networking_course_content import seed_networking_course
+from .nextjs_course_content import seed_nextjs_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -436,6 +437,10 @@ def main():
         if networking_course:
             networking_course.category_id = categories["cybersecurity"].id
             seed_networking_course(db, networking_course)
+        nextjs_course = db.scalar(select(Course).where(Course.slug == "next-js"))
+        if nextjs_course:
+            nextjs_course.category_id = categories["frontend-development"].id
+            seed_nextjs_course(db, nextjs_course)
         seed_challenges(db)
         seed_projects(db)
 
