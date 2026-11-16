@@ -60,6 +60,7 @@ from .react_native_course_content import seed_react_native_course
 from .redis_course_content import seed_redis_course
 from .rust_course_content import seed_rust_course
 from .secure_coding_course_content import seed_secure_coding_course
+from .spring_boot_course_content import seed_spring_boot_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -491,6 +492,10 @@ def main():
         if secure_coding_course:
             secure_coding_course.category_id = categories["cybersecurity"].id
             seed_secure_coding_course(db, secure_coding_course)
+        spring_boot_course = db.scalar(select(Course).where(Course.slug == "spring-boot"))
+        if spring_boot_course:
+            spring_boot_course.category_id = categories["backend-development"].id
+            seed_spring_boot_course(db, spring_boot_course)
         seed_challenges(db)
         seed_projects(db)
 
