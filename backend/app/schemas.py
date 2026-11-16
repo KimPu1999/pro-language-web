@@ -180,7 +180,7 @@ class AdminCourseOut(BaseModel):
     def split_values(cls,v): return v.split("|") if isinstance(v,str) and v else (v or [])
 class AdminPageOut(BaseModel): items: list[AdminCourseOut]; page: int; page_size: int; total: int; pages: int
 class BrandingSettings(BaseModel):
-    website_name: str = Field(default="Learn-Coding", min_length=2, max_length=120)
+    website_name: str = Field(default="Languages-Platform", min_length=2, max_length=120)
     tagline: str = Field(default="Learn to code. Build your future.", max_length=240)
     logo_url: str = Field(default="/branding/tkp.png", max_length=500)
     mobile_logo_url: str = Field(default="/branding/tkp.png", max_length=500)
@@ -188,4 +188,4 @@ class BrandingSettings(BaseModel):
     primary_color: str = Field(default="#6366F1", pattern=r"^#[0-9A-Fa-f]{6}$")
     active_navigation_color: str = Field(default="#6366F1", pattern=r"^#[0-9A-Fa-f]{6}$")
     header_background: str = Field(default="#0B1020", pattern=r"^#[0-9A-Fa-f]{6}$")
-    footer_branding: str = Field(default="Learn-Coding", max_length=120)
+    footer_branding: str = Field(default="Languages-Platform", max_length=120)
