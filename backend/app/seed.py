@@ -24,6 +24,7 @@ from .go_course_content import seed_go_course
 from .kotlin_course_content import seed_kotlin_course
 from .laravel_course_content import seed_laravel_course
 from .linux_course_content import seed_linux_course
+from .machine_learning_course_content import seed_machine_learning_course
 from .cpp_course_content import seed_cpp_course
 from .html_course_content import seed_html_course
 from .css_course_content import seed_css_course
@@ -382,6 +383,10 @@ def main():
         if linux_course:
             linux_course.category_id = categories["devops-cloud"].id
             seed_linux_course(db, linux_course)
+        machine_learning_course = db.scalar(select(Course).where(Course.slug == "machine-learning"))
+        if machine_learning_course:
+            machine_learning_course.category_id = categories["ai-data-science"].id
+            seed_machine_learning_course(db, machine_learning_course)
         data_analysis_course = db.scalar(select(Course).where(Course.slug == "data-analysis"))
         if data_analysis_course:
             data_analysis_course.category_id = categories["data-analytics"].id
