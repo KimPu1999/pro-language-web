@@ -79,7 +79,68 @@ class UserOut(BaseModel):
 class EnrollmentOut(BaseModel):
     id: UUID; course: CourseOut; completed_lessons: int; total_lessons: int; progress_percent: float; last_lesson_slug: str|None
 class ProgressIn(BaseModel): completed: bool
-class DashboardOut(BaseModel): enrollments: list[EnrollmentOut]; completed_lessons: int; overall_progress: float; recent_activity: list[dict]
+class DashboardOut(BaseModel):
+    enrollments: list[EnrollmentOut]
+    completed_lessons: int
+    overall_progress: float
+    recent_activity: list[dict]
+    total_enrolled: int = 0
+    in_progress_courses: int = 0
+    completed_courses: int = 0
+    quiz_attempts: int = 0
+    quiz_average_score: float | None = None
+    certificates_earned: int = 0
+    current_streak: int = 0
+    learning_time_minutes: int | None = None
+class DashboardStudentOut(BaseModel):
+    id: UUID
+    display_name: str
+    avatar_url: str | None = None
+class DashboardStatisticsOut(BaseModel):
+    enrolled_courses: int
+    courses_in_progress: int
+    completed_courses: int
+    completed_lessons: int
+    learning_seconds: int | None = None
+    certificates_earned: int
+    quiz_average_score: float | None = None
+    quiz_attempts: int = 0
+    current_learning_streak: int
+class DashboardLessonRefOut(BaseModel):
+    id: UUID
+    title: str
+    slug: str
+    visited_at: datetime | None = None
+class DashboardCourseOut(BaseModel):
+    course_id: UUID
+    course_slug: str
+    course_title: str
+    course_thumbnail: str | None = None
+    completed_lessons: int
+    total_lessons: int
+    progress_percentage: float
+    last_visited_lesson: DashboardLessonRefOut | None = None
+    next_incomplete_lesson: DashboardLessonRefOut | None = None
+    last_activity_at: datetime | None = None
+class DashboardOverviewOut(BaseModel):
+    student: DashboardStudentOut
+    statistics: DashboardStatisticsOut
+    courses: list[DashboardCourseOut] = Field(default_factory=list)
+class DashboardActivityOut(BaseModel):
+    event_type: str
+    title: str
+    course_title: str
+    course_slug: str
+    lesson_title: str | None = None
+    timestamp: datetime
+class WeeklyActivityDayOut(BaseModel):
+    date: datetime | str
+    completed_lessons: int
+    recorded_learning_minutes: int | None = None
+    quiz_attempts: int
+class WeeklyActivityOut(BaseModel):
+    days: list[WeeklyActivityDayOut]
+    learning_time_available: bool
 class AdminLanguageIn(BaseModel):
     name: str = Field(min_length=2,max_length=80); slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=80); description: str=""; icon: str|None=None; status: str="active"; display_order: int=0
 class AdminCategoryIn(BaseModel):

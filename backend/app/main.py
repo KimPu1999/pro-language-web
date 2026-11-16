@@ -12,6 +12,7 @@ from .schemas import CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut
 from .auth import current_user
 from .auth_routes import router as auth_router
 from .student_routes import router as student_router
+from .dashboard_routes import router as dashboard_router
 from .admin_routes import router as admin_router
 from .runner_routes import router as runner_router
 from .challenge_routes import router as challenge_router
@@ -70,7 +71,7 @@ async def request_context(request, call_next):
     category = "success" if response.status_code < 400 else "client_error" if response.status_code < 500 else "server_error"
     logger.log(level, "request_complete request_id=%s method=%s path=%s status=%s duration_ms=%.1f error_category=%s", request_id, request.method, request.url.path, response.status_code, duration_ms, category)
     return response
-app.include_router(auth_router); app.include_router(student_router); app.include_router(admin_router); app.include_router(runner_router); app.include_router(challenge_router); app.include_router(roadmap_router); app.include_router(project_router); app.include_router(ai_router); app.include_router(gamification_router); app.include_router(community_router); app.include_router(live_class_router)
+app.include_router(auth_router); app.include_router(student_router); app.include_router(dashboard_router); app.include_router(admin_router); app.include_router(runner_router); app.include_router(challenge_router); app.include_router(roadmap_router); app.include_router(project_router); app.include_router(ai_router); app.include_router(gamification_router); app.include_router(community_router); app.include_router(live_class_router)
 app.include_router(analytics_router); app.include_router(operations_router)
 app.include_router(learning_intelligence_router)
 app.include_router(career_router)

@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, current_user, require_csrf, verified_user, hash_token, now
 from .db import get_db
-from .models import AuthSession, Course, CourseModule, Enrollment, Lesson, LessonBookmark, LessonProgress, LessonQuiz, QuizAttempt, QuizQuestion, User, UserProfile
+from .models import AuthSession, Course, CourseModule, Enrollment, IssuedCertificate, LearningStreak, Lesson, LessonBookmark, LessonProgress, LessonQuiz, QuizAttempt, QuizQuestion, User, UserProfile
 from .schemas import DashboardOut, EnrollmentOut, ProfileIn, ProgressIn, QuizAnswerIn, QuizOut, UserOut
 router=APIRouter(prefix="/api/v1/me", tags=["student"])
 def course_base(): return select(Course).options(selectinload(Course.language),selectinload(Course.category)).where(Course.published.is_(True))
@@ -27,7 +27,15 @@ def enrollments(user: User=Depends(current_user), db: Session=Depends(get_db)):
     return [enrollment_payload(db,e) for e in db.scalars(select(Enrollment).where(Enrollment.user_id==user.id).order_by(Enrollment.created_at.desc())).all()]
 @router.get("/dashboard",response_model=DashboardOut)
 def dashboard(user: User=Depends(current_user), db: Session=Depends(get_db)):
-    rows=[enrollment_payload(db,e) for e in db.scalars(select(Enrollment).where(Enrollment.user_id==user.id).order_by(Enrollment.created_at.desc())).all()]; total=sum(x["total_lessons"] for x in rows); complete=sum(x["completed_lessons"] for x in rows); activity=[{"course_slug":x["course"].slug,"lesson_slug":x["last_lesson_slug"],"progress_percent":x["progress_percent"]} for x in rows if x["last_lesson_slug"]]; return {"enrollments":rows,"completed_lessons":complete,"overall_progress":round(complete/total*100,1) if total else 0,"recent_activity":activity}
+    rows=[enrollment_payload(db,e) for e in db.scalars(select(Enrollment).where(Enrollment.user_id==user.id).order_by(Enrollment.created_at.desc())).all()]
+    total=sum(x["total_lessons"] for x in rows); complete=sum(x["completed_lessons"] for x in rows)
+    activity=[{"course_slug":x["course"].slug,"lesson_slug":x["last_lesson_slug"],"progress_percent":x["progress_percent"]} for x in rows if x["last_lesson_slug"]]
+    attempts=db.scalar(select(func.count(QuizAttempt.id)).where(QuizAttempt.user_id==user.id)) or 0
+    score_sum=db.scalar(select(func.sum(QuizAttempt.score)).where(QuizAttempt.user_id==user.id)) or 0
+    total_points=db.scalar(select(func.sum(QuizAttempt.total)).where(QuizAttempt.user_id==user.id)) or 0
+    certificates=db.scalar(select(func.count(IssuedCertificate.id)).where(IssuedCertificate.user_id==user.id,IssuedCertificate.revoked_at.is_(None))) or 0
+    streak=db.scalar(select(LearningStreak.current_streak).where(LearningStreak.user_id==user.id)) or 0
+    return {"enrollments":rows,"completed_lessons":complete,"overall_progress":round(complete/total*100,1) if total else 0,"recent_activity":activity,"total_enrolled":len(rows),"in_progress_courses":sum(1 for x in rows if 0 < x["progress_percent"] < 100),"completed_courses":sum(1 for x in rows if x["total_lessons"] and x["completed_lessons"] >= x["total_lessons"]),"quiz_attempts":attempts,"quiz_average_score":round(score_sum/total_points*100,1) if total_points else None,"certificates_earned":certificates,"current_streak":streak,"learning_time_minutes":None}
 @router.post("/lessons/{lesson_id}/progress")
 def update_progress(lesson_id, payload: ProgressIn, user: User=Depends(verified_user), __: None=Depends(require_csrf), db: Session=Depends(get_db)):
     lesson=db.scalar(select(Lesson).join(CourseModule).join(Course).where(Lesson.id==lesson_id,Lesson.published.is_(True),Course.published.is_(True)))

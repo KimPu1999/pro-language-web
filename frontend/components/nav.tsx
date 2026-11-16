@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Menu, X, Code2, Search } from "lucide-react";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { api } from "@/lib/api";
 import { LogoutButton } from "./auth-form";
 
@@ -10,7 +11,9 @@ const links = [["Home", "/"], ["Courses", "/courses"], ["Learning Paths", "/lear
 export function Nav() {
   const [open, setOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const pathname = usePathname();
   useEffect(() => { api.me().then(() => setSignedIn(true)).catch(() => setSignedIn(false)); }, []);
+  if (pathname.startsWith("/dashboard")) return null;
   return <><header className="fixed inset-x-0 top-0 z-50 border-b border-line/70 bg-ink/90 backdrop-blur-xl">
     <div className="mx-auto flex h-[73px] max-w-7xl items-center justify-between px-5 lg:px-8">
       <Link href="/" className="flex items-center gap-2 font-bold"><span className="grid h-9 w-9 place-items-center rounded-xl bg-primary"><Code2 size={19} /></span><span>CodeMaster<span className="text-indigo-400"> Academy</span></span></Link>
