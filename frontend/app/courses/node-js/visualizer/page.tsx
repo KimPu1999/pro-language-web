@@ -1,0 +1,20 @@
+"use client";
+
+import Link from "next/link";
+import { ArrowRight, RefreshCw, Sparkles } from "lucide-react";
+import { useState } from "react";
+
+const stages = [
+  ["Request", "An HTTP request enters the Node.js process and is matched to a route."],
+  ["Call stack", "Synchronous JavaScript runs on the call stack; long CPU work can delay every request."],
+  ["Async work", "Node delegates supported I/O to the runtime and registers a continuation."],
+  ["Microtasks", "Promise callbacks are processed at the appropriate checkpoint before later work."],
+  ["Event loop", "The event loop advances through timers, poll, check, and close phases."],
+  ["Response", "The route validates data, applies authorization, and sends a safe response."],
+];
+
+export default function NodeJsVisualizerPage() {
+  const [stage, setStage] = useState(0);
+  const current = stages[stage];
+  return <section className="mx-auto max-w-6xl px-5 py-12 lg:px-8"><Link href="/courses/node-js" className="text-sm text-slate-300 hover:text-white">← Back to Node.js</Link><div className="mt-8 max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">Event Loop visualizer</p><h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">From request to response</h1><p className="mt-4 text-lg leading-8 text-slate-400">Step through the runtime boundary, asynchronous work, and safe API response flow.</p></div><div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_.9fr]"><div className="rounded-2xl border border-white/20 bg-surface p-5 sm:p-7"><div className="flex items-center justify-between"><span className="text-sm text-slate-400">Stage {stage + 1} of {stages.length}</span><button onClick={() => setStage(0)} className="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-xs text-slate-300 hover:border-white/50" aria-label="Reset visualizer"><RefreshCw size={14}/> Reset</button></div><div className="mt-8 grid gap-3 sm:grid-cols-3">{stages.map(([label], index) => <button key={label} onClick={() => setStage(index)} className={"rounded-xl p-4 text-left transition " + (index === stage ? "bg-emerald-500/20 text-white ring-1 ring-emerald-300/50" : "bg-ink/60 text-slate-400 hover:bg-white/5")} aria-current={index === stage ? "step" : undefined}><span className="text-[11px] text-slate-500">0{index + 1}</span><span className="mt-2 block text-sm font-semibold">{label}</span></button>)}</div><div className="mt-8 rounded-xl bg-white/10 p-5"><p className="text-xs font-semibold uppercase tracking-wider text-slate-300">Runtime stage</p><h2 className="mt-2 text-2xl font-bold text-white">{current[0]}</h2><p className="mt-3 leading-7 text-slate-300">{current[1]}</p></div><div className="mt-5 flex justify-between gap-3"><button onClick={() => setStage(value => Math.max(0, value - 1))} disabled={stage === 0} className="inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2 text-sm text-slate-300 disabled:opacity-40"><ArrowRight className="rotate-180" size={16}/> Previous</button><button onClick={() => setStage(value => Math.min(stages.length - 1, value + 1))} disabled={stage === stages.length - 1} className="inline-flex items-center gap-2 rounded-lg bg-emerald-400 px-4 py-2 text-sm font-semibold text-slate-950 disabled:opacity-40">Next <ArrowRight size={16}/></button></div></div><aside className="rounded-2xl border border-line bg-surface p-5 sm:p-7"><div className="flex items-center gap-3 text-slate-200"><Sparkles size={20}/><span className="font-semibold">Node.js guardrails</span></div><ul className="mt-5 space-y-4 text-sm leading-6 text-slate-400"><li>Do not block the event loop with unbounded synchronous work.</li><li>Bound concurrency when calling databases or external APIs.</li><li>Validate input and authorize protected resources server-side.</li><li>Keep tokens and database credentials out of client bundles.</li></ul><p className="mt-6 rounded-xl bg-amber-400/10 p-4 text-xs leading-5 text-amber-200">Educational visualizer only. It does not execute Node.js or student code.</p></aside></div></section>;
+}
