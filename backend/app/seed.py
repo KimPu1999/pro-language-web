@@ -53,6 +53,7 @@ from .nextjs_course_content import seed_nextjs_course
 from .nodejs_course_content import seed_nodejs_course
 from .operating_systems_course_content import seed_operating_systems_course
 from .owasp_top_10_course_content import seed_owasp_top_10_course
+from .postgresql_course_content import seed_postgresql_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -456,6 +457,10 @@ def main():
         if owasp_course:
             owasp_course.category_id = categories["cybersecurity"].id
             seed_owasp_top_10_course(db, owasp_course)
+        postgresql_course = db.scalar(select(Course).where(Course.slug == "postgresql"))
+        if postgresql_course:
+            postgresql_course.category_id = categories["database-development"].id
+            seed_postgresql_course(db, postgresql_course)
         seed_challenges(db)
         seed_projects(db)
 
