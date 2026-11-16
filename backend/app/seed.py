@@ -62,6 +62,7 @@ from .rust_course_content import seed_rust_course
 from .secure_coding_course_content import seed_secure_coding_course
 from .spring_boot_course_content import seed_spring_boot_course
 from .sql_course_content import seed_sql_course
+from .tailwind_course_content import seed_tailwind_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -501,6 +502,10 @@ def main():
         if sql_course:
             sql_course.category_id = categories["database-development"].id
             seed_sql_course(db, sql_course)
+        tailwind_course = db.scalar(select(Course).where(Course.slug == "tailwind-css"))
+        if tailwind_course:
+            tailwind_course.category_id = categories["frontend-development"].id
+            seed_tailwind_course(db, tailwind_course)
         seed_challenges(db)
         seed_projects(db)
 
