@@ -14,6 +14,14 @@ body { margin: 0; background: #0B1020; color: #F8FAFC; font-family: Inter, 'Noto
 .theme-light .text-slate-100, .theme-light .text-slate-200, .theme-light .text-slate-300 { color: #1e293b; }
 .theme-light .text-slate-400, .theme-light .text-slate-500 { color: #64748b; }
 .theme-light .border-line { border-color: #e2e8f0; }
+.theme-light .dashboard-shell { background: #0B1020; color: #F8FAFC; }
+.theme-light .dashboard-shell .bg-ink { background-color: #0B1020; }
+.theme-light .dashboard-shell .bg-surface { background-color: #131F36; }
+.theme-light .dashboard-shell .bg-elevated { background-color: #1B2A47; }
+.theme-light .dashboard-shell .text-slate-100, .theme-light .dashboard-shell .text-slate-200, .theme-light .dashboard-shell .text-slate-300 { color: #F8FAFC; }
+.theme-light .dashboard-shell .text-slate-400 { color: #CBD5E1; }
+.theme-light .dashboard-shell .text-slate-500 { color: #94A3B8; }
+.theme-light .dashboard-shell .border-line { border-color: #263653; }
 a { color: inherit; text-decoration: none; }
 button, a, input, select { outline-offset: 3px; }
 :focus-visible { outline: 2px solid #818cf8; }
