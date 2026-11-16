@@ -1,0 +1,25 @@
+"use client";
+
+import Link from "next/link";
+import { RefreshCw, Terminal } from "lucide-react";
+import { useState } from "react";
+
+const initialDocs = [{ title: "Learn BSON", done: false }, { title: "Build a query", done: false }];
+const commands: Record<string, string> = {
+  "show dbs": "[ \"academy_demo\" ]",
+  "show collections": "[ \"todos\" ]",
+  "db.todos.find({done: false})": "[ { title: \"Learn BSON\", done: false }, { title: \"Build a query\", done: false } ]",
+  "db.todos.insertOne({title: \"Add index\", done: false})": "{ acknowledged: true, insertedId: ObjectId(\"simulated\") }",
+  "db.todos.countDocuments({done: false})": "2",
+  "db.todos.aggregate([{$match:{done:false}},{$count:\"open\"}])": "[ { open: 2 } ]"
+};
+
+export default function MongoPlaygroundPage() {
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState("Select a supported command. This is an in-memory simulation.");
+  const [docs, setDocs] = useState(initialDocs);
+  const [history, setHistory] = useState<string[]>([]);
+  const run = (command: string) => { const value = command.trim(); setInput(value); if (!value) return; setHistory(current => [value, ...current].slice(0, 8)); if (value.startsWith("db.todos.insertOne")) setDocs(current => current.some(doc => doc.title === "Add index") ? current : [...current, { title: "Add index", done: false }]); setOutput(commands[value] ?? "Unsupported command. Try show dbs, show collections, db.todos.find({done: false}), or countDocuments."); };
+  return <section className="mx-auto max-w-6xl px-5 py-12 lg:px-8"><Link href="/courses/mongodb" className="text-sm text-emerald-300 hover:text-white">← Back to MongoDB</Link><div className="mt-8 max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">MongoDB playground</p><h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">Safe query simulator</h1><p className="mt-4 text-lg leading-8 text-slate-400">Practice supported CRUD and aggregation examples against a local virtual collection.</p></div><div className="mt-10 grid gap-6 lg:grid-cols-[.8fr_1.2fr]"><div className="rounded-2xl border border-line bg-surface p-5"><div className="flex items-center gap-3 text-emerald-300"><Terminal size={20}/><h2 className="font-semibold">Supported commands</h2></div><div className="mt-4 space-y-2">{Object.keys(commands).map(command => <button key={command} onClick={() => run(command)} className="block w-full rounded-lg bg-ink px-3 py-2 text-left font-mono text-xs text-slate-300 hover:bg-emerald-500/10 hover:text-emerald-200">{command}</button>)}</div><button onClick={() => { setDocs(initialDocs); setHistory([]); setInput(""); setOutput("Simulation reset."); }} className="mt-5 inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm text-slate-300"><RefreshCw size={15}/> Reset database</button></div><div className="space-y-5"><div className="rounded-2xl border border-emerald-400/20 bg-[#061511] p-5"><p className="text-xs uppercase tracking-wider text-emerald-300">academy_demo&gt;</p><form onSubmit={event => { event.preventDefault(); run(input); }} className="mt-3 flex gap-2"><input value={input} onChange={event => setInput(event.target.value)} placeholder="show collections" className="min-w-0 flex-1 rounded-lg border border-line bg-ink px-3 py-2 font-mono text-sm text-white outline-none focus:border-emerald-400"/><button className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">Run</button></form><pre className="mt-4 min-h-28 whitespace-pre-wrap text-sm leading-7 text-emerald-100"><code>{output}</code></pre></div><div className="rounded-2xl border border-line bg-surface p-5"><p className="text-xs uppercase tracking-wider text-slate-500">Virtual todos collection</p><pre className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-300"><code>{JSON.stringify(docs, null, 2)}</code></pre><p className="mt-4 text-xs text-slate-500">History: {history.length ? history.join(" · ") : "empty"}</p></div></div></div><p className="mt-6 rounded-xl bg-amber-400/10 p-4 text-xs leading-5 text-amber-200">Only predefined commands modify in-memory state. No MongoDB server, platform PostgreSQL, filesystem, network, or untrusted query execution is available.</p></section>;
+}
+
