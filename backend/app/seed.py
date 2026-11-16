@@ -17,6 +17,7 @@ from .django_course_content import seed_django_course
 from .docker_course_content import seed_docker_course
 from .express_course_content import seed_express_course
 from .fastapi_course_content import seed_fastapi_course
+from .flutter_course_content import seed_flutter_course
 from .cpp_course_content import seed_cpp_course
 from .html_course_content import seed_html_course
 from .css_course_content import seed_css_course
@@ -346,6 +347,10 @@ def main():
         if dart_course:
             dart_course.category_id = categories["mobile-development"].id
             seed_dart_course(db, dart_course)
+        flutter_course = db.scalar(select(Course).where(Course.slug == "flutter"))
+        if flutter_course:
+            flutter_course.category_id = categories["mobile-development"].id
+            seed_flutter_course(db, flutter_course)
         data_analysis_course = db.scalar(select(Course).where(Course.slug == "data-analysis"))
         if data_analysis_course:
             data_analysis_course.category_id = categories["data-analytics"].id
