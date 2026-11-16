@@ -45,6 +45,7 @@ from .algorithms_course_content import seed_algorithms_course
 from .aws_course_content import seed_aws_course
 from .ci_cd_course_content import seed_ci_cd_course
 from .cybersecurity_fundamentals_course_content import seed_cybersecurity_fundamentals_course
+from .web_security_course_content import seed_web_security_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -416,6 +417,10 @@ def main():
         if cybersecurity_course:
             cybersecurity_course.category_id = categories["cybersecurity-information-security"].id
             seed_cybersecurity_fundamentals_course(db, cybersecurity_course)
+        web_security_course = db.scalar(select(Course).where(Course.slug == "web-security"))
+        if web_security_course:
+            web_security_course.category_id = categories["cybersecurity"].id
+            seed_web_security_course(db, web_security_course)
         seed_challenges(db)
         seed_projects(db)
 
