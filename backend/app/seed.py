@@ -13,6 +13,7 @@ from .models import (Challenge, ChallengeCategory, ChallengeHint, ChallengeLangu
                      CourseCategory, ProgrammingLanguage, ProjectCategory,
                      ProjectMilestone, ProjectTemplate)
 from .c_course_content import seed_c_curriculum
+from .django_course_content import seed_django_course
 from .cpp_course_content import seed_cpp_course
 from .html_course_content import seed_html_course
 from .css_course_content import seed_css_course
@@ -62,7 +63,7 @@ COURSES = [
     ("Rust", "rust", "rust", "#DEA584", "programming-languages"), ("Node.js", "node-js", "javascript", "#339933", "backend-development"),
     ("Express.js", "express-js", "javascript", "#F8FAFC", "backend-development"), ("PHP Programming — From Zero to Advanced", "php", "php", "#777BB4", "backend-development"),
     ("Laravel", "laravel", "php", "#FF2D20", "backend-development"), ("FastAPI", "fastapi", "python", "#009688", "backend-development"),
-    ("Django", "django", "python", "#092E20", "backend-development"), ("Spring Boot", "spring-boot", "java", "#6DB33F", "backend-development"),
+    ("Django", "django", "python", "#087F5B", "backend-development"), ("Spring Boot", "spring-boot", "java", "#6DB33F", "backend-development"),
     ("SQL", "sql", "sql", "#22C55E", "database-development"), ("MySQL", "mysql", "sql", "#4479A1", "database-development"),
     ("PostgreSQL", "postgresql", "sql", "#4169E1", "database-development"), ("SQLite", "sqlite", "sql", "#003B57", "database-development"),
     ("MongoDB", "mongodb", "mongodb", "#47A248", "database-development"), ("Redis", "redis", "redis", "#DC382D", "database-development"),
@@ -300,6 +301,10 @@ def main():
         python_course = db.scalar(select(Course).where(Course.slug == "python"))
         if python_course:
             seed_python_course(db, python_course)
+        django_course = db.scalar(select(Course).where(Course.slug == "django"))
+        if django_course:
+            django_course.category_id = categories["backend-development"].id
+            seed_django_course(db, django_course)
         java_course = db.scalar(select(Course).where(Course.slug == "java"))
         if java_course:
             seed_java_course(db, java_course)
