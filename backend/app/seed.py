@@ -48,6 +48,7 @@ from .cybersecurity_fundamentals_course_content import seed_cybersecurity_fundam
 from .web_security_course_content import seed_web_security_course
 from .mongodb_course_content import seed_mongodb_course
 from .mysql_course_content import seed_mysql_course
+from .networking_course_content import seed_networking_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -431,6 +432,10 @@ def main():
         if mysql_course:
             mysql_course.category_id = categories["database-development"].id
             seed_mysql_course(db, mysql_course)
+        networking_course = db.scalar(select(Course).where(Course.slug == "networking-fundamentals"))
+        if networking_course:
+            networking_course.category_id = categories["cybersecurity"].id
+            seed_networking_course(db, networking_course)
         seed_challenges(db)
         seed_projects(db)
 
