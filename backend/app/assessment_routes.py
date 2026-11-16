@@ -97,7 +97,7 @@ class CredentialIn(BaseModel):
 
 
 @router.get("")
-def assessment_center(user: User = Depends(verified_user), db: Session = Depends(get_db)):
+def assessment_center(user: User = Depends(current_user), db: Session = Depends(get_db)):
     rows = db.scalars(select(AssessmentDefinition).where(AssessmentDefinition.status == "published").order_by(AssessmentDefinition.title)).all()
     attempts = db.scalars(select(AssessmentAttempt).where(AssessmentAttempt.user_id == user.id).order_by(AssessmentAttempt.created_at.desc()).limit(50)).all()
     credentials = db.scalars(select(CredentialAward).where(CredentialAward.user_id == user.id, CredentialAward.status == "active")).all()
@@ -171,7 +171,7 @@ def publish_assessment(assessment_id: UUID, user: User = Depends(reviewer), _: N
 
 
 @router.get("/{assessment_id}")
-def assessment_detail(assessment_id: UUID, user: User = Depends(verified_user), db: Session = Depends(get_db)):
+def assessment_detail(assessment_id: UUID, user: User = Depends(current_user), db: Session = Depends(get_db)):
     assessment = db.scalar(select(AssessmentDefinition).where(AssessmentDefinition.id == assessment_id, AssessmentDefinition.status == "published"))
     if not assessment: raise HTTPException(404, "Published assessment not found")
     version = db.scalar(select(AssessmentVersion).where(AssessmentVersion.assessment_id == assessment.id, AssessmentVersion.status == "published").order_by(AssessmentVersion.version.desc()))
