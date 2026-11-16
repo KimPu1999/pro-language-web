@@ -250,7 +250,6 @@ export function CodeSample({ code, language = "c", output = false, label }: { co
 
 
 export function LessonContent({ content, className = "" }: { content: string; className?: string }) {
-  // Myanmar is rendered by the explicit Show MM control in LessonReader.
   // Older seeded lessons also contain a legacy inline translation section;
   // hide that duplicate so the toggle remains authoritative for all 75 lessons.
   const blocks = parseLessonContent(content).filter(block => block.section !== "Myanmar explanation");

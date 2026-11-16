@@ -5,7 +5,6 @@ import { api, lessonQuizApi } from "@/lib/api";
 import type { CourseProgress, Lesson, LessonQuiz } from "@/lib/types";
 import { csrf } from "@/components/auth-form";
 import { LessonContent, CodeSample } from "@/components/lesson-content";
-import { LessonTranslationToggle } from "@/components/translation";
 import { HtmlPlayground } from "@/components/html-playground";
 import { CssPlayground } from "@/components/css-playground";
 import { JavascriptPlayground } from "@/components/javascript-playground";
@@ -34,7 +33,6 @@ function ProgressBar({ value }: { value: number }) {
 }
 
 export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, modulePosition }: { lesson: Lesson; courseSlug: string; courseTitle: string; moduleTitle?: string; modulePosition?: number }) {
-  const [showMyanmar, setShowMyanmar] = useState(false);
   const [exampleIndex, setExampleIndex] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -113,7 +111,6 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <LessonTranslationToggle onChange={setShowMyanmar} />
             <button
               onClick={toggleBookmark}
               className={`rounded-lg border px-3 py-2 text-sm ${bookmarked ? "border-indigo-400 bg-indigo-500/15 text-indigo-200" : "border-line text-slate-300"}`}
@@ -134,18 +131,6 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
       <article aria-label="Lesson content">
         <LessonContent content={lesson.content_en} />
       </article>
-
-      {showMyanmar && (
-        <section className="mt-8 rounded-2xl border border-indigo-400/20 bg-indigo-500/5 p-5 sm:p-6" aria-label="Myanmar explanation">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-indigo-200">မြန်မာရှင်းလင်းချက်</h2>
-            <span className="rounded-full bg-indigo-500/15 px-2 py-0.5 text-[11px] text-indigo-300">MM</span>
-          </div>
-          {lesson.content_mm
-            ? <LessonContent content={lesson.content_mm} />
-            : <p className="leading-8 text-slate-300">Myanmar explanation is not available for this lesson yet.</p>}
-        </section>
-      )}
 
       {lesson.code_examples.length > 0 && (
         <section className="mt-10" aria-label="Explained code examples">

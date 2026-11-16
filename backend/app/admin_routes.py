@@ -1,13 +1,13 @@
 import json, math
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
-from .auth import current_user, require_csrf
+from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, normalize_email, now, require_csrf, verify_password
 from .db import get_db
-from .models import AdminAuditLog, Course, CourseCategory, CourseInstructor, CourseModule, CourseRevision, Lesson, CodeExample, LessonQuiz, QuizQuestion, ProgrammingLanguage, PublishingReview, User
+from .models import AdminAuditLog, AuthSession, CodeExample, Course, CourseCategory, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, ProgrammingLanguage, PublishingReview, QuizAttempt, QuizQuestion, User
 from .rbac import PLATFORM_ADMIN_ROLES, require_platform_admin
-from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, PublishDecisionIn
+from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, LoginIn, PublishDecisionIn
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
 def admin_user(user: User=Depends(current_user)):
@@ -36,9 +36,40 @@ def lesson_for_edit(lesson_id, user, db):
     if not module: raise HTTPException(404,"Course module not found")
     require_edit(module.course_id, user, db)
     return lesson
+@router.post("/auth/login")
+def admin_login(payload: LoginIn, request: Request, response: Response, db: Session=Depends(get_db)):
+    check_rate_limit(f"admin-login:{request.client.host if request.client else 'unknown'}:{normalize_email(payload.email)}", 8)
+    user=db.scalar(select(User).where(User.email_normalized==normalize_email(payload.email)))
+    if not user or not verify_password(payload.password, user.password_hash) or user.account_status!="active":
+        raise HTTPException(401,"Invalid email or password")
+    if user.role not in ADMIN or not user.email_verified_at:
+        raise HTTPException(403,"Administrator access required")
+    raw, csrf=create_session(db,user)
+    user.last_login_at=now()
+    audit(db,user,"admin_login","admin_session")
+    db.commit()
+    from .auth import set_auth_cookies
+    set_auth_cookies(response,raw,csrf)
+    return {"id":user.id,"email":user.email,"full_name":user.display_name,"role":user.role,"email_verified":True}
+@router.get("/auth/me")
+def admin_me(user: User=Depends(full_admin)):
+    return {"id":user.id,"email":user.email,"full_name":user.display_name,"role":user.role,"email_verified":True}
+@router.post("/auth/logout")
+def admin_logout(response: Response, session_token: str|None=Cookie(default=None,alias=SESSION_COOKIE), user: User=Depends(full_admin), _:None=Depends(require_csrf), db: Session=Depends(get_db)):
+    if session_token:
+        session=db.scalar(select(AuthSession).where(AuthSession.token_hash==hash_token(session_token)))
+        if session: session.revoked_at=now()
+    audit(db,user,"admin_logout","admin_session")
+    db.commit(); clear_auth_cookies(response)
+    return {"status":"ok"}
 @router.get("/dashboard")
 def dashboard(user: User=Depends(full_admin), db: Session=Depends(get_db)):
-    return {"total_courses":db.scalar(select(func.count(Course.id))) or 0,"published_courses":db.scalar(select(func.count(Course.id)).where(Course.published.is_(True))) or 0,"draft_courses":db.scalar(select(func.count(Course.id)).where(Course.status.in_(["draft","in_review"]))) or 0,"total_students":db.scalar(select(func.count(User.id)).where(User.role=="student")) or 0,"total_instructors":db.scalar(select(func.count(User.id)).where(User.role=="instructor")) or 0,"recent_courses":[course_out(x) for x in db.scalars(select(Course).order_by(Course.updated_at.desc()).limit(5)).all()],"pending_reviews":db.scalar(select(func.count(PublishingReview.id)).where(PublishingReview.decision=="pending")) or 0,"recent_activity":[]}
+    lesson_counts=select(CourseModule.course_id.label("course_id"),func.count(Lesson.id).label("total")).join(Lesson,Lesson.module_id==CourseModule.id).where(Lesson.published.is_(True)).group_by(CourseModule.course_id).subquery()
+    completed_counts=select(LessonProgress.user_id.label("user_id"),CourseModule.course_id.label("course_id"),func.count(LessonProgress.id).label("completed")).select_from(LessonProgress).join(Lesson,LessonProgress.lesson_id==Lesson.id).join(CourseModule,CourseModule.id==Lesson.module_id).where(LessonProgress.completed.is_(True)).group_by(LessonProgress.user_id,CourseModule.course_id).subquery()
+    completed_courses=db.scalar(select(func.count()).select_from(Enrollment).join(lesson_counts,lesson_counts.c.course_id==Enrollment.course_id).join(completed_counts,(completed_counts.c.course_id==Enrollment.course_id)&(completed_counts.c.user_id==Enrollment.user_id),isouter=True).where(lesson_counts.c.total>0,func.coalesce(completed_counts.c.completed,0)>=lesson_counts.c.total)) or 0
+    popularity=db.execute(select(Course.title,func.count(Enrollment.id).label("enrollments")).join(Enrollment,Enrollment.course_id==Course.id).group_by(Course.id).order_by(func.count(Enrollment.id).desc()).limit(5)).all()
+    activity=db.scalars(select(AdminAuditLog).order_by(AdminAuditLog.created_at.desc()).limit(8)).all()
+    return {"total_courses":db.scalar(select(func.count(Course.id))) or 0,"published_courses":db.scalar(select(func.count(Course.id)).where(Course.published.is_(True))) or 0,"draft_courses":db.scalar(select(func.count(Course.id)).where(Course.status.in_(["draft","in_review"]))) or 0,"total_lessons":db.scalar(select(func.count(Lesson.id))) or 0,"total_students":db.scalar(select(func.count(User.id)).where(User.role=="student")) or 0,"active_enrollments":db.scalar(select(func.count(Enrollment.id))) or 0,"completed_courses":completed_courses,"quiz_attempts":db.scalar(select(func.count(QuizAttempt.id))) or 0,"total_instructors":db.scalar(select(func.count(User.id)).where(User.role=="instructor")) or 0,"recent_courses":[course_out(x) for x in db.scalars(select(Course).order_by(Course.updated_at.desc()).limit(5)).all()],"pending_reviews":db.scalar(select(func.count(PublishingReview.id)).where(PublishingReview.decision=="pending")) or 0,"recent_activity":[{"action":x.action,"entity_type":x.entity_type,"created_at":x.created_at} for x in activity],"course_popularity":[{"title":title,"enrollments":enrollments} for title,enrollments in popularity]}
 @router.get("/languages")
 def list_languages(search: str|None=None, page: int=Query(1,ge=1), page_size: int=Query(20,ge=1,le=100), user: User=Depends(admin_user), db: Session=Depends(get_db)):
     q=select(ProgrammingLanguage); count=select(func.count()).select_from(ProgrammingLanguage)
