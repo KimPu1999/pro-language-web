@@ -52,6 +52,7 @@ from .networking_course_content import seed_networking_course
 from .nextjs_course_content import seed_nextjs_course
 from .nodejs_course_content import seed_nodejs_course
 from .operating_systems_course_content import seed_operating_systems_course
+from .owasp_top_10_course_content import seed_owasp_top_10_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -451,6 +452,10 @@ def main():
         if operating_systems_course:
             operating_systems_course.category_id = categories["computer-science"].id
             seed_operating_systems_course(db, operating_systems_course)
+        owasp_course = db.scalar(select(Course).where(Course.slug == "owasp-top-10"))
+        if owasp_course:
+            owasp_course.category_id = categories["cybersecurity"].id
+            seed_owasp_top_10_course(db, owasp_course)
         seed_challenges(db)
         seed_projects(db)
 
