@@ -63,6 +63,7 @@ from .secure_coding_course_content import seed_secure_coding_course
 from .spring_boot_course_content import seed_spring_boot_course
 from .sql_course_content import seed_sql_course
 from .tailwind_course_content import seed_tailwind_course
+from .sqlite_course_content import seed_sqlite_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -506,6 +507,10 @@ def main():
         if tailwind_course:
             tailwind_course.category_id = categories["frontend-development"].id
             seed_tailwind_course(db, tailwind_course)
+        sqlite_course = db.scalar(select(Course).where(Course.slug == "sqlite"))
+        if sqlite_course:
+            sqlite_course.category_id = categories["database-development"].id
+            seed_sqlite_course(db, sqlite_course)
         seed_challenges(db)
         seed_projects(db)
 
