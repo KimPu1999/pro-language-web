@@ -1,0 +1,10 @@
+"use client";
+
+import type { ProjectTemplate } from "@/lib/types";
+import { Card } from "@/components/ui";
+
+export function ProjectTestingPanel({ project }: { project: ProjectTemplate }) {
+  const cases = project.milestones.filter(step => step.expected_output?.trim()).map(step => ({ id: step.id, title: step.title, description: step.description_en, expected: step.expected_output, status: "not_run" }));
+  if (!cases.length) return <Card className="border-amber-400/20 bg-amber-400/5 p-6"><h2 className="text-xl font-bold">Project tests unavailable</h2><p className="mt-3 text-sm leading-7 text-slate-300">No trusted project-specific test definitions are published for this project yet. Do not treat the tutorial examples as automated test results.</p></Card>;
+  return <div className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm text-slate-400">{cases.length} published verification cases</p><p className="mt-1 text-xs text-slate-500">Manual verification only · no result is marked as passed by the client.</p></div><span className="rounded-full bg-amber-400/10 px-3 py-1 text-xs text-amber-200">Runner not connected</span></div>{cases.map(test => <Card key={test.id} className="p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold text-slate-100">{test.title}</h3><p className="mt-2 text-sm leading-6 text-slate-400">{test.description}</p></div><span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs text-slate-400">Not run</span></div><div className="mt-4 rounded-xl bg-ink p-4"><p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Expected behavior</p><pre className="mt-2 whitespace-pre-wrap text-sm leading-6 text-emerald-200"><code>{test.expected}</code></pre></div><p className="mt-3 text-xs leading-5 text-slate-500">Run the project locally in the documented environment, compare the actual result, and record the outcome. Automated results require a trusted project test API and isolated runner.</p></Card>)}</div>;
+}

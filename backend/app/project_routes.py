@@ -15,6 +15,7 @@ router=APIRouter(prefix="/api/v1",tags=["projects"])
 class SubmissionIn(BaseModel): repository_url:str; branch_or_sha:str=Field(min_length=1,max_length=180); demo_url:str|None=None; project_description:str=""; setup_instructions:str=""; reviewer_notes:str=""
 class MilestoneIn(BaseModel): completed:bool; notes:str=""
 class ProjectIn(BaseModel): title:str=Field(min_length=1,max_length=180); slug:str=Field(pattern=r"^[a-z0-9-]+$"); description_en:str=Field(min_length=1); description_mm:str|None=None; difficulty:str; category_id:UUID|None=None; estimated_hours:int=Field(default=0,ge=0); requirements:str=""; learning_outcomes:str=""; technology_stack:str=""; prerequisites:str=""; architecture_overview:str=""; folder_structure:str=""; testing_guide:str=""; deployment_guide:str=""
+class ProjectPatch(BaseModel): title:str|None=Field(default=None,min_length=1,max_length=180); slug:str|None=Field(default=None,pattern=r"^[a-z0-9-]+$"); description_en:str|None=Field(default=None,min_length=1); description_mm:str|None=None; difficulty:str|None=None; category_id:UUID|None=None; estimated_hours:int|None=Field(default=None,ge=0); requirements:str|None=None; learning_outcomes:str|None=None; technology_stack:str|None=None; prerequisites:str|None=None; architecture_overview:str|None=None; folder_structure:str|None=None; testing_guide:str|None=None; deployment_guide:str|None=None
 class ReviewIn(BaseModel): decision:str; comments:str=""; scores:dict[UUID,int]={}
 class PortfolioIn(BaseModel): username:str=Field(pattern=r"^[a-z0-9-]{3,80}$"); headline:str=""; bio:str=""; github_url:str|None=None; visibility:str="private"
 def safe_url(value:str,github=False):
@@ -80,6 +81,19 @@ def enroll_project(project_id:UUID,user:User=Depends(verified_user),_:None=Depen
 @router.get("/me/projects")
 def my_projects(user:User=Depends(current_user),db:Session=Depends(get_db)):
     rows=db.scalars(select(StudentProject).where(StudentProject.user_id==user.id).order_by(StudentProject.created_at.desc())).all();return [{"id":r.id,"project_id":r.project_id,"title":db.scalar(select(ProjectTemplate.title).where(ProjectTemplate.id==r.project_id)),"difficulty":db.scalar(select(ProjectTemplate.difficulty).where(ProjectTemplate.id==r.project_id)),"status":r.status,"progress":project_progress(db,r)} for r in rows]
+@router.get("/me/projects/dashboard")
+def my_project_dashboard(search:str|None=None,status:str|None=None,technology:str|None=None,page:int=Query(1,ge=1),page_size:int=Query(10,ge=1,le=50),user:User=Depends(current_user),db:Session=Depends(get_db)):
+    base=select(StudentProject,ProjectTemplate).join(ProjectTemplate,ProjectTemplate.id==StudentProject.project_id).where(StudentProject.user_id==user.id)
+    count=select(func.count()).select_from(StudentProject).join(ProjectTemplate,ProjectTemplate.id==StudentProject.project_id).where(StudentProject.user_id==user.id)
+    if search:
+        pattern=f"%{search}%"; condition=ProjectTemplate.title.ilike(pattern)|ProjectTemplate.description_en.ilike(pattern); base=base.where(condition);count=count.where(condition)
+    if status:
+        condition=StudentProject.status==("approved" if status=="completed" else status);base=base.where(condition);count=count.where(condition)
+    if technology:
+        condition=ProjectTemplate.technology_stack.ilike(f"%{technology}%");base=base.where(condition);count=count.where(condition)
+    total=db.scalar(count) or 0; rows=db.execute(base.order_by(StudentProject.updated_at.desc()).offset((page-1)*page_size).limit(page_size)).all()
+    items=[{"id":student.id,"project_id":template.id,"title":template.title,"difficulty":template.difficulty,"technology_stack":template.technology_stack,"status":"completed" if student.status=="approved" else student.status,"progress":project_progress(db,student),"updated_at":student.updated_at} for student,template in rows]
+    return {"items":items,"page":page,"page_size":page_size,"total":total,"pages":(total+page_size-1)//page_size if total else 0}
 @router.get("/me/projects/{project_id}")
 def my_project(project_id:UUID,user:User=Depends(current_user),db:Session=Depends(get_db)):
     row=db.scalar(select(StudentProject).where(StudentProject.id==project_id,StudentProject.user_id==user.id));
@@ -109,10 +123,21 @@ def submit_project(project_id:UUID,payload:SubmissionIn,user:User=Depends(verifi
     if not student:raise HTTPException(404,"Project not found")
     if student.status in {"submitted", "in_review"}: raise HTTPException(409,"A submission is already awaiting review")
     if student.status == "approved": raise HTTPException(409,"Approved projects cannot be resubmitted")
+    required_ids=set(db.scalars(select(ProjectMilestone.id).where(ProjectMilestone.project_id==student.project_id,ProjectMilestone.required.is_(True))).all())
+    completed_ids=set(db.scalars(select(StudentProjectMilestone.milestone_id).where(StudentProjectMilestone.student_project_id==student.id,StudentProjectMilestone.completed.is_(True),StudentProjectMilestone.milestone_id.in_(required_ids))).all()) if required_ids else set()
+    if required_ids - completed_ids:
+        raise HTTPException(422,"Complete all required project tasks before submitting")
     safe_url(payload.repository_url,True);demo=safe_url(payload.demo_url) if payload.demo_url else None;submission=ProjectSubmission(student_project_id=student.id,repository_url=payload.repository_url,branch_or_sha=payload.branch_or_sha,demo_url=demo,project_description=payload.project_description,setup_instructions=payload.setup_instructions,reviewer_notes=payload.reviewer_notes,status="submitted");db.add(submission);student.status="submitted";db.commit();return {"id":submission.id,"status":submission.status}
 @router.get("/instructor/projects/reviews")
 def review_queue(user:User=Depends(admin_user),db:Session=Depends(get_db)):
-    rows=db.scalars(select(ProjectSubmission).where(ProjectSubmission.status.in_(["submitted","in_review","changes_requested"])).order_by(ProjectSubmission.created_at)).all();return rows
+    rows=db.scalars(select(ProjectSubmission).where(ProjectSubmission.status.in_(["submitted","in_review","changes_requested"])).order_by(ProjectSubmission.created_at)).all();return [{"id":row.id,"status":row.status,"submitted_at":row.submitted_at,"repository_url":row.repository_url,"branch_or_sha":row.branch_or_sha,"project_title":db.scalar(select(ProjectTemplate.title).join(StudentProject,StudentProject.project_id==ProjectTemplate.id).where(StudentProject.id==row.student_project_id))} for row in rows]
+@router.get("/instructor/projects/reviews/{submission_id}")
+def review_detail(submission_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    submission=db.get(ProjectSubmission,submission_id)
+    if not submission: raise HTTPException(404,"Submission not found")
+    project=db.get(StudentProject,submission.student_project_id); template=db.get(ProjectTemplate,project.project_id) if project else None
+    criteria=db.scalars(select(ProjectRubricCriterion).where(ProjectRubricCriterion.project_id==project.project_id).order_by(ProjectRubricCriterion.position)).all() if project else []
+    return {"id":submission.id,"status":submission.status,"submitted_at":submission.submitted_at,"repository_url":submission.repository_url,"branch_or_sha":submission.branch_or_sha,"demo_url":submission.demo_url,"project_description":submission.project_description,"setup_instructions":submission.setup_instructions,"project":{"id":template.id,"title":template.title} if template else None,"criteria":[{"id":c.id,"name":c.name,"weight":c.weight,"position":c.position} for c in criteria]}
 @router.post("/instructor/projects/reviews/{submission_id}")
 def review_submission(submission_id:UUID,payload:ReviewIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     submission=db.get(ProjectSubmission,submission_id)
@@ -153,6 +178,60 @@ def create_project(payload:ProjectIn,user:User=Depends(admin_user),_:None=Depend
     if db.scalar(select(ProjectTemplate).where(ProjectTemplate.slug==payload.slug)):raise HTTPException(409,"Slug already exists")
     if payload.difficulty not in {"beginner","intermediate","advanced","professional"}:raise HTTPException(422,"Invalid difficulty")
     row=ProjectTemplate(**payload.model_dump(),created_by=user.id);db.add(row);audit(db,user,"project_created","project",row.id);db.commit();return {"id":row.id,"slug":row.slug}
+def project_quality(row,db):
+    milestones=db.scalars(select(ProjectMilestone).where(ProjectMilestone.project_id==row.id)).all();criteria=db.scalars(select(ProjectRubricCriterion).where(ProjectRubricCriterion.project_id==row.id)).all();missing=[]
+    for field,label in ((row.description_en,"overview"),(row.requirements,"requirements"),(row.learning_outcomes,"learning objectives"),(row.technology_stack,"technology stack"),(row.testing_guide,"testing guide")):
+        if not (field or "").strip(): missing.append(label)
+    if not milestones: missing.append("tutorial milestones")
+    elif any(not (m.title.strip() and m.content_en.strip()) for m in milestones): missing.append("complete milestone content")
+    if not criteria: missing.append("grading rubric")
+    elif sum(c.weight for c in criteria)!=100: missing.append("rubric weights totaling 100")
+    return {"ready":not missing,"missing":missing,"milestones":len(milestones),"rubric_weight":sum(c.weight for c in criteria)}
+@router.get("/admin/projects")
+def admin_projects(search:str|None=None,published:bool|None=None,page:int=Query(1,ge=1),page_size:int=Query(10,ge=1,le=50),user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    q=select(ProjectTemplate);count=select(func.count()).select_from(ProjectTemplate)
+    if search:
+        condition=ProjectTemplate.title.ilike(f"%{search}%")|ProjectTemplate.slug.ilike(f"%{search}%");q=q.where(condition);count=count.where(condition)
+    if published is not None:q=q.where(ProjectTemplate.published==published);count=count.where(ProjectTemplate.published==published)
+    total=db.scalar(count) or 0;rows=db.scalars(q.order_by(ProjectTemplate.updated_at.desc()).offset((page-1)*page_size).limit(page_size)).all()
+    return {"items":[{"id":row.id,"title":row.title,"slug":row.slug,"status":row.status,"published":row.published,"updated_at":row.updated_at,"quality":project_quality(row,db)} for row in rows],"page":page,"page_size":page_size,"total":total,"pages":(total+page_size-1)//page_size if total else 0}
+@router.get("/admin/projects/{project_id}")
+def admin_project_detail(project_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    row=db.get(ProjectTemplate,project_id)
+    if not row: raise HTTPException(404,"Project not found")
+    return {"project":template_out(row,db),"quality":project_quality(row,db)}
+@router.patch("/admin/projects/{project_id}")
+def update_project(project_id:UUID,payload:ProjectPatch,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    row=db.get(ProjectTemplate,project_id)
+    if not row: raise HTTPException(404,"Project not found")
+    values=payload.model_dump(exclude_unset=True)
+    if "slug" in values and values["slug"]!=row.slug and db.scalar(select(ProjectTemplate).where(ProjectTemplate.slug==values["slug"],ProjectTemplate.id!=row.id)): raise HTTPException(409,"Slug already exists")
+    if "difficulty" in values and values["difficulty"] not in {"beginner","intermediate","advanced","professional"}: raise HTTPException(422,"Invalid difficulty")
+    for key,value in values.items(): setattr(row,key,value)
+    audit(db,user,"project_updated","project",row.id);db.commit();return {"id":row.id,"slug":row.slug,"quality":project_quality(row,db)}
+@router.post("/admin/projects/{project_id}/duplicate",status_code=201)
+def duplicate_project(project_id:UUID,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    source=db.get(ProjectTemplate,project_id)
+    if not source: raise HTTPException(404,"Project not found")
+    slug=f"{source.slug}-copy";suffix=1
+    while db.scalar(select(ProjectTemplate).where(ProjectTemplate.slug==slug)): suffix+=1;slug=f"{source.slug}-copy-{suffix}"
+    values={key:getattr(source,key) for key in ("category_id","title","description_en","description_mm","difficulty","estimated_hours","requirements","learning_outcomes","technology_stack","prerequisites","architecture_overview","folder_structure","testing_guide","deployment_guide")};values["title"]=f"{source.title} (Copy)";values["slug"]=slug;values["published"]=False;values["status"]="draft";values["created_by"]=user.id
+    row=ProjectTemplate(**values);db.add(row);db.flush()
+    for milestone in db.scalars(select(ProjectMilestone).where(ProjectMilestone.project_id==source.id)).all():
+        db.add(ProjectMilestone(project_id=row.id,title=milestone.title,slug=milestone.slug,description_en=milestone.description_en,description_mm=milestone.description_mm,content_en=milestone.content_en,content_mm=milestone.content_mm,code=milestone.code,filename=milestone.filename,expected_output=milestone.expected_output,line_explanation=milestone.line_explanation,position=milestone.position,required=milestone.required))
+    audit(db,user,"project_duplicated","project",row.id);db.commit();return {"id":row.id,"slug":row.slug,"published":False}
+@router.post("/admin/projects/{project_id}/publish")
+def publish_project(project_id:UUID,payload:dict,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    row=db.get(ProjectTemplate,project_id)
+    if not row: raise HTTPException(404,"Project not found")
+    publish=bool(payload.get("published",True));quality=project_quality(row,db)
+    if publish and not quality["ready"]: raise HTTPException(422,{"message":"Project content is not ready to publish","missing":quality["missing"]})
+    row.published=publish;row.status="published" if publish else "draft";audit(db,user,"project_published" if publish else "project_unpublished","project",row.id);db.commit();return {"id":row.id,"published":row.published,"status":row.status,"quality":quality}
+@router.post("/admin/projects/{project_id}/archive")
+def archive_project(project_id:UUID,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    row=db.get(ProjectTemplate,project_id)
+    if not row: raise HTTPException(404,"Project not found")
+    row.published=False;row.status="archived";audit(db,user,"project_archived","project",row.id);db.commit();return {"id":row.id,"status":row.status,"published":False}
 @router.post("/admin/projects/{project_id}/milestones",status_code=201)
 def create_milestone(project_id:UUID,payload:dict,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=ProjectMilestone(project_id=project_id,title=str(payload.get("title","")),slug=str(payload.get("slug", "")),description_en=str(payload.get("description_en","")),description_mm=payload.get("description_mm"),content_en=str(payload.get("content_en",payload.get("description_en",""))),content_mm=payload.get("content_mm"),code=str(payload.get("code","")),filename=payload.get("filename"),expected_output=str(payload.get("expected_output","")),line_explanation=str(payload.get("line_explanation","")),position=int(payload.get("position",0)),required=bool(payload.get("required",True)));db.add(row);db.commit();return {"id":row.id}

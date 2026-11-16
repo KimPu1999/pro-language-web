@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf
 from .db import get_db
-from .models import IssuedCertificate, CertificateRevocation, LeaderboardPreference, StudentAchievement, StudentXPBalance, LearningStreak, User
+from .models import AchievementDefinition, IssuedCertificate, CertificateRevocation, LeaderboardPreference, StudentAchievement, StudentXPBalance, LearningStreak, User
 from .admin_routes import full_admin
 router=APIRouter(prefix="/api/v1/gamification",tags=["gamification"])
 class PreferenceIn(BaseModel): opted_in: bool=False; display_name: str|None=Field(default=None,max_length=120)
@@ -29,6 +29,11 @@ def verify_certificate(certificate_id:str,db:Session=Depends(get_db)):
 def summary(user:User=Depends(current_user),db:Session=Depends(get_db)):
     balance=db.scalar(select(StudentXPBalance).where(StudentXPBalance.user_id==user.id)); streak=db.scalar(select(LearningStreak).where(LearningStreak.user_id==user.id)); earned=db.scalar(select(func.count(StudentAchievement.id)).where(StudentAchievement.user_id==user.id)) or 0
     return {"total_xp":balance.total_xp if balance else 0,"level":balance.current_level if balance else 1,"current_streak":streak.current_streak if streak else 0,"longest_streak":streak.longest_streak if streak else 0,"badges":earned}
+@router.get("/achievements")
+def achievements(user:User=Depends(current_user),db:Session=Depends(get_db)):
+    earned={row.achievement_id:row.awarded_at for row in db.scalars(select(StudentAchievement).where(StudentAchievement.user_id==user.id)).all()}
+    definitions=db.scalars(select(AchievementDefinition).order_by(AchievementDefinition.created_at)).all()
+    return {"items":[{"id":row.id,"slug":row.slug,"title":row.title,"description":row.description,"threshold":row.threshold,"earned":row.id in earned,"awarded_at":earned.get(row.id)} for row in definitions]}
 @router.get("/leaderboard")
 def leaderboard(period:str=Query("all_time",pattern="^(weekly|monthly|all_time)$"),page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=50),db:Session=Depends(get_db)):
     rows=db.execute(select(User.display_name,StudentXPBalance.total_xp).join(StudentXPBalance,StudentXPBalance.user_id==User.id).join(LeaderboardPreference,LeaderboardPreference.user_id==User.id).where(LeaderboardPreference.opted_in.is_(True)).order_by(StudentXPBalance.total_xp.desc()).offset((page-1)*page_size).limit(page_size)).all()
