@@ -1,0 +1,27 @@
+"use client";
+
+import Link from "next/link";
+import { ArrowRight, RefreshCw, Sparkles } from "lucide-react";
+import { useState } from "react";
+
+const stages = [
+  ["Local branch", "A focused branch contains the proposed change before it is shared."],
+  ["Remote push", "The remote receives commits only after authentication and an intentional push."],
+  ["Pull request", "A pull request compares a source branch with a protected base branch."],
+  ["Checks", "Automated jobs provide evidence such as lint, tests, scans, and build results."],
+  ["Review", "Reviewers discuss the diff, request changes, and approve only when requirements are met."],
+  ["Protected merge", "Branch rules enforce the final merge gate and preserve a reviewable history."],
+];
+
+export default function GitHubVisualizerPage() {
+  const [stage, setStage] = useState(0);
+  const current = stages[stage];
+  return <section className="mx-auto max-w-6xl px-5 py-12 lg:px-8">
+    <Link href="/courses/github" className="text-sm text-indigo-300 hover:text-white">← Back to GitHub course</Link>
+    <div className="mt-8 max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.24em] text-indigo-300">GitHub visualizer</p><h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">Pull request lifecycle</h1><p className="mt-4 text-lg leading-8 text-slate-400">Step through local work, checks, review, and a protected merge.</p></div>
+    <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
+      <div className="rounded-2xl border border-indigo-400/20 bg-surface p-5 sm:p-7"><div className="flex items-center justify-between"><span className="text-sm text-slate-400">Stage {stage + 1} of {stages.length}</span><button onClick={() => setStage(0)} className="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-xs text-slate-300 hover:border-indigo-400/50" aria-label="Reset visualizer"><RefreshCw size={14}/> Reset</button></div><div className="mt-8 grid gap-3 sm:grid-cols-3" role="list" aria-label="Pull request stages">{stages.map(([label], index) => <button key={label} onClick={() => setStage(index)} className={"rounded-xl p-4 text-left transition " + (index === stage ? "bg-indigo-500/20 text-indigo-100 ring-1 ring-indigo-400/50" : "bg-ink/60 text-slate-400 hover:bg-white/5")} aria-current={index === stage ? "step" : undefined}><span className="text-[11px] text-slate-500">0{index + 1}</span><span className="mt-2 block text-sm font-semibold">{label}</span></button>)}</div><div className="mt-8 rounded-xl bg-indigo-500/15 p-5"><p className="text-xs font-semibold uppercase tracking-wider text-indigo-300">Current state</p><h2 className="mt-2 text-2xl font-bold text-white">{current[0]}</h2><p className="mt-3 leading-7 text-slate-300">{current[1]}</p></div><div className="mt-5 flex justify-between gap-3"><button onClick={() => setStage(value => Math.max(0, value - 1))} disabled={stage === 0} className="inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2 text-sm text-slate-300 disabled:opacity-40"><ArrowRight className="rotate-180" size={16}/> Previous</button><button onClick={() => setStage(value => Math.min(stages.length - 1, value + 1))} disabled={stage === stages.length - 1} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">Next <ArrowRight size={16}/></button></div></div>
+      <aside className="rounded-2xl border border-line bg-surface p-5 sm:p-7"><div className="flex items-center gap-3 text-indigo-300"><Sparkles size={20}/><span className="font-semibold">Review safety reminders</span></div><ul className="mt-5 space-y-4 text-sm leading-6 text-slate-400"><li>Verify the base branch and repository owner before opening a PR.</li><li>Use least-privilege workflow permissions and protect secrets.</li><li>Treat passing checks as evidence, not a replacement for review.</li><li>Require appropriate approval before merging to a protected branch.</li></ul><p className="mt-6 rounded-xl bg-amber-400/10 p-4 text-xs leading-5 text-amber-200">This is an instructional visualizer. It does not connect to GitHub or modify repositories.</p></aside>
+    </div>
+  </section>;
+}

@@ -19,6 +19,7 @@ from .express_course_content import seed_express_course
 from .fastapi_course_content import seed_fastapi_course
 from .flutter_course_content import seed_flutter_course
 from .git_course_content import seed_git_course
+from .github_course_content import seed_github_course
 from .cpp_course_content import seed_cpp_course
 from .html_course_content import seed_html_course
 from .css_course_content import seed_css_course
@@ -357,6 +358,10 @@ def main():
         if git_course:
             git_course.category_id = categories["developer-tools"].id
             seed_git_course(db, git_course)
+        github_course = db.scalar(select(Course).where(Course.slug == "github"))
+        if github_course:
+            github_course.category_id = categories["devops-cloud"].id
+            seed_github_course(db, github_course)
         data_analysis_course = db.scalar(select(Course).where(Course.slug == "data-analysis"))
         if data_analysis_course:
             data_analysis_course.category_id = categories["data-analytics"].id
