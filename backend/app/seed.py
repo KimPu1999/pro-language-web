@@ -47,6 +47,7 @@ from .ci_cd_course_content import seed_ci_cd_course
 from .cybersecurity_fundamentals_course_content import seed_cybersecurity_fundamentals_course
 from .web_security_course_content import seed_web_security_course
 from .mongodb_course_content import seed_mongodb_course
+from .mysql_course_content import seed_mysql_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -426,6 +427,10 @@ def main():
         if mongodb_course:
             mongodb_course.category_id = categories["database-development"].id
             seed_mongodb_course(db, mongodb_course)
+        mysql_course = db.scalar(select(Course).where(Course.slug == "mysql"))
+        if mysql_course:
+            mysql_course.category_id = categories["database-development"].id
+            seed_mysql_course(db, mysql_course)
         seed_challenges(db)
         seed_projects(db)
 
