@@ -1,0 +1,13 @@
+"use client";
+
+import Link from "next/link";
+import { RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
+
+export default function RedisTtlVisualizerPage() {
+  const [seconds, setSeconds] = useState(15);
+  const [persistent, setPersistent] = useState(false);
+  useEffect(() => { if (persistent || seconds <= 0) return; const timer = window.setInterval(() => setSeconds(value => Math.max(0, value - 1)), 1000); return () => window.clearInterval(timer); }, [persistent, seconds]);
+  const reset = () => { setSeconds(15); setPersistent(false); };
+  return <section className="mx-auto max-w-5xl px-5 py-12 lg:px-8"><Link href="/courses/redis" className="text-sm text-slate-300 hover:text-white">← Back to Redis</Link><div className="mt-8"><p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-300">TTL visualizer</p><h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">Watch a key expire</h1><p className="mt-4 max-w-2xl text-lg leading-8 text-slate-400">Controlled virtual time demonstrates expiration without creating a real Redis key.</p></div><div className="mt-10 rounded-2xl border border-line bg-surface p-6 sm:p-8"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs uppercase tracking-wider text-slate-500">Key</p><p className="mt-2 font-mono text-red-200">cache:course:42</p></div><button onClick={reset} className="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm text-slate-300"><RefreshCw size={15}/> Reset</button></div><div className="mt-8 h-3 overflow-hidden rounded-full bg-ink"><div className="h-full bg-red-500 transition-all" style={{ width: `${persistent ? 100 : (seconds / 15) * 100}%` }}/></div><div className="mt-5 grid gap-4 sm:grid-cols-3"><div><p className="text-xs uppercase text-slate-500">TTL</p><p className="mt-1 text-2xl font-bold">{persistent ? "-1" : seconds}</p></div><div><p className="text-xs uppercase text-slate-500">Status</p><p className="mt-1 text-2xl font-bold text-emerald-300">{persistent || seconds > 0 ? "Present" : "Expired"}</p></div><div><p className="text-xs uppercase text-slate-500">Policy</p><button onClick={() => { setPersistent(value => !value); setSeconds(15); }} className="mt-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white">{persistent ? "Make expiring" : "Make persistent"}</button></div></div><p className="mt-8 rounded-xl bg-amber-400/10 p-4 text-sm leading-6 text-amber-200">TTL controls lifetime only. It does not authorize access, guarantee durability, or replace a source-of-truth database.</p></div></section>;
+}

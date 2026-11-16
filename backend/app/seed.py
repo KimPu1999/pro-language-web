@@ -57,6 +57,7 @@ from .postgresql_course_content import seed_postgresql_course
 from .python_ai_course_content import seed_python_ai_course
 from .react_course_content import seed_react_course
 from .react_native_course_content import seed_react_native_course
+from .redis_course_content import seed_redis_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -476,6 +477,10 @@ def main():
         if react_native_course:
             react_native_course.category_id = categories["mobile-development"].id
             seed_react_native_course(db, react_native_course)
+        redis_course = db.scalar(select(Course).where(Course.slug == "redis"))
+        if redis_course:
+            redis_course.category_id = categories["database-development"].id
+            seed_redis_course(db, redis_course)
         seed_challenges(db)
         seed_projects(db)
 
