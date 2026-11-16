@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -26,6 +26,7 @@ from .schemas import (
     DashboardActivityOut,
     DashboardCourseOut,
     DashboardOverviewOut,
+    DashboardAnalyticsOut,
     DashboardStatisticsOut,
     DashboardStudentOut,
     WeeklyActivityDayOut,
@@ -219,3 +220,80 @@ def weekly_activity(user: User = Depends(current_user), db: Session = Depends(ge
         if day in days:
             days[day]["quiz_attempts"] += 1
     return {"days": list(days.values()), "learning_time_available": False}
+
+
+@router.get("/analytics", response_model=DashboardAnalyticsOut)
+def dashboard_analytics(
+    days: int = Query(default=30, ge=7, le=90),
+    start_date: date | None = Query(default=None),
+    end_date: date | None = Query(default=None),
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    """Return verified, student-scoped learning activity for dashboard charts.
+
+    Only completed lessons and submitted quizzes are counted. There is no
+    authoritative duration record in the current schema, so time remains null.
+    """
+    today = datetime.now(timezone.utc).date()
+    range_end = end_date or today
+    range_start = start_date or (range_end - timedelta(days=days - 1))
+    if range_start > range_end:
+        range_start, range_end = range_end, range_start
+    if (range_end - range_start).days > 90:
+        range_start = range_end - timedelta(days=89)
+    start_dt = datetime.combine(range_start, datetime.min.time(), tzinfo=timezone.utc)
+    end_dt = datetime.combine(range_end + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
+    points = {
+        day: {"date": day.isoformat(), "completed_lessons": 0, "quiz_attempts": 0, "learning_minutes": None}
+        for day in (range_start + timedelta(days=index) for index in range((range_end - range_start).days + 1))
+    }
+    progress_rows = db.scalars(
+        select(LessonProgress).where(
+            LessonProgress.user_id == user.id,
+            LessonProgress.completed.is_(True),
+            LessonProgress.last_visited_at >= start_dt,
+            LessonProgress.last_visited_at < end_dt,
+        )
+    ).all()
+    for row in progress_rows:
+        if row.last_visited_at:
+            day = row.last_visited_at.date()
+            if day in points:
+                points[day]["completed_lessons"] += 1
+    attempts = db.scalars(
+        select(QuizAttempt).where(
+            QuizAttempt.user_id == user.id,
+            QuizAttempt.created_at >= start_dt,
+            QuizAttempt.created_at < end_dt,
+        )
+    ).all()
+    for attempt in attempts:
+        if attempt.created_at:
+            day = attempt.created_at.date()
+            if day in points:
+                points[day]["quiz_attempts"] += 1
+    graded = [attempt for attempt in attempts if attempt.score is not None and attempt.total and attempt.total > 0]
+    rows = _course_rows(db, user.id)
+    streak = db.scalar(select(LearningStreak.current_streak).where(LearningStreak.user_id == user.id)) or 0
+    return {
+        "range_start": range_start.isoformat(),
+        "range_end": range_end.isoformat(),
+        "activity": list(points.values()),
+        "completed_lessons": sum(item["completed_lessons"] for item in points.values()),
+        "quiz_attempts": len(attempts),
+        "quiz_average_score": round(sum(attempt.score / attempt.total * 100 for attempt in graded) / len(graded), 1) if graded else None,
+        "current_learning_streak": int(streak),
+        "learning_seconds": None,
+        "learning_time_available": False,
+        "course_progress": [
+            {
+                "course_slug": row["course"].slug,
+                "course_title": row["course"].title,
+                "progress_percentage": row["progress_percentage"],
+                "completed_lessons": row["completed_lessons"],
+                "total_lessons": row["total_lessons"],
+            }
+            for row in rows
+        ],
+    }

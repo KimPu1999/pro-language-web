@@ -22,6 +22,16 @@ class FeedbackIn(BaseModel):
 class PlanIn(BaseModel):
     title: str = Field(default="My weekly study plan", min_length=1, max_length=180)
     week_start: datetime | None = None
+class PlanItemIn(BaseModel):
+    activity_type: str = Field(default="study", pattern="^(study|lesson|quiz|project|review)$")
+    resource_id: UUID | None = None
+    scheduled_for: datetime
+    minutes: int = Field(default=30, ge=5, le=480)
+class PlanItemUpdateIn(BaseModel):
+    activity_type: str | None = Field(default=None, pattern="^(study|lesson|quiz|project|review)$")
+    scheduled_for: datetime | None = None
+    minutes: int | None = Field(default=None, ge=5, le=480)
+    completed: bool | None = None
 class RevisionAttemptIn(BaseModel):
     confidence: int = Field(ge=1, le=5)
 class CoachIn(BaseModel):
@@ -110,14 +120,34 @@ def study_plans(user: User = Depends(current_user), db: Session = Depends(get_db
     rows = db.scalars(select(LearningStudyPlan).where(LearningStudyPlan.user_id == user.id).order_by(LearningStudyPlan.created_at.desc())).all()
     return {"items": [{"id": r.id, "title": r.title, "status": r.status, "week_start": r.week_start, "items": [{"id": i.id, "activity_type": i.activity_type, "resource_id": i.resource_id, "scheduled_for": i.scheduled_for, "minutes": i.minutes, "completed": i.completed} for i in db.scalars(select(LearningStudyPlanItem).where(LearningStudyPlanItem.plan_id == r.id).order_by(LearningStudyPlanItem.scheduled_for)).all()]} for r in rows]}
 
+@router.post("/study-plans/{plan_id}/items", status_code=201)
+def add_plan_item(plan_id: UUID, payload: PlanItemIn, user: User = Depends(verified_user), _: None = Depends(require_csrf), db: Session = Depends(get_db)):
+    plan = owned_plan(db, user, plan_id)
+    item = LearningStudyPlanItem(plan_id=plan.id, activity_type=payload.activity_type, resource_id=payload.resource_id, scheduled_for=payload.scheduled_for, minutes=payload.minutes)
+    db.add(item); db.commit(); db.refresh(item)
+    return {"id": item.id, "activity_type": item.activity_type, "resource_id": item.resource_id, "scheduled_for": item.scheduled_for, "minutes": item.minutes, "completed": item.completed}
+
 @router.patch("/study-plans/{plan_id}/items/{item_id}")
-def update_plan_item(plan_id: UUID, item_id: UUID, user: User = Depends(verified_user), _: None = Depends(require_csrf), db: Session = Depends(get_db)):
+def edit_plan_item(plan_id: UUID, item_id: UUID, payload: PlanItemUpdateIn, user: User = Depends(verified_user), _: None = Depends(require_csrf), db: Session = Depends(get_db)):
     owned_plan(db, user, plan_id)
     item = db.scalar(select(LearningStudyPlanItem).where(LearningStudyPlanItem.id == item_id, LearningStudyPlanItem.plan_id == plan_id))
     if not item: raise HTTPException(404, "Study plan item not found")
-    lesson_complete = item.resource_id and db.scalar(select(LessonProgress).where(LessonProgress.user_id == user.id, LessonProgress.lesson_id == item.resource_id, LessonProgress.completed.is_(True)))
-    item.completed = bool(lesson_complete); item.completed_at = utcnow() if item.completed else None; db.commit()
-    return {"id": item.id, "completed": item.completed, "verified": True}
+    values = payload.model_dump(exclude_none=True)
+    if "completed" in values and item.activity_type == "lesson" and values["completed"]:
+        verified = item.resource_id and db.scalar(select(LessonProgress).where(LessonProgress.user_id == user.id, LessonProgress.lesson_id == item.resource_id, LessonProgress.completed.is_(True)))
+        if not verified: raise HTTPException(409, "Lesson plans can only be completed after verified lesson completion")
+    for key, value in values.items():
+        if key != "completed" or item.activity_type != "lesson": setattr(item, key, value)
+    if "completed" in values:
+        item.completed = bool(values["completed"]); item.completed_at = utcnow() if item.completed else None
+    db.commit(); return {"id": item.id, "completed": item.completed, "scheduled_for": item.scheduled_for, "minutes": item.minutes, "activity_type": item.activity_type}
+
+@router.delete("/study-plans/{plan_id}/items/{item_id}", status_code=204)
+def delete_plan_item(plan_id: UUID, item_id: UUID, user: User = Depends(verified_user), _: None = Depends(require_csrf), db: Session = Depends(get_db)):
+    owned_plan(db, user, plan_id)
+    item = db.scalar(select(LearningStudyPlanItem).where(LearningStudyPlanItem.id == item_id, LearningStudyPlanItem.plan_id == plan_id))
+    if not item: raise HTTPException(404, "Study plan item not found")
+    db.delete(item); db.commit()
 
 @router.get("/revision")
 def revision(user: User = Depends(current_user), db: Session = Depends(get_db)):

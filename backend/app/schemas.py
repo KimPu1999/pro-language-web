@@ -77,7 +77,7 @@ class ProfileIn(BaseModel):
 class UserOut(BaseModel):
     id: UUID; email: str; full_name: str; role: str; email_verified: bool; email_verified_at: datetime|None; profile: dict
 class EnrollmentOut(BaseModel):
-    id: UUID; course: CourseOut; completed_lessons: int; total_lessons: int; progress_percent: float; last_lesson_slug: str|None
+    id: UUID; course: CourseOut; completed_lessons: int; total_lessons: int; progress_percent: float; last_lesson_slug: str|None; next_lesson_slug: str|None = None
 class ProgressIn(BaseModel): completed: bool
 class DashboardOut(BaseModel):
     enrollments: list[EnrollmentOut]
@@ -141,6 +141,28 @@ class WeeklyActivityDayOut(BaseModel):
 class WeeklyActivityOut(BaseModel):
     days: list[WeeklyActivityDayOut]
     learning_time_available: bool
+class AnalyticsActivityDayOut(BaseModel):
+    date: str
+    completed_lessons: int
+    quiz_attempts: int
+    learning_minutes: int | None = None
+class AnalyticsCourseProgressOut(BaseModel):
+    course_slug: str
+    course_title: str
+    progress_percentage: float
+    completed_lessons: int
+    total_lessons: int
+class DashboardAnalyticsOut(BaseModel):
+    range_start: str
+    range_end: str
+    activity: list[AnalyticsActivityDayOut]
+    completed_lessons: int
+    quiz_attempts: int
+    quiz_average_score: float | None = None
+    current_learning_streak: int
+    learning_seconds: int | None = None
+    learning_time_available: bool
+    course_progress: list[AnalyticsCourseProgressOut]
 class AdminLanguageIn(BaseModel):
     name: str = Field(min_length=2,max_length=80); slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=80); description: str=""; icon: str|None=None; status: str="active"; display_order: int=0
 class AdminCategoryIn(BaseModel):

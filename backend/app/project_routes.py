@@ -79,12 +79,12 @@ def enroll_project(project_id:UUID,user:User=Depends(verified_user),_:None=Depen
     return start_project(template.slug,user,_,db)
 @router.get("/me/projects")
 def my_projects(user:User=Depends(current_user),db:Session=Depends(get_db)):
-    rows=db.scalars(select(StudentProject).where(StudentProject.user_id==user.id).order_by(StudentProject.created_at.desc())).all();return [{"id":r.id,"project_id":r.project_id,"status":r.status,"progress":project_progress(db,r)} for r in rows]
+    rows=db.scalars(select(StudentProject).where(StudentProject.user_id==user.id).order_by(StudentProject.created_at.desc())).all();return [{"id":r.id,"project_id":r.project_id,"title":db.scalar(select(ProjectTemplate.title).where(ProjectTemplate.id==r.project_id)),"difficulty":db.scalar(select(ProjectTemplate.difficulty).where(ProjectTemplate.id==r.project_id)),"status":r.status,"progress":project_progress(db,r)} for r in rows]
 @router.get("/me/projects/{project_id}")
 def my_project(project_id:UUID,user:User=Depends(current_user),db:Session=Depends(get_db)):
     row=db.scalar(select(StudentProject).where(StudentProject.id==project_id,StudentProject.user_id==user.id));
     if not row:raise HTTPException(404,"Project not found")
-    milestones=db.scalars(select(StudentProjectMilestone).where(StudentProjectMilestone.student_project_id==row.id)).all();submission=db.scalar(select(ProjectSubmission).where(ProjectSubmission.student_project_id==row.id).order_by(ProjectSubmission.created_at.desc()));return {"id":row.id,"status":row.status,"project":template_out(db.get(ProjectTemplate,row.project_id),db),"progress":project_progress(db,row),"milestones":[{"id":m.milestone_id,"completed":m.completed,"notes":m.notes} for m in milestones],"submission":submission}
+    milestones=db.scalars(select(StudentProjectMilestone).where(StudentProjectMilestone.student_project_id==row.id)).all();submissions=db.scalars(select(ProjectSubmission).where(ProjectSubmission.student_project_id==row.id).order_by(ProjectSubmission.created_at.desc())).all();reviews=db.scalars(select(ProjectReview).where(ProjectReview.submission_id.in_([s.id for s in submissions]))).all() if submissions else [];review_by_submission={review.submission_id:review for review in reviews};submission_payload=[{"id":submission.id,"repository_url":submission.repository_url,"branch_or_sha":submission.branch_or_sha,"demo_url":submission.demo_url,"project_description":submission.project_description,"setup_instructions":submission.setup_instructions,"status":submission.status,"submitted_at":submission.submitted_at,"review":{"decision":review_by_submission[submission.id].decision,"comments":review_by_submission[submission.id].comments,"total_score":review_by_submission[submission.id].total_score} if submission.id in review_by_submission else None} for submission in submissions];return {"id":row.id,"status":row.status,"project":template_out(db.get(ProjectTemplate,row.project_id),db),"progress":project_progress(db,row),"milestones":[{"id":m.milestone_id,"completed":m.completed,"notes":m.notes} for m in milestones],"submission":submission_payload[0] if submission_payload else None,"submissions":submission_payload}
 @router.get("/me/projects/{project_id}/progress")
 def project_progress_endpoint(project_id:UUID,user:User=Depends(current_user),db:Session=Depends(get_db)):
     row=db.scalar(select(StudentProject).where(StudentProject.id==project_id,StudentProject.user_id==user.id))
@@ -107,6 +107,8 @@ def bookmark_project(project_id:UUID,user:User=Depends(current_user),_:None=Depe
 def submit_project(project_id:UUID,payload:SubmissionIn,user:User=Depends(verified_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     student=db.scalar(select(StudentProject).where(StudentProject.id==project_id,StudentProject.user_id==user.id));
     if not student:raise HTTPException(404,"Project not found")
+    if student.status in {"submitted", "in_review"}: raise HTTPException(409,"A submission is already awaiting review")
+    if student.status == "approved": raise HTTPException(409,"Approved projects cannot be resubmitted")
     safe_url(payload.repository_url,True);demo=safe_url(payload.demo_url) if payload.demo_url else None;submission=ProjectSubmission(student_project_id=student.id,repository_url=payload.repository_url,branch_or_sha=payload.branch_or_sha,demo_url=demo,project_description=payload.project_description,setup_instructions=payload.setup_instructions,reviewer_notes=payload.reviewer_notes,status="submitted");db.add(submission);student.status="submitted";db.commit();return {"id":submission.id,"status":submission.status}
 @router.get("/instructor/projects/reviews")
 def review_queue(user:User=Depends(admin_user),db:Session=Depends(get_db)):

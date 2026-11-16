@@ -1,4 +1,4 @@
-import type { AdminCodeExample, AdminCourse, AdminCurriculumModule, AdminDashboard, AdminPage, AdminQuiz, Challenge, ChallengeCategory, ChallengePage, ChallengeProgress, Course, CourseDetail, CourseLearning, CourseProgress, Dashboard, DashboardActivity, DashboardOverview, Enrollment, Language, Lesson, LessonQuiz, Module, Paginated, RunnerJob, RunnerLanguage, SkillDashboard, User, LearningIntelligence, LearningPlan, RevisionItem, WeeklyActivity } from "./types";
+import type { AdminCodeExample, AdminCourse, AdminCurriculumModule, AdminDashboard, AdminPage, AdminQuiz, Challenge, ChallengeCategory, ChallengePage, ChallengeProgress, Course, CourseDetail, CourseLearning, CourseProgress, Dashboard, DashboardActivity, DashboardOverview, DashboardAnalytics, Enrollment, Language, Lesson, LessonQuiz, Module, Paginated, RunnerJob, RunnerLanguage, SkillDashboard, User, LearningIntelligence, LearningPlan, RevisionItem, WeeklyActivity } from "./types";
 
 // Browser requests use the same-origin Next rewrite. Server rendering may use the private internal URL.
 const base = process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === "undefined" ? process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000" : "");
@@ -50,6 +50,7 @@ export const dashboardApi = {
   courses: () => request<DashboardOverview["courses"]>("/api/v1/dashboard/courses"),
   recentActivity: () => request<DashboardActivity[]>("/api/v1/dashboard/recent-activity"),
   weeklyActivity: () => request<WeeklyActivity>("/api/v1/dashboard/weekly-activity"),
+  analytics: (query = "") => request<DashboardAnalytics>(`/api/v1/dashboard/analytics${query}`),
 };
 
 export const courseLearningApi = {
@@ -66,7 +67,11 @@ export const learningApi = {
   skills: () => request<{items: import("./types").LearningSkill[]}>("/api/v1/learning/skills"),
   recommendations: () => request<{items: LearningIntelligence["recommendations"]; status:string}>("/api/v1/learning/recommendations"),
   plans: () => request<{items:LearningPlan[]}>("/api/v1/learning/study-plans"),
+  goals: () => request<import("./types").LearningGoal | null>("/api/v1/learning/goals"),
   createPlan: (body:unknown, csrf:string) => request<{id:string;title:string;status:string;items:number}>("/api/v1/learning/study-plans", { ...json(body), headers:{"X-CSRF-Token":csrf} }),
+  addPlanItem: (planId:string, body:unknown, csrf:string) => request<LearningPlan["items"][number]>(`/api/v1/learning/study-plans/${planId}/items`, { ...json(body), headers:{"X-CSRF-Token":csrf} }),
+  updatePlanItem: (planId:string, itemId:string, body:unknown, csrf:string) => request<LearningPlan["items"][number]>(`/api/v1/learning/study-plans/${planId}/items/${itemId}`, { method:"PATCH", body:JSON.stringify(body), headers:{"X-CSRF-Token":csrf} }),
+  deletePlanItem: (planId:string, itemId:string, csrf:string) => request<void>(`/api/v1/learning/study-plans/${planId}/items/${itemId}`, { method:"DELETE", headers:{"X-CSRF-Token":csrf} }),
   revision: () => request<{items:RevisionItem[]}>("/api/v1/learning/revision"),
   coach: (message:string, csrf:string) => request<{status:string;message:string}>("/api/v1/learning/coach", { ...json({message}), headers:{"X-CSRF-Token":csrf} }),
 };
