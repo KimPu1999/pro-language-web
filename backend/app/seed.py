@@ -55,6 +55,7 @@ from .operating_systems_course_content import seed_operating_systems_course
 from .owasp_top_10_course_content import seed_owasp_top_10_course
 from .postgresql_course_content import seed_postgresql_course
 from .python_ai_course_content import seed_python_ai_course
+from .react_course_content import seed_react_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -466,6 +467,10 @@ def main():
         if python_ai_course:
             python_ai_course.category_id = categories["ai-data-science"].id
             seed_python_ai_course(db, python_ai_course)
+        react_course = db.scalar(select(Course).where(Course.slug == "react"))
+        if react_course:
+            react_course.category_id = categories["frontend-development"].id
+            seed_react_course(db, react_course)
         seed_challenges(db)
         seed_projects(db)
 
