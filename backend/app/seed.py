@@ -21,6 +21,7 @@ from .flutter_course_content import seed_flutter_course
 from .git_course_content import seed_git_course
 from .github_course_content import seed_github_course
 from .go_course_content import seed_go_course
+from .kotlin_course_content import seed_kotlin_course
 from .cpp_course_content import seed_cpp_course
 from .html_course_content import seed_html_course
 from .css_course_content import seed_css_course
@@ -367,6 +368,10 @@ def main():
         if go_course:
             go_course.category_id = categories["programming-languages"].id
             seed_go_course(db, go_course)
+        kotlin_course = db.scalar(select(Course).where(Course.slug == "kotlin"))
+        if kotlin_course:
+            kotlin_course.category_id = categories["mobile-development"].id
+            seed_kotlin_course(db, kotlin_course)
         data_analysis_course = db.scalar(select(Course).where(Course.slug == "data-analysis"))
         if data_analysis_course:
             data_analysis_course.category_id = categories["data-analytics"].id
