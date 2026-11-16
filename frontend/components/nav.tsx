@@ -39,9 +39,9 @@ export function Nav() {
   return <>
     <header className="sticky inset-x-0 top-0 z-50 border-b border-line/70 bg-ink/90 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 lg:px-8">
-        <Link href="/" aria-label="Language-Platform home" className="flex shrink-0 items-center gap-2 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
-          <Image src="/branding/tkp.png" alt="Language-Platform logo" width={40} height={40} className="h-10 w-10 object-contain" priority />
-          <span className="hidden sm:inline">Language-Platform</span>
+        <Link href="/" aria-label="Learn-Coding home" className="flex shrink-0 items-center gap-2 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
+          <Image src="/branding/tkp.png" alt="Learn-Coding logo" width={40} height={40} className="h-10 w-10 object-contain" priority />
+          <span className="hidden sm:inline">Learn-Coding</span>
         </Link>
         <nav aria-label="Primary navigation" className="hidden items-center gap-1 md:flex">
           {links.map(([label, href]) => { const active = isActive(pathname, href); return <Link key={href} href={href} aria-current={active ? "page" : undefined} className={navClass(active)}>{label}</Link>; })}

@@ -1,4 +1,4 @@
-import logging, math, time, uuid
+import json, logging, math, time, uuid
 from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,8 +7,8 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 from .config import settings
 from .db import get_db
-from .models import ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseModule, LearningPath, Lesson, ProgrammingLanguage, StudentChallengeProgress, User
-from .schemas import CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut, LanguageOut, LessonOut, ModuleOut, PageOut, PathOut
+from .models import ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseModule, LearningPath, Lesson, PlatformSetting, ProgrammingLanguage, StudentChallengeProgress, User
+from .schemas import BrandingSettings, CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut, LanguageOut, LessonOut, ModuleOut, PageOut, PathOut
 from .auth import current_user
 from .auth_routes import router as auth_router
 from .student_routes import router as student_router
@@ -106,6 +106,12 @@ def readiness(db: Session=Depends(get_db)):
         logger.warning("readiness database check failed: %s", type(exc).__name__)
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Database is not ready") from exc
     return {"status": "ready", "database": "ok", "service": "codemaster-api"}
+@app.get("/api/v1/site/branding", response_model=BrandingSettings)
+def site_branding(db: Session=Depends(get_db)):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="branding"))
+    if not row: return BrandingSettings()
+    try: return BrandingSettings(**json.loads(row.value_json or "{}"))
+    except (TypeError, ValueError, json.JSONDecodeError): return BrandingSettings()
 @app.get("/api/v1/languages",response_model=list[LanguageOut])
 def languages(db: Session=Depends(get_db)): return db.scalars(select(ProgrammingLanguage).order_by(ProgrammingLanguage.name)).all()
 @app.get("/api/v1/challenge-categories")

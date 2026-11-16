@@ -12,7 +12,7 @@ from .models import User
 
 SUPER_ADMIN_ROLES = frozenset({"super_admin"})
 PLATFORM_ADMIN_ROLES = frozenset({"platform_admin", "admin", "super_admin"})
-CONTENT_ADMIN_ROLES = PLATFORM_ADMIN_ROLES | frozenset({"instructor"})
+CONTENT_ADMIN_ROLES = PLATFORM_ADMIN_ROLES | frozenset({"instructor", "content_editor"})
 MODERATION_ROLES = PLATFORM_ADMIN_ROLES | frozenset({"moderator"})
 
 

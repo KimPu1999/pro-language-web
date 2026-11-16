@@ -5,17 +5,24 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, normalize_email, now, require_csrf, verify_password
 from .db import get_db
-from .models import AdminAuditLog, AuthSession, CodeExample, Course, CourseCategory, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, ProgrammingLanguage, PublishingReview, QuizAttempt, QuizQuestion, User
-from .rbac import PLATFORM_ADMIN_ROLES, require_platform_admin
-from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, LoginIn, PublishDecisionIn
+from .models import AdminAuditLog, AuthSession, CodeExample, Course, CourseCategory, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, PlatformSetting, ProgrammingLanguage, PublishingReview, QuizAttempt, QuizQuestion, User
+from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
+from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, LoginIn, PublishDecisionIn
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
+BRANDING_KEY="branding"
+DEFAULT_BRANDING=BrandingSettings().model_dump()
 def admin_user(user: User=Depends(current_user)):
-    if user.role not in ADMIN and user.role!="instructor": raise HTTPException(403,"Admin access required")
+    if user.role not in CONTENT_ADMIN_ROLES: raise HTTPException(403,"Admin access required")
     return user
 def full_admin(user: User=Depends(current_user)):
     return require_platform_admin(user)
 def audit(db, actor, action, entity_type, entity_id=None): db.add(AdminAuditLog(actor_id=actor.id,action=action,entity_type=entity_type,entity_id=entity_id))
+def branding_value(db):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==BRANDING_KEY))
+    if not row: return DEFAULT_BRANDING.copy()
+    try: return BrandingSettings(**{**DEFAULT_BRANDING, **json.loads(row.value_json or "{}")}).model_dump()
+    except (TypeError, ValueError, json.JSONDecodeError): return DEFAULT_BRANDING.copy()
 def course_out(course): return {"id":course.id,"title":course.title,"slug":course.slug,"short_description":course.short_description or "","description":course.description,"language_id":course.language_id,"category_id":course.category_id,"level":course.level,"thumbnail":course.thumbnail,"estimated_duration":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"published":course.published,"outcomes":course.outcomes,"requirements":course.requirements}
 def load_course(db, course_id): return db.scalar(select(Course).options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples)).where(Course.id==course_id))
 def can_edit(course, user, db):
@@ -42,7 +49,7 @@ def admin_login(payload: LoginIn, request: Request, response: Response, db: Sess
     user=db.scalar(select(User).where(User.email_normalized==normalize_email(payload.email)))
     if not user or not verify_password(payload.password, user.password_hash) or user.account_status!="active":
         raise HTTPException(401,"Invalid email or password")
-    if user.role not in ADMIN or not user.email_verified_at:
+    if user.role not in CONTENT_ADMIN_ROLES or not user.email_verified_at:
         raise HTTPException(403,"Administrator access required")
     raw, csrf=create_session(db,user)
     user.last_login_at=now()
@@ -52,7 +59,7 @@ def admin_login(payload: LoginIn, request: Request, response: Response, db: Sess
     set_auth_cookies(response,raw,csrf)
     return {"id":user.id,"email":user.email,"full_name":user.display_name,"role":user.role,"email_verified":True}
 @router.get("/auth/me")
-def admin_me(user: User=Depends(full_admin)):
+def admin_me(user: User=Depends(admin_user)):
     return {"id":user.id,"email":user.email,"full_name":user.display_name,"role":user.role,"email_verified":True}
 @router.post("/auth/logout")
 def admin_logout(response: Response, session_token: str|None=Cookie(default=None,alias=SESSION_COOKIE), user: User=Depends(full_admin), _:None=Depends(require_csrf), db: Session=Depends(get_db)):
@@ -70,6 +77,21 @@ def dashboard(user: User=Depends(full_admin), db: Session=Depends(get_db)):
     popularity=db.execute(select(Course.title,func.count(Enrollment.id).label("enrollments")).join(Enrollment,Enrollment.course_id==Course.id).group_by(Course.id).order_by(func.count(Enrollment.id).desc()).limit(5)).all()
     activity=db.scalars(select(AdminAuditLog).order_by(AdminAuditLog.created_at.desc()).limit(8)).all()
     return {"total_courses":db.scalar(select(func.count(Course.id))) or 0,"published_courses":db.scalar(select(func.count(Course.id)).where(Course.published.is_(True))) or 0,"draft_courses":db.scalar(select(func.count(Course.id)).where(Course.status.in_(["draft","in_review"]))) or 0,"total_lessons":db.scalar(select(func.count(Lesson.id))) or 0,"total_students":db.scalar(select(func.count(User.id)).where(User.role=="student")) or 0,"active_enrollments":db.scalar(select(func.count(Enrollment.id))) or 0,"completed_courses":completed_courses,"quiz_attempts":db.scalar(select(func.count(QuizAttempt.id))) or 0,"total_instructors":db.scalar(select(func.count(User.id)).where(User.role=="instructor")) or 0,"recent_courses":[course_out(x) for x in db.scalars(select(Course).order_by(Course.updated_at.desc()).limit(5)).all()],"pending_reviews":db.scalar(select(func.count(PublishingReview.id)).where(PublishingReview.decision=="pending")) or 0,"recent_activity":[{"action":x.action,"entity_type":x.entity_type,"created_at":x.created_at} for x in activity],"course_popularity":[{"title":title,"enrollments":enrollments} for title,enrollments in popularity]}
+@router.get("/settings/branding", response_model=BrandingSettings)
+def get_branding_settings(user: User=Depends(full_admin), db: Session=Depends(get_db)):
+    return branding_value(db)
+@router.patch("/settings/branding", response_model=BrandingSettings)
+def update_branding_settings(payload: BrandingSettings, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    values=payload.model_dump()
+    for key in ("logo_url", "mobile_logo_url", "favicon_url"):
+        if not (values[key].startswith("/") and not values[key].startswith("//")):
+            raise HTTPException(422, "Branding assets must use an internal path")
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==BRANDING_KEY))
+    if row: row.value_json=json.dumps(values); row.updated_by=user.id
+    else: db.add(PlatformSetting(key=BRANDING_KEY,value_json=json.dumps(values),updated_by=user.id))
+    audit(db,user,"branding_updated","platform_setting")
+    db.commit()
+    return values
 @router.get("/languages")
 def list_languages(search: str|None=None, page: int=Query(1,ge=1), page_size: int=Query(20,ge=1,le=100), user: User=Depends(admin_user), db: Session=Depends(get_db)):
     q=select(ProgrammingLanguage); count=select(func.count()).select_from(ProgrammingLanguage)

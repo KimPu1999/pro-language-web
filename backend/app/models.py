@@ -54,6 +54,12 @@ class PublishingReview(TimestampMixin, Base):
     __tablename__="publishing_reviews"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); course_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("courses.id",ondelete="CASCADE"),index=True); reviewer_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id")); decision: Mapped[str]=mapped_column(String(30)); note: Mapped[str]=mapped_column(Text,default="")
 class AdminAuditLog(TimestampMixin, Base):
     __tablename__="admin_audit_logs"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); actor_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id")); action: Mapped[str]=mapped_column(String(80)); entity_type: Mapped[str]=mapped_column(String(50)); entity_id: Mapped[uuid.UUID|None]=mapped_column(UUIDType,nullable=True); metadata_json: Mapped[str]=mapped_column(Text,default="{}")
+class PlatformSetting(TimestampMixin, Base):
+    __tablename__="platform_settings"; __table_args__=(UniqueConstraint("key"),)
+    id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4)
+    key: Mapped[str]=mapped_column(String(120),nullable=False,index=True)
+    value_json: Mapped[str]=mapped_column(Text,default="{}",nullable=False)
+    updated_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True)
 class CodingExercise(TimestampMixin, Base):
     __tablename__="coding_exercises"; __table_args__=(UniqueConstraint("slug"),Index("ix_exercises_lesson_status","lesson_id","status")); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); lesson_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("lessons.id",ondelete="CASCADE")); title: Mapped[str]=mapped_column(String(180)); slug: Mapped[str]=mapped_column(String(180)); description_en: Mapped[str]=mapped_column(Text); description_mm: Mapped[str|None]=mapped_column(Text,nullable=True); difficulty: Mapped[str]=mapped_column(String(30)); language: Mapped[str]=mapped_column(String(30)); starter_code: Mapped[str]=mapped_column(Text,default=""); time_limit_ms: Mapped[int]=mapped_column(Integer,default=2000); memory_limit_mb: Mapped[int]=mapped_column(Integer,default=128); status: Mapped[str]=mapped_column(String(20),default="draft")
 class ExerciseStarterCode(TimestampMixin, Base):

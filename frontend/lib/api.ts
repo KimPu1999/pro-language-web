@@ -49,6 +49,8 @@ export const adminApi = {
   login: (body: unknown) => request<User>("/api/v1/admin/auth/login", json(body)),
   me: () => request<User>("/api/v1/admin/auth/me"),
   logout: (csrf: string) => request<{ status: string }>("/api/v1/admin/auth/logout", { method: "POST", headers: { "X-CSRF-Token": csrf } }),
+  branding: () => request<import("./types").BrandingSettings>("/api/v1/admin/settings/branding"),
+  updateBranding: (body: import("./types").BrandingSettings, csrf: string) => request<import("./types").BrandingSettings>("/api/v1/admin/settings/branding", { method: "PATCH", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
 };
 
 export const dashboardApi = {
