@@ -15,6 +15,7 @@ from .models import (Challenge, ChallengeCategory, ChallengeHint, ChallengeLangu
 from .c_course_content import seed_c_curriculum
 from .django_course_content import seed_django_course
 from .docker_course_content import seed_docker_course
+from .express_course_content import seed_express_course
 from .cpp_course_content import seed_cpp_course
 from .html_course_content import seed_html_course
 from .css_course_content import seed_css_course
@@ -310,6 +311,10 @@ def main():
         if docker_course:
             docker_course.category_id = categories["devops-cloud"].id
             seed_docker_course(db, docker_course)
+        express_course = db.scalar(select(Course).where(Course.slug == "express-js"))
+        if express_course:
+            express_course.category_id = categories["backend-development"].id
+            seed_express_course(db, express_course)
         java_course = db.scalar(select(Course).where(Course.slug == "java"))
         if java_course:
             seed_java_course(db, java_course)
