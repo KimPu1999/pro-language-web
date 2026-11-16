@@ -58,6 +58,7 @@ from .python_ai_course_content import seed_python_ai_course
 from .react_course_content import seed_react_course
 from .react_native_course_content import seed_react_native_course
 from .redis_course_content import seed_redis_course
+from .rust_course_content import seed_rust_course
 
 CATEGORIES = [
     ("Frontend Development", "frontend-development"),
@@ -481,6 +482,10 @@ def main():
         if redis_course:
             redis_course.category_id = categories["database-development"].id
             seed_redis_course(db, redis_course)
+        rust_course = db.scalar(select(Course).where(Course.slug == "rust"))
+        if rust_course:
+            rust_course.category_id = categories["programming-languages"].id
+            seed_rust_course(db, rust_course)
         seed_challenges(db)
         seed_projects(db)
 
