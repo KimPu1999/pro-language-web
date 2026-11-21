@@ -1,1 +1,1 @@
-import type { Config } from "tailwindcss"; export default {content:["./app/**/*.{ts,tsx}","./components/**/*.{ts,tsx}"],theme:{extend:{colors:{ink:"#0B1020",surface:"#111827",line:"#1E293B",primary:"#6366F1"}}},plugins:[]} satisfies Config;
+import type { Config } from "tailwindcss"; export default {content:["./app/**/*.{ts,tsx}","./components/**/*.{ts,tsx}"],theme:{extend:{colors:{ink:"#0B1020",surface:"#131F36",line:"#263653",primary:"#6366F1",accent:"#818CF8",muted:"#94A3B8"},boxShadow:{panel:"0 18px 60px rgba(2, 6, 23, .18)"}}},plugins:[]} satisfies Config;

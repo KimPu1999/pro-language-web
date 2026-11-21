@@ -1,5 +1,5 @@
-import { CourseManagement } from "@/components/course-management";
+import { CourseList } from "@/components/course-list";
 
 export default function AdminCoursesPage() {
-  return <CourseManagement />;
+  return <CourseList />;
 }
