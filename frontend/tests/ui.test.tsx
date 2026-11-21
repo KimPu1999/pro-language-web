@@ -12,12 +12,10 @@ describe("shared UI", () => {
     expect(screen.getByRole("button", { name: "Start learning" })).toBeEnabled();
   });
 
-  it("toggles and persists Myanmar explanations", () => {
+  it("renders English-only lesson explanations", () => {
     render(<BilingualLessonContent english="English explanation" myanmar="မြန်မာရှင်းလင်းချက်" />);
     expect(screen.queryByText("မြန်မာရှင်းလင်းချက်")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Show MM" }));
-    expect(screen.getByText("မြန်မာရှင်းလင်းချက်")).toBeVisible();
-    expect(localStorage.getItem("showMyanmar")).toBe("true");
+    expect(screen.getByText("English explanation")).toBeVisible();
   });
 
   it("parses authored lesson sections, lists, and fenced code", () => {

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from .config import settings
 from .db import get_db
 from .models import ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseModule, LearningPath, Lesson, PlatformSetting, ProgrammingLanguage, StudentChallengeProgress, User
-from .schemas import BrandingSettings, CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut, LanguageOut, LessonOut, ModuleOut, PageOut, PathOut
+from .schemas import BrandingSettings, CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut, LanguageOut, LessonOut, ModuleOut, NavigationSettings, PageOut, PathOut, PlatformPageOut
 from .auth import current_user
 from .auth_routes import router as auth_router
 from .student_routes import router as student_router
@@ -112,6 +112,22 @@ def site_branding(db: Session=Depends(get_db)):
     if not row: return BrandingSettings()
     try: return BrandingSettings(**json.loads(row.value_json or "{}"))
     except (TypeError, ValueError, json.JSONDecodeError): return BrandingSettings()
+@app.get("/api/v1/site/navigation", response_model=NavigationSettings)
+def site_navigation(db: Session=Depends(get_db)):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="navigation"))
+    if not row: return NavigationSettings(items=[])
+    try: return NavigationSettings.model_validate(json.loads(row.value_json or "{}"))
+    except (TypeError, ValueError, json.JSONDecodeError): return NavigationSettings(items=[])
+@app.get("/api/v1/site/pages/{slug}", response_model=PlatformPageOut)
+def site_page(slug: str, db: Session=Depends(get_db)):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==f"page:{slug}"))
+    if not row: raise HTTPException(404, "Published page not found")
+    try:
+        page=PlatformPageOut.model_validate(json.loads(row.value_json or "{}"))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        raise HTTPException(404, "Published page not found")
+    if page.status != "published": raise HTTPException(404, "Published page not found")
+    return page
 @app.get("/api/v1/languages",response_model=list[LanguageOut])
 def languages(db: Session=Depends(get_db)): return db.scalars(select(ProgrammingLanguage).order_by(ProgrammingLanguage.name)).all()
 @app.get("/api/v1/challenge-categories")

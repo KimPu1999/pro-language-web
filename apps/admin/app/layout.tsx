@@ -1,0 +1,1 @@
+import type {Metadata} from "next"; import "./globals.css"; import {AdminShell} from "@/components/admin-shell"; export const metadata:Metadata={title:{default:"Learn-Coding Admin",template:"%s | Learn-Coding Admin"}}; export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><body><AdminShell>{children}</AdminShell></body></html>}

@@ -1,0 +1,3 @@
+import type { Metadata } from "next"; import "./globals.css"; import { PlatformNav } from "@/components/platform-nav";
+export const metadata: Metadata={title:{default:"Learn-Coding",template:"%s | Learn-Coding"},description:"Practical coding education and projects."};
+export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><body><PlatformNav/><main>{children}</main><footer className="border-t border-line px-6 py-10 text-sm text-slate-400"><div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-4"><span>© 2026 Learn-Coding</span><nav className="flex gap-4"><a href="/about">About</a><a href="/contact">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer></body></html>}

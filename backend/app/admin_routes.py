@@ -7,7 +7,7 @@ from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_s
 from .db import get_db
 from .models import AdminAuditLog, AuthSession, CodeExample, Course, CourseCategory, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, PlatformSetting, ProgrammingLanguage, PublishingReview, QuizAttempt, QuizQuestion, User
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
-from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, LoginIn, PublishDecisionIn
+from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
 BRANDING_KEY="branding"
@@ -92,6 +92,35 @@ def update_branding_settings(payload: BrandingSettings, user: User=Depends(full_
     audit(db,user,"branding_updated","platform_setting")
     db.commit()
     return values
+@router.get("/settings/navigation", response_model=NavigationSettings)
+def get_navigation_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="navigation"))
+    if not row: return NavigationSettings(items=[])
+    try: return NavigationSettings.model_validate(json.loads(row.value_json or "{}"))
+    except (TypeError, ValueError, json.JSONDecodeError): return NavigationSettings(items=[])
+@router.patch("/settings/navigation", response_model=NavigationSettings)
+def update_navigation_settings(payload: NavigationSettings, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    values=payload.model_dump()
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="navigation"))
+    if row: row.value_json=json.dumps(values); row.updated_by=user.id
+    else: db.add(PlatformSetting(key="navigation",value_json=json.dumps(values),updated_by=user.id))
+    audit(db,user,"navigation_updated","platform_setting"); db.commit(); return values
+@router.get("/pages")
+def list_platform_pages(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    rows=db.scalars(select(PlatformSetting).where(PlatformSetting.key.like("page:%")).order_by(PlatformSetting.key)).all()
+    pages=[]
+    for row in rows:
+        try: pages.append(PlatformPageOut.model_validate(json.loads(row.value_json or "{}")))
+        except (TypeError, ValueError, json.JSONDecodeError): continue
+    return pages
+@router.put("/pages/{slug}", response_model=PlatformPageOut)
+def upsert_platform_page(slug: str, payload: PlatformPageIn, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    if slug != payload.slug: raise HTTPException(422, "Page slug does not match path")
+    values=payload.model_dump()
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==f"page:{slug}"))
+    if row: row.value_json=json.dumps(values); row.updated_by=user.id
+    else: db.add(PlatformSetting(key=f"page:{slug}",value_json=json.dumps(values),updated_by=user.id))
+    audit(db,user,f"page_{payload.status}","platform_page"); db.commit(); return values
 @router.get("/languages")
 def list_languages(search: str|None=None, page: int=Query(1,ge=1), page_size: int=Query(20,ge=1,le=100), user: User=Depends(admin_user), db: Session=Depends(get_db)):
     q=select(ProgrammingLanguage); count=select(func.count()).select_from(ProgrammingLanguage)

@@ -33,6 +33,29 @@ npm run dev
 
 Open http://localhost:3000. The frontend expects the API at `http://localhost:8000` by default.
 
+## Learn-Coding applications
+
+The separated local applications use the same FastAPI backend and PostgreSQL database:
+
+```bash
+# public platform
+cd apps/platform && npm install && npm run dev
+
+# admin panel, in another terminal
+cd apps/admin && npm install && npm run dev
+```
+
+Open `http://localhost:3000` for the public platform and `http://localhost:3001/login` for the Admin Panel.
+
+If the database has no administrator, create the first one through the operator-only CLI. It prompts for the password and never logs it:
+
+```bash
+cd backend
+./.venv/bin/python -m app.bootstrap_super_admin --email admin@example.com --name "Learn-Coding Admin"
+```
+
+The command refuses to run if an administrator already exists. Do not use it against production without an approved operator procedure.
+
 ## PostgreSQL setup
 
 Start PostgreSQL, then create the database before running migrations. With the

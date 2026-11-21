@@ -180,7 +180,7 @@ class AdminCourseOut(BaseModel):
     def split_values(cls,v): return v.split("|") if isinstance(v,str) and v else (v or [])
 class AdminPageOut(BaseModel): items: list[AdminCourseOut]; page: int; page_size: int; total: int; pages: int
 class BrandingSettings(BaseModel):
-    website_name: str = Field(default="Languages-Platform", min_length=2, max_length=120)
+    website_name: str = Field(default="Learn-Coding", min_length=2, max_length=120)
     tagline: str = Field(default="Learn to code. Build your future.", max_length=240)
     logo_url: str = Field(default="/branding/tkp.png", max_length=500)
     mobile_logo_url: str = Field(default="/branding/tkp.png", max_length=500)
@@ -188,4 +188,23 @@ class BrandingSettings(BaseModel):
     primary_color: str = Field(default="#6366F1", pattern=r"^#[0-9A-Fa-f]{6}$")
     active_navigation_color: str = Field(default="#6366F1", pattern=r"^#[0-9A-Fa-f]{6}$")
     header_background: str = Field(default="#0B1020", pattern=r"^#[0-9A-Fa-f]{6}$")
-    footer_branding: str = Field(default="Languages-Platform", max_length=120)
+    footer_branding: str = Field(default="Learn-Coding", max_length=120)
+
+class NavigationItem(BaseModel):
+    label: str = Field(min_length=1, max_length=80)
+    href: str = Field(pattern=r"^/[A-Za-z0-9/_?=&.-]*$", max_length=240)
+    enabled: bool = True
+    position: int = Field(ge=0, le=200)
+    area: str = Field(default="header", pattern=r"^(header|footer)$")
+
+class NavigationSettings(BaseModel):
+    items: list[NavigationItem] = Field(default_factory=list, max_length=100)
+
+class PlatformPageIn(BaseModel):
+    slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=120)
+    title: str = Field(min_length=2, max_length=180)
+    body: str = Field(default="", max_length=100000)
+    status: str = Field(default="draft", pattern=r"^(draft|in_review|published|archived)$")
+
+class PlatformPageOut(PlatformPageIn):
+    updated_at: datetime | None = None
