@@ -23,7 +23,21 @@ function activeItem(path: string) { return groups.flatMap(group => group.items.m
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const path = usePathname(); const login = path === "/login"; const [user, setUser] = useState<any>(); const [error, setError] = useState(""); const [collapsed, setCollapsed] = useState(false); const [mobileOpen, setMobileOpen] = useState(false); const [profileOpen, setProfileOpen] = useState(false); const [notificationOpen, setNotificationOpen] = useState(false); const [search, setSearch] = useState(""); const [activity, setActivity] = useState<any[]>([]); const [pendingReviews, setPendingReviews] = useState(0);
-  useEffect(() => { if (login) return; let active = true; fetch("/api/v1/admin/auth/me", { credentials: "include" }).then(response => response.ok ? response.json() : Promise.reject(new Error("Administrator access required."))).then(value => { if (active) setUser(value); }).catch(reason => { if (active) setError(reason instanceof Error ? reason.message : "Administrator access required."); }); return () => { active = false; }; }, [login]);
+  useEffect(() => {
+    if (login) return;
+    let active = true;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 8000);
+    fetch("/api/v1/admin/auth/me", { credentials: "include", signal: controller.signal })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(response.status === 401 || response.status === 403 ? "Administrator access required." : `Admin authentication failed (${response.status}).`)))
+      .then(value => { if (active) setUser(value); })
+      .catch(reason => {
+        if (!active) return;
+        setError(reason?.name === "AbortError" ? "The Admin API did not respond within 8 seconds. Check that FastAPI is healthy and port 8000 is reachable." : reason instanceof Error ? reason.message : "Administrator access required.");
+      })
+      .finally(() => window.clearTimeout(timeout));
+    return () => { active = false; controller.abort(); window.clearTimeout(timeout); };
+  }, [login]);
   useEffect(() => { if (!user) return; fetch("/api/v1/admin/dashboard", { credentials: "include" }).then(response => response.ok ? response.json() : null).then(value => { if (value) { setActivity(value.recent_activity ?? []); setPendingReviews(value.pending_reviews ?? 0); } }).catch(() => undefined); }, [user]);
   useEffect(() => { setMobileOpen(false); setProfileOpen(false); setNotificationOpen(false); }, [path]);
   useEffect(() => { const close = (event: KeyboardEvent) => { if (event.key === "Escape") { setMobileOpen(false); setProfileOpen(false); setNotificationOpen(false); } }; window.addEventListener("keydown", close); return () => window.removeEventListener("keydown", close); }, []);

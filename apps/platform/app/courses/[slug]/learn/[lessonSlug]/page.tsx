@@ -14,20 +14,45 @@ const csrf = () => document.cookie.match(/(?:^|; )cm_csrf=([^;]+)/)?.[1] ?? "";
 
 function ContentBlocks({ content }: { content: string }) {
   const blocks = content.split(/\n\s*\n/).map(block => block.trim()).filter(Boolean);
+  const tableCells = (line: string) => line.replace(/^\||\|$/g, "").split("|").map(cell => cell.trim());
 
   return <div className="space-y-6">
     {blocks.map((block, index) => {
       const lines = block.split("\n");
       const first = lines[0];
       const heading = first.match(/^(#{1,3})\s+(.+)$/);
+      const codeFence = first.match(/^```\s*([\w+-]*)$/);
+      const calloutMatch = first.match(/^:::(TIP|NOTE|WARNING)$/i);
+      const inlineCalloutMatch = first.match(/^!\s*(TIP|NOTE|WARNING):\s*(.*)$/i);
+      const callout = Boolean((calloutMatch && lines.at(-1) === ":::") || inlineCalloutMatch);
+      const table = lines.length >= 2 && /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(lines[1]);
 
       if (heading) {
         const Heading = heading[1].length === 3 ? "h3" : "h2";
         return <section key={index} className="space-y-3 pt-3"><Heading className={heading[1].length === 3 ? "text-xl font-semibold text-foreground" : heading[1].length === 2 ? "text-2xl font-semibold text-foreground" : "text-3xl font-semibold text-foreground"}>{heading[2]}</Heading>{lines.length > 1 && <p className="whitespace-pre-line text-[17px] leading-[1.8] text-muted">{lines.slice(1).join("\n")}</p>}</section>;
       }
 
+      if (codeFence && lines.at(-1) === "```") return <pre key={index} className="overflow-x-auto rounded-2xl border border-line bg-[#0D1628] p-5 text-sm leading-7 text-indigo-100"><code>{lines.slice(1, -1).join("\n")}</code></pre>;
+      if (callout) {
+        const tone = (calloutMatch?.[1] || inlineCalloutMatch?.[1] || "note").toLowerCase();
+        const body = inlineCalloutMatch ? [inlineCalloutMatch[2], ...lines.slice(1)] : lines.slice(1, -1);
+        return <aside key={index} className={`rounded-xl border-l-4 px-5 py-4 text-[17px] leading-[1.8] ${tone === "warning" ? "border-amber-500 bg-amber-500/10 text-amber-900 dark:text-amber-100" : "border-primary bg-primary/8 text-muted"}`}><p className="mb-2 text-xs font-semibold uppercase tracking-[.16em]">{tone}</p>{body.filter(Boolean).map((line, lineIndex) => <p key={lineIndex}>{line}</p>)}</aside>;
+      }
+      if (table) {
+        return <div key={index} className="overflow-x-auto rounded-xl border border-line"><table className="min-w-full text-left text-sm"><thead className="bg-surface-elevated/60 text-foreground"><tr>{tableCells(lines[0]).map((cell, cellIndex) => <th key={cellIndex} className="border-b border-line px-4 py-3 font-semibold">{cell}</th>)}</tr></thead><tbody>{lines.slice(2).map((line, rowIndex) => <tr key={rowIndex} className="border-b border-line last:border-0">{tableCells(line).map((cell, cellIndex) => <td key={cellIndex} className="px-4 py-3 text-muted">{cell}</td>)}</tr>)}</tbody></table></div>;
+      }
+      if (/^!\s*IMAGE:\s*(\/[^\s]+)$/i.test(first) && lines.length === 1) {
+        const src = first.replace(/^!\s*IMAGE:\s*/i, "").trim();
+        return <figure key={index}><img src={src} alt="Lesson illustration" className="max-h-[520px] w-full rounded-2xl border border-line object-contain" /></figure>;
+      }
+      if (/^!\[[^\]]*\]\((\/[^)]+)\)$/.test(first) && lines.length === 1) {
+        const image = first.match(/^!\[([^\]]*)\]\((\/[^)]+)\)$/);
+        return image ? <figure key={index} className="space-y-2"><img src={image[2]} alt={image[1]} className="max-h-[520px] w-full rounded-2xl border border-line object-contain" /><figcaption className="text-center text-xs text-muted">{image[1]}</figcaption></figure> : null;
+      }
       if (lines.every(line => /^[-*]\s/.test(line))) return <ul key={index} className="list-disc space-y-2 pl-6 text-[17px] leading-[1.8] text-muted">{lines.map((line, lineIndex) => <li key={lineIndex}>{line.replace(/^[-*]\s+/, "")}</li>)}</ul>;
+      if (lines.every(line => /^\d+\.\s/.test(line))) return <ol key={index} className="list-decimal space-y-2 pl-6 text-[17px] leading-[1.8] text-muted">{lines.map((line, lineIndex) => <li key={lineIndex}>{line.replace(/^\d+\.\s+/, "")}</li>)}</ol>;
       if (/^>\s?/.test(first)) return <aside key={index} className="rounded-xl border-l-4 border-primary bg-primary/8 px-5 py-4 text-[17px] leading-[1.8] text-muted">{lines.map((line, lineIndex) => <p key={lineIndex}>{line.replace(/^>\s?/, "")}</p>)}</aside>;
+      if (/^(---|\*\s*\*\s*\*)$/.test(first) && lines.length === 1) return <hr key={index} className="border-line" />;
       return <p key={index} className="whitespace-pre-line text-[17px] leading-[1.8] text-muted">{block}</p>;
     })}
   </div>;

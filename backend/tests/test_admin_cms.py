@@ -9,11 +9,45 @@ def admin_login(client):
     return client.cookies.get("cm_csrf")
 def test_students_cannot_access_admin_apis(client):
     assert client.get("/api/v1/admin/dashboard").status_code==401
+
+def test_admin_lesson_read_route_is_get_and_returns_editor_metadata(client):
+    from app.models import Course, CourseModule, Lesson
+    assert client.get("/api/v1/admin/lessons/00000000-0000-0000-0000-000000000000").status_code==401
+    csrf=admin_login(client)
+    with client.session_factory() as db:
+        course=db.scalar(select(Course).where(Course.slug=="python-foundations")); module=db.scalar(select(CourseModule).where(CourseModule.course_id==course.id)); lesson=db.scalar(select(Lesson).where(Lesson.module_id==module.id)); lesson_id=str(lesson.id)
+    response=client.get(f"/api/v1/admin/lessons/{lesson_id}")
+    assert response.status_code==200
+    body=response.json(); assert body["id"]==lesson_id; assert body["module_id"]==str(module.id); assert body["course_id"]==str(course.id); assert body["course_slug"]==course.slug; assert body["language_name"]=="Python"; assert body["content_en"]=="Hello lesson"; assert "published" in body
+    assert client.get("/api/v1/admin/lessons/00000000-0000-0000-0000-000000000000").status_code==404
+    assert csrf
+
+def test_course_publish_route_accepts_post_only_and_handles_cors_preflight(client):
+    path="/api/v1/admin/courses/00000000-0000-0000-0000-000000000000/publish"
+    for method in ("get", "patch", "put"):
+        response=getattr(client,method)(path)
+        assert response.status_code==405
+        assert response.headers["allow"]=="POST"
+        assert response.json()=={"detail":"Method Not Allowed"}
+    preflight=client.options(path,headers={"Origin":"http://localhost:3001","Access-Control-Request-Method":"POST","Access-Control-Request-Headers":"content-type,x-csrf-token"})
+    assert preflight.status_code==200
+    assert "POST" in preflight.headers["access-control-allow-methods"]
+
 def test_admin_course_create_and_publish_validation(client):
     csrf=admin_login(client); lang=client.get("/api/v1/languages").json()[0]; category=client.get("/api/v1/categories").json()[0]
     payload={"title":"Admin Course","slug":"admin-course","short_description":"Short","description":"Long","language_id":lang["id"],"category_id":category["id"],"level":"beginner","estimated_duration":90,"outcomes":[],"requirements":[]}
     response=client.post("/api/v1/admin/courses",json=payload,headers={"X-CSRF-Token":csrf}); assert response.status_code==201; course_id=response.json()["id"]
     assert client.post(f"/api/v1/admin/courses/{course_id}/publish",json={"decision":"publish"},headers={"X-CSRF-Token":csrf}).status_code==422
+
+def test_admin_course_builder_publish_workflow_and_public_visibility(client):
+    csrf=admin_login(client); lang=client.get("/api/v1/languages").json()[0]; category=client.get("/api/v1/categories").json()[0]
+    payload={"title":"Publish Workflow Course","slug":"publish-workflow-course","short_description":"Short","description":"Long","language_id":lang["id"],"category_id":category["id"],"level":"beginner","estimated_duration":90,"outcomes":[],"requirements":[]}
+    course=client.post("/api/v1/admin/courses",json=payload,headers={"X-CSRF-Token":csrf}); assert course.status_code==201; course_id=course.json()["id"]
+    module=client.post(f"/api/v1/admin/courses/{course_id}/modules",json={"title":"Module 1","position":0},headers={"X-CSRF-Token":csrf}); assert module.status_code==201; module_id=module.json()["id"]
+    lesson=client.post(f"/api/v1/admin/modules/{module_id}/lessons",json={"title":"English Lesson","slug":"english-lesson","description":"Lesson","content_en":"Published content","content_mm":None,"position":0,"duration_minutes":10,"status":"draft"},headers={"X-CSRF-Token":csrf}); assert lesson.status_code==201; lesson_id=lesson.json()["id"]
+    ready=client.patch(f"/api/v1/admin/lessons/{lesson_id}",json={"title":"English Lesson","slug":"english-lesson","description":"Lesson","content_en":"Published content","content_mm":None,"position":0,"duration_minutes":10,"status":"published","expected_version":lesson.json()["content_version"]},headers={"X-CSRF-Token":csrf}); assert ready.status_code==200; assert ready.json()["published"] is True
+    published=client.post(f"/api/v1/admin/courses/{course_id}/publish",json={"decision":"publish","note":"Ready"},headers={"X-CSRF-Token":csrf}); assert published.status_code==200; assert published.json()["published"] is True
+    public=client.get("/api/v1/courses/publish-workflow-course"); assert public.status_code==200; assert public.json()["slug"]=="publish-workflow-course"
 def test_admin_duplicate_language_slug_is_rejected(client):
     csrf=admin_login(client); language=client.get("/api/v1/languages").json()[0]; response=client.post("/api/v1/admin/languages",json={"name":"Duplicate","slug":language["slug"]},headers={"X-CSRF-Token":csrf}); assert response.status_code==409
 

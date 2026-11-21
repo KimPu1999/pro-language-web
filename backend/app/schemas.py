@@ -203,9 +203,12 @@ class AdminCourseIn(BaseModel):
 class AdminCourseFAQIn(BaseModel):
     question: str = Field(min_length=3, max_length=500); answer: str = Field(min_length=1, max_length=10000); position: int = Field(default=0, ge=0); status: str = Field(default="published", pattern=r"^(draft|published|archived)$")
 class AdminModuleIn(BaseModel): title: str=Field(min_length=2,max_length=180); position: int=Field(ge=0); description: str=""
-class AdminLessonIn(BaseModel): title: str=Field(min_length=2,max_length=180); slug: str=Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=180); description: str=""; content_en: str=""; content_mm: str|None=None; position: int=Field(ge=0); duration_minutes: int=Field(default=10,ge=0); status: str="draft"
+class AdminLessonIn(BaseModel): title: str=Field(min_length=2,max_length=180); slug: str=Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=180); description: str=""; content_en: str=""; content_mm: str|None=None; position: int=Field(ge=0); duration_minutes: int=Field(default=10,ge=0); status: str=Field(default="draft",pattern=r"^(draft|in_review|published|archived)$"); expected_version: int|None=Field(default=None,ge=1); change_summary: str=Field(default="",max_length=240)
 class AdminCodeExampleIn(BaseModel): title: str=Field(min_length=1,max_length=180); language: str=Field(min_length=1,max_length=50); filename: str|None=None; source_code: str; description: str=""; position: int=Field(ge=0)
 class PublishDecisionIn(BaseModel): decision: str; note: str=""
+class CurriculumLessonOrder(BaseModel): id: UUID; position: int=Field(ge=0)
+class CurriculumModuleOrder(BaseModel): id: UUID; position: int=Field(ge=0); lesson_ids: list[UUID]=Field(default_factory=list)
+class CurriculumOrderIn(BaseModel): modules: list[CurriculumModuleOrder]=Field(default_factory=list)
 class AdminCourseOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; short_description: str; description: str; target_audience: str = ""; technologies: list[str]=Field(default_factory=list); seo_title: str = ""; seo_description: str = ""; language_id: UUID; category_id: UUID; level: str; thumbnail: str|None; estimated_duration: int; status: str; published: bool; outcomes: list[str]=Field(default_factory=list); requirements: list[str]=Field(default_factory=list)
     @field_validator("outcomes","requirements","technologies",mode="before")
