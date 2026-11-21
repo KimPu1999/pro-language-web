@@ -1,2 +1,2 @@
-import { CareersManagement } from "@/components/careers-management";
-export default function CareersManagementPage() { return <CareersManagement />; }
+import { CareerPathManagement } from "@/components/career-path-management";
+export default function CareerPathManagementPage() { return <CareerPathManagement />; }

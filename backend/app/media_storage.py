@@ -114,6 +114,18 @@ async def save_project_image(upload: UploadFile) -> tuple[str, Path, tuple[int, 
     return f"{settings.media_url_prefix.rstrip('/')}/{key.as_posix()}", path, (width, height)
 
 
+async def save_roadmap_image(upload: UploadFile) -> tuple[str, Path, tuple[int, int]]:
+    """Persist a validated Career Path cover in shared media storage."""
+    data = await upload.read(settings.course_image_max_bytes + 1)
+    detected, width, height = inspect_image(data, upload.content_type, upload.filename)
+    extension = ALLOWED_MIME_TYPES[detected]
+    key = Path("roadmaps") / f"{uuid4().hex}.{extension}"
+    path = ensure_media_root() / key
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    return f"{settings.media_url_prefix.rstrip('/')}/{key.as_posix()}", path, (width, height)
+
+
 async def save_project_submission_archive(upload: UploadFile) -> tuple[str, Path, str, int]:
     data = await upload.read(settings.project_submission_max_bytes + 1)
     if len(data) > settings.project_submission_max_bytes:
