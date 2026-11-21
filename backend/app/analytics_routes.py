@@ -6,9 +6,9 @@ from sqlalchemy import func, or_, select, union
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf
 from .db import get_db
-from .models import (AnalyticsAuditLog, AnalyticsReportExport, ChallengeSubmission, CommunityAnswer,
+from .models import (AnalyticsAuditLog, AnalyticsReportExport, Challenge, ChallengeSubmission, CommunityAnswer,
     CommunityPost, Course, CourseInstructor, CourseModule, Enrollment, IssuedCertificate, Lesson, LessonProgress,
-    StudentAchievement, User)
+    ProjectSubmission, ProjectTemplate, StudentAchievement, StudentProject, User)
 from .config import settings
 from .rbac import PLATFORM_ADMIN_ROLES, require_platform_admin
 
@@ -116,7 +116,8 @@ def overview(start_date: date|None = Query(None), end_date: date|None = Query(No
     completion_data = completion_rows(db,start,end,user,course_id)
     completed = sum(total > 0 and done == total for _,_,total,done in completion_data)
     eligible = sum(total > 0 for _,_,total,_ in completion_data)
-    return {"range":{"start":start_day.isoformat(),"end":end_day.isoformat()},"kpis":{"total_students":total_students,"active_students":active_student_count(db,start,end,user),"total_instructors":total_instructors,"published_courses":published_courses,"total_enrollments":enrollments,"completed_courses":completed,"coding_submissions":submissions,"certificates_issued":certificates},"trends":[{"date":(start_day+timedelta(days=i)).isoformat(),"enrollments":db.scalar(select(func.count(Enrollment.id)).where(Enrollment.created_at >= start+timedelta(days=i),Enrollment.created_at < start+timedelta(days=i+1))) or 0,"lesson_completions":db.scalar(select(func.count(LessonProgress.id)).where(LessonProgress.updated_at >= start+timedelta(days=i),LessonProgress.updated_at < start+timedelta(days=i+1),LessonProgress.completed.is_(True))) or 0} for i in range(min((end_day-start_day).days+1,90))],"completion_rate":round(completed/eligible*100,1) if eligible else 0,"definitions":definition_payload()}
+    new_registrations = db.scalar(select(func.count(User.id)).where(User.role == "student", User.created_at >= start, User.created_at < end)) or 0
+    return {"range":{"start":start_day.isoformat(),"end":end_day.isoformat()},"kpis":{"total_students":total_students,"new_registrations":new_registrations,"active_students":active_student_count(db,start,end,user),"total_instructors":total_instructors,"published_courses":published_courses,"total_enrollments":enrollments,"completed_courses":completed,"coding_submissions":submissions,"challenge_submissions":submissions,"certificates_issued":certificates},"trends":[{"date":(start_day+timedelta(days=i)).isoformat(),"enrollments":db.scalar(select(func.count(Enrollment.id)).where(Enrollment.created_at >= start+timedelta(days=i),Enrollment.created_at < start+timedelta(days=i+1))) or 0,"lesson_completions":db.scalar(select(func.count(LessonProgress.id)).where(LessonProgress.updated_at >= start+timedelta(days=i),LessonProgress.updated_at < start+timedelta(days=i+1),LessonProgress.completed.is_(True))) or 0} for i in range(min((end_day-start_day).days+1,90))],"completion_rate":round(completed/eligible*100,1) if eligible else 0,"definitions":definition_payload()}
 
 @router.get("/analytics/students")
 def students(start_date: date|None = Query(None), end_date: date|None = Query(None), page: int = Query(1,ge=1), page_size: int = Query(20,ge=1,le=100), user: User = Depends(full_admin), db: Session = Depends(get_db)):
@@ -132,6 +133,7 @@ def courses(start_date: date|None = Query(None), end_date: date|None = Query(Non
         lessons=db.scalar(select(func.count(Lesson.id)).join(CourseModule,CourseModule.id==Lesson.module_id).where(CourseModule.course_id==course.id,Lesson.published.is_(True))) or 0
         activity=db.scalar(select(func.count(LessonProgress.id)).join(Lesson,Lesson.id==LessonProgress.lesson_id).join(CourseModule,CourseModule.id==Lesson.module_id).where(CourseModule.course_id==course.id,LessonProgress.updated_at>=start,LessonProgress.updated_at<end)) or 0
         items.append({"id":course.id,"title":course.title,"enrollments":enrollments,"published_lessons":lessons,"lesson_activity":activity,"completion_rate":round(completed/eligible*100,1) if eligible else 0})
+    items.sort(key=lambda item: (-item["enrollments"], item["title"].lower()))
     return {"range":{"start":sd.isoformat(),"end":ed.isoformat()},"items":items,"definitions":definition_payload()}
 
 @router.get("/analytics/instructors")
@@ -143,7 +145,21 @@ def instructors(start_date: date|None = Query(None), end_date: date|None = Query
 
 @router.get("/analytics/challenges")
 def challenges(start_date: date|None = Query(None), end_date: date|None = Query(None), user: User = Depends(full_admin), db: Session = Depends(get_db)):
-    start,end,sd,ed=bounds(start_date,end_date); base=select(ChallengeSubmission).where(ChallengeSubmission.created_at>=start,ChallengeSubmission.created_at<end); rows=db.scalars(base).all(); evaluated=[r for r in rows if r.status not in {"queued","running","internal_error"}]; accepted=sum(r.status=="accepted" for r in evaluated); return {"range":{"start":sd.isoformat(),"end":ed.isoformat()},"attempts":len(rows),"accepted":accepted,"failed":len(evaluated)-accepted,"success_rate":round(accepted/len(evaluated)*100,1) if evaluated else 0,"statuses":{s:sum(r.status==s for r in rows) for s in sorted({r.status for r in rows})},"languages":{s:sum(r.language==s for r in rows) for s in sorted({r.language for r in rows})},"definitions":definition_payload()}
+    start,end,sd,ed=bounds(start_date,end_date); base=select(ChallengeSubmission).where(ChallengeSubmission.created_at>=start,ChallengeSubmission.created_at<end); rows=db.scalars(base).all(); evaluated=[r for r in rows if r.status not in {"queued","running","internal_error"}]; accepted=sum(r.status=="accepted" for r in evaluated); challenge_difficulty=dict(db.execute(select(Challenge.id,Challenge.difficulty).where(Challenge.id.in_({row.challenge_id for row in rows}))).all()) if rows else {}; difficulty={}
+    for row in rows:
+        name=challenge_difficulty.get(row.challenge_id,"unknown"); bucket=difficulty.setdefault(name,{"difficulty":name,"attempts":0,"accepted":0}); bucket["attempts"]+=1; bucket["accepted"]+=int(row.status=="accepted")
+    for bucket in difficulty.values(): bucket["acceptance_rate"]=round(bucket["accepted"]/bucket["attempts"]*100,1) if bucket["attempts"] else 0
+    return {"range":{"start":sd.isoformat(),"end":ed.isoformat()},"attempts":len(rows),"accepted":accepted,"failed":len(evaluated)-accepted,"success_rate":round(accepted/len(evaluated)*100,1) if evaluated else 0,"statuses":{s:sum(r.status==s for r in rows) for s in sorted({r.status for r in rows})},"languages":{s:sum(r.language==s for r in rows) for s in sorted({r.language for r in rows})},"difficulty_performance":sorted(difficulty.values(),key=lambda item:item["difficulty"]),"definitions":definition_payload()}
+
+@router.get("/analytics/projects")
+def projects(start_date: date|None = Query(None), end_date: date|None = Query(None), user: User = Depends(full_admin), db: Session = Depends(get_db)):
+    """Return real project submission/review counts for the selected UTC period."""
+    start,end,sd,ed=bounds(start_date,end_date)
+    submissions=db.scalars(select(ProjectSubmission).where(ProjectSubmission.created_at>=start,ProjectSubmission.created_at<end)).all()
+    status_counts={status:sum(row.status==status for row in submissions) for status in {row.status for row in submissions}}
+    published_projects=db.scalar(select(func.count(ProjectTemplate.id)).where(ProjectTemplate.published.is_(True))) or 0
+    started_projects=db.scalar(select(func.count(StudentProject.id)).where(StudentProject.created_at>=start,StudentProject.created_at<end)) or 0
+    return {"range":{"start":sd.isoformat(),"end":ed.isoformat()},"submitted":len(submissions),"pending_reviews":sum(status_counts.get(status,0) for status in ("submitted","in_review")),"approved":status_counts.get("approved",0),"revision_requests":status_counts.get("changes_requested",0),"rejected":status_counts.get("rejected",0),"published_projects":published_projects,"started_projects":started_projects,"statuses":status_counts,"definitions":{"submitted":"Project submissions created during the selected UTC period.","pending_reviews":"Submissions currently in submitted or in_review state.","approved":"Submissions marked approved during the selected UTC period.","revision_requests":"Submissions currently marked changes_requested."}}
 
 @router.get("/analytics/learning")
 def learning(start_date: date|None = Query(None), end_date: date|None = Query(None), user: User = Depends(full_admin), db: Session = Depends(get_db)):

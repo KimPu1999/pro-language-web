@@ -27,6 +27,16 @@ def test_invalid_analytics_date_range_is_rejected(client):
     response = client.get("/api/v1/platform/analytics/overview?start_date=2026-02-01&end_date=2026-01-01")
     assert response.status_code == 422
 
+def test_project_analytics_is_admin_only_and_uses_empty_real_dataset(client):
+    assert client.get("/api/v1/platform/analytics/projects").status_code == 401
+    admin_login(client)
+    response = client.get("/api/v1/platform/analytics/projects")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["submitted"] == 0
+    assert body["pending_reviews"] == 0
+    assert body["definitions"]["submitted"]
+
 def test_report_export_requires_csrf_and_admin(client):
     assert client.post("/api/v1/platform/reports/export").status_code == 401
     csrf = admin_login(client)
