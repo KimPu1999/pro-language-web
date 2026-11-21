@@ -1,6 +1,7 @@
 node_modules/
 .next/
 .next-dev/
+backend/media/
 out/
 *.log
 .env

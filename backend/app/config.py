@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     media_root: str = "./media"
     media_url_prefix: str = "/media"
     course_image_max_bytes: int = 5 * 1024 * 1024
+    project_submission_max_bytes: int = 20 * 1024 * 1024
     slow_request_ms: int = 500
     runner_enabled: bool = False
     runner_queue_name: str = "codemaster:execution"

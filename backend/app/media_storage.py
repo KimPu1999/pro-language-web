@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
+from zipfile import BadZipFile, ZipFile
 from uuid import uuid4
 
 from fastapi import HTTPException, UploadFile, status
@@ -98,6 +100,43 @@ async def save_course_image(upload: UploadFile) -> tuple[str, Path, tuple[int, i
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)
     return f"{settings.media_url_prefix.rstrip('/')}/{key.as_posix()}", path, (width, height)
+
+
+async def save_project_image(upload: UploadFile) -> tuple[str, Path, tuple[int, int]]:
+    """Persist a validated project cover in the shared media store."""
+    data = await upload.read(settings.course_image_max_bytes + 1)
+    detected, width, height = inspect_image(data, upload.content_type, upload.filename)
+    extension = ALLOWED_MIME_TYPES[detected]
+    key = Path("projects") / f"{uuid4().hex}.{extension}"
+    path = ensure_media_root() / key
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    return f"{settings.media_url_prefix.rstrip('/')}/{key.as_posix()}", path, (width, height)
+
+
+async def save_project_submission_archive(upload: UploadFile) -> tuple[str, Path, str, int]:
+    data = await upload.read(settings.project_submission_max_bytes + 1)
+    if len(data) > settings.project_submission_max_bytes:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Project submission archive must be 20 MB or smaller")
+    if not (upload.filename or "").lower().endswith(".zip"):
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Only ZIP project submissions are accepted")
+    try:
+        with ZipFile(BytesIO(data)) as archive:
+            total_uncompressed = 0
+            for member in archive.infolist():
+                name = member.filename.replace("\\", "/")
+                if name.startswith("/") or ".." in Path(name).parts:
+                    raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Submission archive contains an unsafe path")
+                total_uncompressed += member.file_size
+            if total_uncompressed > 100 * 1024 * 1024:
+                raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Submission archive expands beyond the safe limit")
+    except BadZipFile as exc:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "The submission is not a valid ZIP archive") from exc
+    key = Path("projects") / "private" / f"{uuid4().hex}.zip"
+    path = ensure_media_root() / key
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    return key.as_posix(), path, upload.filename or "submission.zip", len(data)
 
 
 def safe_media_path(url: str | None) -> Path | None:
