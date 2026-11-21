@@ -95,8 +95,8 @@ export function PlatformNav() {
     return iconByRoute[href] || Wrench;
   }
 
-  return <header className="sticky top-0 z-40 shrink-0 border-b border-line bg-surface/95 shadow-sm backdrop-blur">
-    <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
+  return <header className="sticky top-0 z-[70] shrink-0 border-b border-line bg-surface/95 shadow-sm backdrop-blur">
+    <div className="mx-auto flex min-h-16 w-full min-w-0 max-w-6xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
       <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 font-bold" onClick={closeMenu} aria-label={`${branding.website_name} home`}>
         <Image src={branding.logo_url} alt={`${branding.website_name} logo`} width={36} height={36} className="rounded-xl" />
         <span className="truncate">{branding.website_name}</span>
@@ -116,7 +116,7 @@ export function PlatformNav() {
       </nav>
     </div>
 
-    {open && <nav ref={menuPanelRef} id="platform-mobile-navigation" aria-label="Mobile public navigation" className="absolute inset-x-0 top-full border-b border-line bg-surface shadow-lg lg:hidden">
+    {open && <nav ref={menuPanelRef} id="platform-mobile-navigation" aria-label="Mobile public navigation" className="absolute inset-x-0 top-full z-[80] border-b border-line bg-surface shadow-lg lg:hidden">
       <div className="mx-auto max-h-[calc(100dvh-4rem)] max-w-6xl overflow-y-auto overscroll-contain px-4 py-3 sm:px-6">
         <div className="space-y-1 rounded-2xl border border-line bg-surface-elevated/50 p-2">
           {navigationLinks.map(({ label, href }, index) => { const Icon = iconForRoute(href); const active = isActiveRoute(pathname, href); return <Link key={`${href}-${label}`} ref={index === 0 ? firstMenuLinkRef : undefined} href={href} onClick={closeMenu} aria-current={active ? "page" : undefined} className={`flex min-h-12 items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${active ? "bg-primary/12 font-semibold text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`}><Icon size={18} aria-hidden="true" /><span className="flex-1">{label}</span><ChevronRight size={16} aria-hidden="true" /></Link>; })}
