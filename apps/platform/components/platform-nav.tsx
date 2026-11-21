@@ -3,12 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BriefcaseBusiness, BookOpen, ChevronRight, Code2, FolderCode, House, LogIn, Menu, UserRound, Wrench, X, type LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { BriefcaseBusiness, BookOpen, ChevronDown, ChevronRight, Code2, FolderCode, House, LogIn, Menu, UserRound, Wrench, X, type LucideIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type Ref } from "react";
 import { ThemeSwitcher } from "@/components/theme-provider";
 
-const fallbackLinks = [["Courses", "/courses"], ["Projects", "/projects"], ["Challenges", "/challenges"], ["Careers", "/careers"], ["Developer Tools", "/tools"]] as const;
-type PublicLink = { label: string; href: string; enabled: boolean; position: number; area: "header" | "footer" };
+const fallbackLinks = [{ id: "courses", label: "Courses", href: "/courses", enabled: true, position: 0, area: "header" as const, link_type: "internal" as const }, { id: "projects", label: "Projects", href: "/projects", enabled: true, position: 1, area: "header" as const, link_type: "internal" as const }, { id: "challenges", label: "Challenges", href: "/challenges", enabled: true, position: 2, area: "header" as const, link_type: "internal" as const }, { id: "careers", label: "Careers", href: "/careers", enabled: true, position: 3, area: "header" as const, link_type: "internal" as const }, { id: "tools", label: "Developer Tools", href: "/tools", enabled: true, position: 4, area: "header" as const, link_type: "internal" as const }];
+type PublicLink = { id: string; label: string; href: string; enabled: boolean; position: number; area: "header" | "footer"; link_type?: "internal" | "external"; external_url?: string | null; parent_id?: string | null; target_blank?: boolean };
 type Branding = { website_name: string; logo_url: string };
 type AuthUser = { full_name: string; email: string; role: string };
 
@@ -31,7 +31,7 @@ export function PlatformNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [links, setLinks] = useState<readonly (readonly [string, string])[]>(fallbackLinks);
+  const [links, setLinks] = useState<PublicLink[]>(fallbackLinks);
   const [branding, setBranding] = useState<Branding>({ website_name: "Learn-Coding", logo_url: "/branding/tkp.png" });
   const [user, setUser] = useState<AuthUser | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -46,14 +46,14 @@ export function PlatformNav() {
       }
       if (navigationResponse.ok) {
         const value = await navigationResponse.json();
-        const headerLinks = (value.items as PublicLink[] | undefined)?.filter(item => item.enabled && item.area === "header").sort((a, b) => a.position - b.position).map(item => [item.label, item.href] as [string, string]);
+        const headerLinks = (value.items as PublicLink[] | undefined)?.filter(item => item.enabled && item.area === "header").sort((a, b) => a.position - b.position);
         if (headerLinks?.length) setLinks(headerLinks);
       }
       if (userResponse.ok) setUser(await userResponse.json());
     }).catch(() => undefined);
   }, []);
 
-  const navigationLinks = useMemo(() => [{ label: "Home", href: "/" }, ...links.filter(([, href]) => href !== "/").map(([label, href]) => ({ label, href }))], [links]);
+  const navigationLinks = useMemo(() => [{ id: "home", label: "Home", href: "/", enabled: true, position: -1, area: "header" as const, link_type: "internal" as const }, ...links.filter(link => link.href !== "/" && !link.parent_id)], [links]);
 
   useEffect(() => {
     setOpen(false);
@@ -95,6 +95,13 @@ export function PlatformNav() {
     return iconByRoute[href] || Wrench;
   }
 
+  function destination(link: PublicLink) { return link.link_type === "external" ? (link.external_url || link.href) : link.href; }
+
+  function linkView(link: PublicLink, className: string, child = false, Icon?: LucideIcon, active = false, ref?: Ref<HTMLAnchorElement>) {
+    const href = destination(link); const props = { className, target: link.target_blank ? "_blank" : undefined, rel: link.target_blank ? "noopener noreferrer" : undefined, onClick: closeMenu, "aria-current": active ? "page" as const : undefined, ref };
+    return href.startsWith("/") ? <Link href={href} {...props}>{Icon ? <Icon size={18} aria-hidden="true" /> : child && <ChevronRight size={15} aria-hidden="true" />}<span className="flex-1">{link.label}</span></Link> : <a href={href} {...props}>{Icon ? <Icon size={18} aria-hidden="true" /> : child && <ChevronRight size={15} aria-hidden="true" />}<span className="flex-1">{link.label}</span></a>;
+  }
+
   return <header className="sticky top-0 z-[70] shrink-0 border-b border-line bg-surface/95 shadow-sm backdrop-blur">
     <div className="mx-auto flex min-h-16 w-full min-w-0 max-w-6xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
       <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 font-bold" onClick={closeMenu} aria-label={`${branding.website_name} home`}>
@@ -110,7 +117,7 @@ export function PlatformNav() {
       </div>
 
       <nav aria-label="Public navigation" className="ml-auto hidden items-center gap-2 lg:flex">
-        {navigationLinks.map(({ label, href }) => { const active = isActiveRoute(pathname, href); return <Link key={`${href}-${label}`} href={href} onClick={closeMenu} aria-current={active ? "page" : undefined} className={`rounded-lg px-3 py-2 text-sm transition ${active ? "bg-primary/10 font-medium text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`}>{label}</Link>; })}
+        {navigationLinks.map(link => { const href = destination(link); const active = isActiveRoute(pathname, href); const children = links.filter(child => child.parent_id === link.id && child.enabled).sort((a, b) => a.position - b.position); return children.length ? <div key={link.id} className="group relative"><button type="button" className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm transition ${active ? "bg-primary/10 font-medium text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`} aria-haspopup="menu">{link.label}<ChevronDown size={14} aria-hidden="true" /></button><div className="invisible absolute left-0 top-full z-10 min-w-48 translate-y-1 rounded-xl border border-line bg-surface p-1 opacity-0 shadow-xl transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">{children.map(child => linkView(child, `flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${isActiveRoute(pathname, destination(child)) ? "bg-primary/10 text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`, true, undefined, isActiveRoute(pathname, destination(child))))}</div></div> : linkView(link, `rounded-lg px-3 py-2 text-sm transition ${active ? "bg-primary/10 font-medium text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`, false, undefined, active); })}
         <ThemeSwitcher />
         {user ? <div className="flex items-center gap-2"><Link href="/profile" onClick={closeMenu} className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-surface-hover hover:text-foreground"><UserRound size={16} aria-hidden="true" /> Profile</Link><button type="button" onClick={signOut} className="rounded-lg border border-line px-3 py-2 text-sm text-muted transition hover:bg-surface-hover hover:text-foreground">Sign out</button></div> : <Link href="/login" onClick={closeMenu} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-primary-hover"><LogIn size={16} aria-hidden="true" /> Sign in</Link>}
       </nav>
@@ -119,7 +126,7 @@ export function PlatformNav() {
     {open && <nav ref={menuPanelRef} id="platform-mobile-navigation" aria-label="Mobile public navigation" className="absolute inset-x-0 top-full z-[80] border-b border-line bg-surface shadow-lg lg:hidden">
       <div className="mx-auto max-h-[calc(100dvh-4rem)] max-w-6xl overflow-y-auto overscroll-contain px-4 py-3 sm:px-6">
         <div className="space-y-1 rounded-2xl border border-line bg-surface-elevated/50 p-2">
-          {navigationLinks.map(({ label, href }, index) => { const Icon = iconForRoute(href); const active = isActiveRoute(pathname, href); return <Link key={`${href}-${label}`} ref={index === 0 ? firstMenuLinkRef : undefined} href={href} onClick={closeMenu} aria-current={active ? "page" : undefined} className={`flex min-h-12 items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${active ? "bg-primary/12 font-semibold text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`}><Icon size={18} aria-hidden="true" /><span className="flex-1">{label}</span><ChevronRight size={16} aria-hidden="true" /></Link>; })}
+          {navigationLinks.map((link, index) => { const Icon = iconForRoute(destination(link)); const active = isActiveRoute(pathname, destination(link)); const children = links.filter(child => child.parent_id === link.id && child.enabled).sort((a, b) => a.position - b.position); return <div key={link.id}>{linkView(link, `flex min-h-12 items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${active ? "bg-primary/12 font-semibold text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`, false, Icon, active, index === 0 ? firstMenuLinkRef : undefined)}{children.map(child => linkView(child, `ml-8 flex min-h-11 items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${isActiveRoute(pathname, destination(child)) ? "bg-primary/10 font-semibold text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`, true, undefined, isActiveRoute(pathname, destination(child))))}</div>; })}
           <div className="my-2 border-t border-line" />
           {user ? <><Link href="/profile" onClick={closeMenu} className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-3 text-sm text-muted transition hover:bg-surface-hover hover:text-foreground"><UserRound size={18} aria-hidden="true" /><span className="flex-1">Profile</span><ChevronRight size={16} aria-hidden="true" /></Link><button type="button" onClick={signOut} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-muted transition hover:bg-surface-hover hover:text-foreground"><LogIn size={18} aria-hidden="true" /><span className="flex-1">Sign out</span></button></> : <Link href="/login" onClick={closeMenu} className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-primary transition hover:bg-surface-hover"><LogIn size={18} aria-hidden="true" /><span className="flex-1">Sign in</span><ChevronRight size={16} aria-hidden="true" /></Link>}
         </div>

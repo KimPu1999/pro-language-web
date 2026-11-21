@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime
 from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -228,14 +228,38 @@ class BrandingSettings(BaseModel):
     footer_branding: str = Field(default="Learn-Coding", max_length=120)
 
 class NavigationItem(BaseModel):
+    id: str = Field(default_factory=lambda: f"nav-{uuid4().hex[:12]}", pattern=r"^[A-Za-z0-9_-]{1,80}$")
     label: str = Field(min_length=1, max_length=80)
-    href: str = Field(pattern=r"^/[A-Za-z0-9/_?=&.-]*$", max_length=240)
+    href: str = Field(default="/", max_length=500)
     enabled: bool = True
     position: int = Field(ge=0, le=200)
     area: str = Field(default="header", pattern=r"^(header|footer)$")
+    link_type: str = Field(default="internal", pattern=r"^(internal|external)$")
+    external_url: str | None = Field(default=None, max_length=500)
+    parent_id: str | None = Field(default=None, max_length=80)
+    footer_group: str | None = Field(default=None, max_length=80)
+    target_blank: bool = False
+
+    @model_validator(mode="after")
+    def validate_destination(self):
+        if self.link_type == "internal":
+            if not self.href.startswith("/") or self.href.startswith("//"):
+                raise ValueError("Internal navigation destinations must be site routes")
+            if self.external_url:
+                raise ValueError("Internal navigation items cannot include an external URL")
+        else:
+            from urllib.parse import urlparse
+            url = self.external_url or self.href
+            parsed = urlparse(url)
+            if parsed.scheme != "https" or not parsed.hostname:
+                raise ValueError("External navigation links must use HTTPS")
+        if self.area == "footer" and self.parent_id:
+            raise ValueError("Footer navigation items cannot have child items")
+        return self
 
 class NavigationSettings(BaseModel):
     items: list[NavigationItem] = Field(default_factory=list, max_length=100)
+    status: str = Field(default="published", pattern=r"^(draft|published)$")
 
 class HomepageSection(BaseModel):
     id: str = Field(default="", pattern=r"^[A-Za-z0-9_-]*$", max_length=80)

@@ -37,6 +37,30 @@ def test_admin_navigation_and_published_page_reach_public_api(client):
     assert public.json()["title"] == "About Learn-Coding"
 
 
+def test_navigation_draft_is_private_until_publish_and_supports_safe_dropdowns(client):
+    csrf = admin_login(client)
+    draft = {
+        "status": "draft",
+        "items": [
+            {"id": "learn", "label": "Learn", "href": "/courses", "enabled": True, "position": 0, "area": "header", "link_type": "internal"},
+            {"id": "tools", "label": "Tools", "href": "/tools", "enabled": True, "position": 1, "area": "header", "link_type": "internal"},
+            {"id": "json", "label": "JSON Formatter", "href": "/tools/json-formatter", "enabled": True, "position": 2, "area": "header", "link_type": "internal", "parent_id": "tools"},
+            {"id": "docs", "label": "Documentation", "href": "/", "external_url": "https://example.com/docs", "link_type": "external", "enabled": True, "position": 3, "area": "header", "target_blank": True},
+        ],
+    }
+    saved = client.patch("/api/v1/admin/settings/navigation", json=draft, headers={"X-CSRF-Token": csrf})
+    assert saved.status_code == 200 and saved.json()["status"] == "draft"
+    assert client.get("/api/v1/admin/settings/navigation/preview").json()["items"][2]["parent_id"] == "tools"
+    public_before = client.get("/api/v1/site/navigation").json()
+    assert "Documentation" not in {item["label"] for item in public_before["items"]}
+    published = client.post("/api/v1/admin/settings/navigation/publish", headers={"X-CSRF-Token": csrf})
+    assert published.status_code == 200 and published.json()["status"] == "published"
+    public_after = client.get("/api/v1/site/navigation").json()
+    assert public_after["items"][3]["external_url"] == "https://example.com/docs"
+    bad = {"status": "draft", "items": [{"id": "bad", "label": "Unsafe", "href": "javascript:alert(1)", "enabled": True, "position": 0, "area": "header", "link_type": "external"}]}
+    assert client.patch("/api/v1/admin/settings/navigation", json=bad, headers={"X-CSRF-Token": csrf}).status_code == 422
+
+
 def test_student_cannot_update_navigation(client):
     client.post("/api/v1/auth/register", json={"full_name": "Student", "email": "split-student@example.com", "password": "strong-pwd12", "confirm_password": "strong-pwd12", "accept_terms": True})
     csrf = client.cookies.get("cm_csrf")

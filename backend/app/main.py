@@ -11,6 +11,7 @@ from .db import get_db
 from .models import ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, LearningPath, Lesson, PlatformSetting, ProgrammingLanguage, StudentChallengeProgress, User, UserProfile
 from .schemas import BrandingSettings, CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut, FooterSettings, HomepageSettings, LanguageOut, LessonOut, ModuleOut, NavigationSettings, PageOut, PathOut, PlatformPageOut
 from .footer_config import read_footer
+from .navigation_config import NAVIGATION_PUBLISHED_KEY, read_navigation
 from .auth import current_user
 from .auth_routes import router as auth_router
 from .student_routes import router as student_router
@@ -120,10 +121,7 @@ def site_branding(db: Session=Depends(get_db)):
     except (TypeError, ValueError, json.JSONDecodeError): return BrandingSettings()
 @app.get("/api/v1/site/navigation", response_model=NavigationSettings)
 def site_navigation(db: Session=Depends(get_db)):
-    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="navigation"))
-    if not row: return NavigationSettings(items=[])
-    try: return NavigationSettings.model_validate(json.loads(row.value_json or "{}"))
-    except (TypeError, ValueError, json.JSONDecodeError): return NavigationSettings(items=[])
+    return read_navigation(db, NAVIGATION_PUBLISHED_KEY, public=True)
 @app.get("/api/v1/site/homepage")
 def site_homepage(db: Session=Depends(get_db)):
     return public_homepage(db)

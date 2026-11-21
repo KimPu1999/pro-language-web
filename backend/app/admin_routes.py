@@ -11,6 +11,7 @@ from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_ad
 from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
 from .media_storage import ensure_media_root, remove_file_if_safe, save_course_image
+from .navigation_config import NAVIGATION_DRAFT_KEY, NAVIGATION_KEY, NAVIGATION_PUBLISHED_KEY, read_admin_navigation, read_navigation, save_navigation, validate_navigation
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
 BRANDING_KEY="branding"
@@ -282,17 +283,33 @@ def update_branding_settings(payload: BrandingSettings, user: User=Depends(full_
     return values
 @router.get("/settings/navigation", response_model=NavigationSettings)
 def get_navigation_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
-    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="navigation"))
-    if not row: return NavigationSettings(items=[])
-    try: return NavigationSettings.model_validate(json.loads(row.value_json or "{}"))
-    except (TypeError, ValueError, json.JSONDecodeError): return NavigationSettings(items=[])
+    return read_admin_navigation(db)
 @router.patch("/settings/navigation", response_model=NavigationSettings)
 def update_navigation_settings(payload: NavigationSettings, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
-    values=payload.model_dump()
-    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="navigation"))
-    if row: row.value_json=json.dumps(values); row.updated_by=user.id
-    else: db.add(PlatformSetting(key="navigation",value_json=json.dumps(values),updated_by=user.id))
-    audit(db,user,"navigation_updated","platform_setting"); db.commit(); return values
+    payload = validate_navigation(payload).model_copy(update={"status": "draft"})
+    value = save_navigation(db, user.id, NAVIGATION_DRAFT_KEY, payload)
+    audit(db,user,"navigation_draft_saved","platform_setting"); db.commit(); return value
+@router.get("/settings/navigation/preview", response_model=NavigationSettings)
+def preview_navigation_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    return read_admin_navigation(db)
+@router.post("/settings/navigation/publish", response_model=NavigationSettings)
+def publish_navigation_settings(user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    draft = read_admin_navigation(db)
+    if not db.scalar(select(PlatformSetting).where(PlatformSetting.key == NAVIGATION_DRAFT_KEY)):
+        draft = draft.model_copy(update={"status": "published"})
+    value = validate_navigation(draft).model_copy(update={"status": "published"})
+    save_navigation(db, user.id, NAVIGATION_PUBLISHED_KEY, value)
+    # Keep the old key synchronized for older clients and footer migration code.
+    if db.scalar(select(PlatformSetting).where(PlatformSetting.key == NAVIGATION_KEY)):
+        save_navigation(db, user.id, NAVIGATION_KEY, value)
+    audit(db,user,"navigation_published","platform_setting"); db.commit(); return value
+@router.post("/settings/navigation/revert", response_model=NavigationSettings)
+def revert_navigation_settings(user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    draft = db.scalar(select(PlatformSetting).where(PlatformSetting.key == NAVIGATION_DRAFT_KEY))
+    if draft:
+        db.delete(draft)
+    value = read_navigation(db, NAVIGATION_PUBLISHED_KEY)
+    audit(db,user,"navigation_draft_reverted","platform_setting"); db.commit(); return value
 @router.get("/settings/homepage")
 def get_homepage_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
     draft_exists=db.scalar(select(PlatformSetting).where(PlatformSetting.key==HOMEPAGE_DRAFT_KEY)) is not None
