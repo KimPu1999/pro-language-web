@@ -1,6 +1,9 @@
+import base64
 from datetime import datetime, timezone
 from sqlalchemy import select
 from app.auth import password_hasher
+from app.config import settings
+from app.media_storage import media_root
 from app.models import User
 def admin_login(client):
     with client.session_factory() as db:
@@ -53,6 +56,21 @@ def test_admin_course_create_and_publish_validation(client):
     payload={"title":"Admin Course","slug":"admin-course","short_description":"Short","description":"Long","language_id":lang["id"],"category_id":category["id"],"level":"beginner","estimated_duration":90,"outcomes":[],"requirements":[]}
     response=client.post("/api/v1/admin/courses",json=payload,headers={"X-CSRF-Token":csrf}); assert response.status_code==201; course_id=response.json()["id"]
     assert client.post(f"/api/v1/admin/courses/{course_id}/publish",json={"decision":"publish"},headers={"X-CSRF-Token":csrf}).status_code==422
+
+def test_admin_course_cover_upload_replace_remove_and_validation(client, monkeypatch, tmp_path):
+    from app.models import Course
+    with client.session_factory() as db:
+        course_id=str(db.scalar(select(Course).where(Course.slug=="python-foundations")).id)
+    assert client.post(f"/api/v1/admin/courses/{course_id}/thumbnail",files={"image":("cover.png",b"not-an-image","image/png")}).status_code==401
+    csrf=admin_login(client); monkeypatch.setattr(settings,"media_root",str(tmp_path/"media"))
+    png=base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
+    uploaded=client.post(f"/api/v1/admin/courses/{course_id}/thumbnail",files={"image":("cover.png",png,"image/png")},headers={"X-CSRF-Token":csrf})
+    assert uploaded.status_code==200; thumbnail=uploaded.json()["thumbnail"]; assert thumbnail.startswith("/media/courses/"); stored=media_root()/thumbnail.removeprefix("/media/"); assert stored.is_file()
+    assert client.get(f"/api/v1/admin/courses/{course_id}/builder").json()["thumbnail"]==thumbnail
+    invalid=client.post(f"/api/v1/admin/courses/{course_id}/thumbnail",files={"image":("cover.png",b"not-an-image","image/png")},headers={"X-CSRF-Token":csrf}); assert invalid.status_code==415
+    replaced=client.post(f"/api/v1/admin/courses/{course_id}/thumbnail",files={"image":("replacement.png",png,"image/png")},headers={"X-CSRF-Token":csrf}); assert replaced.status_code==200; assert replaced.json()["thumbnail"]!=thumbnail; assert not stored.exists()
+    current=replaced.json()["thumbnail"]; current_path=media_root()/current.removeprefix("/media/"); assert current_path.is_file()
+    removed=client.delete(f"/api/v1/admin/courses/{course_id}/thumbnail",headers={"X-CSRF-Token":csrf}); assert removed.status_code==200; assert removed.json()["thumbnail"] is None; assert not current_path.exists()
 
 def test_admin_course_builder_publish_workflow_and_public_visibility(client):
     csrf=admin_login(client); lang=client.get("/api/v1/languages").json()[0]; category=client.get("/api/v1/categories").json()[0]

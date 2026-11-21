@@ -1,7 +1,7 @@
 import json, math
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Cookie, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, normalize_email, now, require_csrf, verify_password
@@ -10,6 +10,7 @@ from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeEx
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
 from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
+from .media_storage import remove_file_if_safe, save_course_image
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
 BRANDING_KEY="branding"
@@ -24,6 +25,9 @@ def admin_user(user: User=Depends(current_user)):
 def full_admin(user: User=Depends(current_user)):
     return require_platform_admin(user)
 def audit(db, actor, action, entity_type, entity_id=None): db.add(AdminAuditLog(actor_id=actor.id,action=action,entity_type=entity_type,entity_id=entity_id))
+def cleanup_course_thumbnail(db, url: str|None, course_id: UUID):
+    if url and not db.scalar(select(Course.id).where(Course.thumbnail==url, Course.id!=course_id)):
+        remove_file_if_safe(url)
 def branding_value(db):
     row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==BRANDING_KEY))
     if not row: return DEFAULT_BRANDING.copy()
@@ -426,6 +430,27 @@ def update_course(course_id:UUID,payload:AdminCourseIn,user:User=Depends(admin_u
         if key in {"estimated_duration","outcomes","requirements"}: continue
         setattr(row,key,value)
     row.duration_minutes=payload.estimated_duration; row.target_audience=payload.target_audience; row.technologies="|".join(payload.technologies); row.seo_title=payload.seo_title; row.seo_description=payload.seo_description; row.outcomes="|".join(payload.outcomes); row.requirements="|".join(payload.requirements); row.updated_by=user.id; db.add(CourseRevision(course_id=row.id,changed_by=user.id,status=row.status,snapshot_json=json.dumps(course_out(row),default=str))); audit(db,user,"course_updated","course",row.id); db.commit(); return course_out(row)
+@router.post("/courses/{course_id}/thumbnail",response_model=AdminCourseOut)
+async def upload_course_thumbnail(course_id:UUID,image:UploadFile=File(...),user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    row=require_edit(course_id,user,db); previous=row.thumbnail
+    public_url, _, _ = await save_course_image(image)
+    row.thumbnail=public_url; row.updated_by=user.id
+    audit(db,user,"course_thumbnail_uploaded","course",row.id)
+    try:
+        db.commit()
+    except Exception:
+        db.rollback(); remove_file_if_safe(public_url); raise
+    if previous and previous != public_url:
+        cleanup_course_thumbnail(db,previous,row.id)
+    return course_out(row)
+@router.delete("/courses/{course_id}/thumbnail",response_model=AdminCourseOut)
+def remove_course_thumbnail(course_id:UUID,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    row=require_edit(course_id,user,db); previous=row.thumbnail
+    row.thumbnail=None; row.updated_by=user.id
+    audit(db,user,"course_thumbnail_removed","course",row.id); db.commit()
+    if previous:
+        cleanup_course_thumbnail(db,previous,row.id)
+    return course_out(row)
 @router.post("/courses/{course_id}/duplicate",response_model=AdminCourseOut,status_code=201)
 def duplicate_course(course_id:UUID,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     source=require_edit(course_id,user,db); slug=f"{source.slug}-copy"; suffix=2

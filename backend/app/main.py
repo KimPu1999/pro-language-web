@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 from .config import settings
@@ -49,9 +50,11 @@ from .career_network_routes import router as career_network_router
 from .community_network_routes import router as community_network_router
 from .gamification_network_routes import router as gamification_network_router
 from .developer_tools_routes import router as developer_tools_router
+from .media_storage import ensure_media_root
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger=logging.getLogger("codemaster.api")
 app=FastAPI(title="CodeMaster Academy API", version="1.0.0")
+app.mount(settings.media_url_prefix, StaticFiles(directory=ensure_media_root()), name="media")
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allow_credentials=True, allow_methods=["GET","POST","PUT","PATCH","DELETE","OPTIONS"], allow_headers=["Content-Type","X-CSRF-Token"])
 @app.middleware("http")
 async def request_context(request, call_next):
