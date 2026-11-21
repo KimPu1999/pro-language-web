@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf, verified_user
 from .db import get_db
-from .models import (CareerRoadmap, ChallengeSubmission, Course, CourseModule, Lesson, LessonProgress, RoadmapPrerequisite, RoadmapStage, RoadmapStep, RoadmapStepResource, StudentLearningGoal, StudentProject, StudentRoadmap, StudentRoadmapBookmark, User)
+from .models import (CareerRoadmap, Challenge, ChallengeSubmission, Course, CourseModule, Lesson, LessonProgress, ProjectTemplate, RoadmapPrerequisite, RoadmapStage, RoadmapStep, RoadmapStepResource, StudentLearningGoal, StudentProject, StudentRoadmap, StudentRoadmapBookmark, User)
 from .admin_routes import admin_user, full_admin, audit
 
 router=APIRouter(prefix="/api/v1",tags=["roadmaps"])
@@ -19,7 +19,15 @@ class OrderIn(BaseModel): ids:list[UUID]
 class PrereqIn(BaseModel): prerequisite_step_id:UUID
 class ResourceIn(BaseModel): resource_type:str; resource_id:UUID
 def step_dict(step,db):
-    return {"id":step.id,"title":step.title,"instructions_en":step.instructions_en,"instructions_mm":step.instructions_mm,"position":step.position,"required":step.required,"resources":[{"resource_type":r.resource_type,"resource_id":r.resource_id} for r in db.scalars(select(RoadmapStepResource).where(RoadmapStepResource.step_id==step.id)).all()]}
+    resources=[]
+    for resource in db.scalars(select(RoadmapStepResource).where(RoadmapStepResource.step_id==step.id)).all():
+        item={"resource_type":resource.resource_type,"resource_id":resource.resource_id,"slug":None,"title":None}
+        model={"course":Course,"project":ProjectTemplate,"challenge":Challenge}.get(resource.resource_type)
+        if model:
+            target=db.get(model,resource.resource_id)
+            if target: item.update({"slug":target.slug,"title":getattr(target,"title",None)})
+        resources.append(item)
+    return {"id":step.id,"title":step.title,"instructions_en":step.instructions_en,"instructions_mm":step.instructions_mm,"position":step.position,"required":step.required,"resources":resources}
 def roadmap_dict(row,db,include_steps=True):
     stages=db.scalars(select(RoadmapStage).where(RoadmapStage.roadmap_id==row.id).order_by(RoadmapStage.position)).all(); out={"id":row.id,"title":row.title,"slug":row.slug,"career_category":row.career_category,"description_en":row.description_en,"description_mm":row.description_mm,"prerequisites_en":row.prerequisites_en,"outcomes_en":row.outcomes_en,"estimated_hours":row.estimated_hours,"status":row.status,"published":row.published,"stages":[]}
     if include_steps: out["stages"]=[{"id":s.id,"title":s.title,"description_en":s.description_en,"description_mm":s.description_mm,"level":s.level,"position":s.position,"steps":[step_dict(x,db) for x in db.scalars(select(RoadmapStep).where(RoadmapStep.stage_id==s.id).order_by(RoadmapStep.position)).all()]} for s in stages]
@@ -84,7 +92,7 @@ def enroll_learning_path(roadmap_id:UUID,user:User=Depends(verified_user),_:None
     row=StudentRoadmap(user_id=user.id,roadmap_id=roadmap.id); db.add(row); db.commit(); return {"id":row.id,"status":row.status,"progress":progress_view(db,row)}
 @router.get("/me/roadmaps")
 def my_roadmaps(user:User=Depends(current_user),db:Session=Depends(get_db)):
-    rows=db.scalars(select(StudentRoadmap).where(StudentRoadmap.user_id==user.id).order_by(StudentRoadmap.created_at.desc())).all(); bookmarks={x.roadmap_id for x in db.scalars(select(StudentRoadmapBookmark).where(StudentRoadmapBookmark.user_id==user.id)).all()}; return [{"id":x.id,"roadmap_id":x.roadmap_id,"status":x.status,"bookmarked":x.roadmap_id in bookmarks,"progress":progress_view(db,x)} for x in rows]
+    rows=db.scalars(select(StudentRoadmap).where(StudentRoadmap.user_id==user.id).order_by(StudentRoadmap.created_at.desc())).all(); bookmarks={x.roadmap_id for x in db.scalars(select(StudentRoadmapBookmark).where(StudentRoadmapBookmark.user_id==user.id)).all()}; return [{"id":x.id,"roadmap_id":x.roadmap_id,"roadmap_slug":(roadmap.slug if (roadmap:=db.get(CareerRoadmap,x.roadmap_id)) else None),"roadmap_title":roadmap.title if roadmap else None,"status":x.status,"bookmarked":x.roadmap_id in bookmarks,"progress":progress_view(db,x)} for x in rows]
 @router.get("/me/learning-paths")
 def my_learning_paths(user:User=Depends(current_user),db:Session=Depends(get_db)):
     return my_roadmaps(user,db)

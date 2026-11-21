@@ -159,7 +159,10 @@ def review_submission(submission_id:UUID,payload:ReviewIn,user:User=Depends(admi
     db.commit();return {"id":review.id,"decision":review.decision,"total_score":review.total_score}
 @router.get("/me/portfolio")
 def get_portfolio(user:User=Depends(current_user),db:Session=Depends(get_db)):
-    row=db.scalar(select(StudentPortfolio).where(StudentPortfolio.user_id==user.id));return row or {"visibility":"private","projects":[]}
+    row=db.scalar(select(StudentPortfolio).where(StudentPortfolio.user_id==user.id))
+    if not row: return {"visibility":"private","projects":[]}
+    projects=db.execute(select(PortfolioProject,StudentProject,ProjectTemplate).join(StudentProject,StudentProject.id==PortfolioProject.student_project_id).join(ProjectTemplate,ProjectTemplate.id==StudentProject.project_id).where(PortfolioProject.portfolio_id==row.id)).all()
+    return {"id":row.id,"username":row.username,"headline":row.headline,"bio":row.bio,"github_url":row.github_url,"visibility":row.visibility,"projects":[{"id":portfolio_project.id,"student_project_id":student_project.id,"title":template.title,"status":student_project.status,"visible":portfolio_project.visible} for portfolio_project,student_project,template in projects]}
 @router.put("/me/portfolio")
 def save_portfolio(payload:PortfolioIn,user:User=Depends(current_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=db.scalar(select(StudentPortfolio).where(StudentPortfolio.user_id==user.id)) or StudentPortfolio(user_id=user.id,username=payload.username);row.username=payload.username;row.headline=payload.headline;row.bio=payload.bio;row.github_url=safe_url(payload.github_url) if payload.github_url else None;row.visibility=payload.visibility if payload.visibility in {"private","public"} else "private";db.add(row);db.commit();return row

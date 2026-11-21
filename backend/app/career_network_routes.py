@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -62,14 +62,16 @@ def skill_gap(role_slug:str|None=None,user=Depends(verified_user),db:Session=Dep
     return {"role":{"slug":role.slug,"title":role.title},"matched":matched,"missing":missing,"evidence_based":True,"disclaimer":"This is a learning gap view, not a hiring prediction."}
 
 @router.get("/jobs")
-def jobs(search:str|None=None,experience_level:str|None=None,limit:int=Query(20,ge=1,le=50),offset:int=Query(0,ge=0),db:Session=Depends(get_db)):
-    q=select(CareerJobPosting).join(CareerEmployerOrganization).where(CareerJobPosting.status=="published",CareerEmployerOrganization.verification_status=="verified")
+def jobs(search:str|None=None,experience_level:str|None=None,work_mode:str|None=None,location:str|None=None,limit:int=Query(20,ge=1,le=50),offset:int=Query(0,ge=0),db:Session=Depends(get_db)):
+    q=select(CareerJobPosting).join(CareerEmployerOrganization).where(CareerJobPosting.status=="published",CareerEmployerOrganization.verification_status=="verified",(CareerJobPosting.expires_at.is_(None))|(CareerJobPosting.expires_at>datetime.now(timezone.utc)))
     if search:q=q.where(CareerJobPosting.title.ilike(f"%{search}%"))
     if experience_level:q=q.where(CareerJobPosting.experience_level==experience_level)
+    if work_mode:q=q.where(CareerJobPosting.work_mode==work_mode)
+    if location:q=q.where(CareerJobPosting.location.ilike(f"%{location}%"))
     rows=db.scalars(q.order_by(CareerJobPosting.created_at.desc()).offset(offset).limit(limit)).all();return [{"id":x.id,"title":x.title,"description":x.description,"technologies":json.loads(x.technologies_json),"experience_level":x.experience_level,"work_mode":x.work_mode,"location":x.location,"external_url":x.external_url,"expires_at":x.expires_at} for x in rows]
 @router.post("/jobs/{job_id}/save",status_code=201)
 def save_job(job_id:UUID,user=Depends(verified_user),_=Depends(require_csrf),db:Session=Depends(get_db)):
-    if not db.scalar(select(CareerJobPosting).where(CareerJobPosting.id==job_id,CareerJobPosting.status=="published")):raise HTTPException(404,"Published job not found")
+    if not db.scalar(select(CareerJobPosting).where(CareerJobPosting.id==job_id,CareerJobPosting.status=="published",(CareerJobPosting.expires_at.is_(None))|(CareerJobPosting.expires_at>datetime.now(timezone.utc)))):raise HTTPException(404,"Published job not found")
     row=CareerSavedJob(user_id=user.id,job_id=job_id);db.add(row)
     try:db.commit()
     except Exception:db.rollback();raise HTTPException(409,"Job already saved")
