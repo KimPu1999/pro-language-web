@@ -1,5 +1,6 @@
 "use client";
 
+import { Monitor, Moon, Sun } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 export type ThemeMode = "light" | "dark" | "system";
@@ -48,5 +49,16 @@ export function useTheme() {
 
 export function ThemeSwitcher({ className = "" }: { className?: string }) {
   const { theme, setTheme } = useTheme();
-  return <label className={`flex items-center gap-2 text-xs text-muted ${className}`}><span className="sr-only">Theme</span><select aria-label="Theme preference" value={theme} onChange={event => setTheme(event.target.value as ThemeMode)} className="h-9 rounded-lg border border-line bg-surface px-2 text-xs text-foreground outline-none transition focus:border-primary"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>;
+  const [open, setOpen] = useState(false);
+  const Icon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
+  const label = theme === "system" ? "System theme" : theme === "light" ? "Light theme" : "Dark theme";
+  const options: { value: ThemeMode; label: string; icon: typeof Sun }[] = [{ value: "light", label: "Light", icon: Sun }, { value: "dark", label: "Dark", icon: Moon }, { value: "system", label: "System", icon: Monitor }];
+  return <div className={`relative ${className}`}>
+    <button type="button" aria-label={label} aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen(value => !value)} className="grid h-9 w-9 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:bg-surface-hover hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
+      <Icon size={17} aria-hidden="true" />
+    </button>
+    {open && <div role="menu" aria-label="Theme preference" className="absolute right-0 top-11 z-50 min-w-36 rounded-xl border border-line bg-surface p-1.5 shadow-lg">
+      {options.map(option => { const OptionIcon = option.icon; return <button key={option.value} type="button" role="menuitemradio" aria-checked={theme === option.value} onClick={() => { setTheme(option.value); setOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs transition ${theme === option.value ? "bg-primary/15 text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`}><OptionIcon size={15} aria-hidden="true" /> {option.label}</button>; })}
+    </div>}
+  </div>;
 }

@@ -1,7 +1,33 @@
 "use client";
+
 import Link from "next/link";
-import {use, useEffect, useState} from "react";
-const descriptions:Record<string,string>={courses:"Published courses and lessons.",projects:"Practical projects with milestones.",challenges:"Practice problems to sharpen your skills.",careers:"Career paths and interview preparation.",tools:"A directory of developer tools.",about:"Learn-Coding makes practical programming education easier to access.",contact:"Questions about a course or account? Contact the Learn-Coding team.",privacy:"Privacy policy.",terms:"Terms of service.",dashboard:"Your learning dashboard.",profile:"Your profile.",achievements:"Your achievements."};
-const endpoints:Record<string,string>={courses:"/api/v1/courses?page_size=12",projects:"/api/v1/projects?page_size=12",challenges:"/api/v1/challenges?page_size=12",careers:"/api/v1/roadmaps?page_size=12"};
-const detailPaths:Record<string,string>={courses:"/courses",projects:"/projects",challenges:"/challenges",careers:"/careers/paths"};
-export default function Section({params}:{params:Promise<{section:string}>}){const{section}=use(params);const title=section.replaceAll("-"," ").replace(/\b\w/g,c=>c.toUpperCase());const[data,setData]=useState<any>(null);const endpoint=endpoints[section];useEffect(()=>{if(endpoint)fetch(endpoint).then(r=>r.ok?r.json():null).then(setData).catch(()=>setData(null))},[endpoint]);const items=data?.items??[];return <section className="mx-auto max-w-6xl px-6 py-16"><p className="text-sm uppercase tracking-[.2em] text-indigo-300">Learn-Coding</p><h1 className="mt-3 text-4xl font-bold capitalize">{title}</h1><p className="mt-4 max-w-2xl text-slate-400">{descriptions[section]??"Explore Learn-Coding."}</p>{endpoint&&data&&<div className="mt-10 grid gap-4 md:grid-cols-3">{items.map((item:any)=><Link key={item.slug??item.id} href={`${detailPaths[section]}/${item.slug}`} className="rounded-xl border border-line bg-surface p-5 hover:border-indigo-400"><h2 className="font-semibold">{item.title}</h2><p className="mt-2 text-sm text-slate-400">{item.description??item.description_en??"Published Learn-Coding resource."}</p><span className="mt-4 block text-xs text-indigo-300">Open resource →</span></Link>)}</div>}{endpoint&&data&&items.length===0&&<p className="mt-10 rounded-xl border border-line bg-surface p-5 text-slate-400">No published {title.toLowerCase()} are available yet.</p>}{!endpoint&&section==="tools"&&<p className="mt-10 rounded-xl border border-line bg-surface p-5 text-slate-400">The developer-tool catalog is not connected to a database-backed API yet.</p>}<Link href="/" className="mt-10 inline-block text-indigo-300">← Back home</Link></section>}
+import { ArrowLeft, ArrowRight, BookOpen, BriefcaseBusiness, Code2, Compass, FolderCode, Wrench } from "lucide-react";
+import { use, useEffect, useState } from "react";
+
+const descriptions: Record<string, string> = { courses: "Published courses and lessons.", projects: "Practical projects with milestones.", challenges: "Practice problems to sharpen your skills.", careers: "Career paths and interview preparation.", tools: "A directory of developer tools.", about: "Learn-Coding makes practical programming education easier to access.", contact: "Questions about a course or account? Contact the Learn-Coding team.", privacy: "Privacy policy.", terms: "Terms of service.", dashboard: "Your learning dashboard.", profile: "Your profile.", achievements: "Your achievements." };
+const endpoints: Record<string, string> = { courses: "/api/v1/courses?page_size=12", projects: "/api/v1/projects?page_size=12", challenges: "/api/v1/challenges?page_size=12", careers: "/api/v1/roadmaps?page_size=12" };
+const detailPaths: Record<string, string> = { courses: "/courses", projects: "/projects", challenges: "/challenges", careers: "/careers/paths" };
+const sectionIcons = { courses: BookOpen, projects: FolderCode, challenges: Code2, careers: BriefcaseBusiness, tools: Wrench } as const;
+
+export default function Section({ params }: { params: Promise<{ section: string }> }) {
+  const { section } = use(params);
+  const title = section.replaceAll("-", " ").replace(/\b\w/g, character => character.toUpperCase());
+  const [data, setData] = useState<any>(null);
+  const endpoint = endpoints[section];
+  const Icon = sectionIcons[section as keyof typeof sectionIcons] ?? Compass;
+
+  useEffect(() => {
+    if (endpoint) fetch(endpoint).then(response => response.ok ? response.json() : null).then(setData).catch(() => setData(null));
+  }, [endpoint]);
+
+  const items = data?.items ?? [];
+  return <section className="mx-auto max-w-6xl px-6 py-16">
+    <div className="flex items-center gap-2 text-sm uppercase tracking-[.2em] text-indigo-300"><Icon size={16} aria-hidden="true" /> Learn-Coding</div>
+    <h1 className="mt-3 text-4xl font-bold capitalize">{title}</h1>
+    <p className="mt-4 max-w-2xl text-slate-400">{descriptions[section] ?? "Explore Learn-Coding."}</p>
+    {endpoint && data && <div className="mt-10 grid gap-4 md:grid-cols-3">{items.map((item: any) => <Link key={item.slug ?? item.id} href={`${detailPaths[section]}/${item.slug}`} className="group rounded-xl border border-line bg-surface p-5 hover:border-indigo-400"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-300"><Icon size={18} aria-hidden="true" /></div><h2 className="mt-4 font-semibold group-hover:text-indigo-200">{item.title}</h2><p className="mt-2 text-sm text-slate-400">{item.description ?? item.description_en ?? "Published Learn-Coding resource."}</p><span className="mt-4 inline-flex items-center gap-1 text-xs text-indigo-300">Open resource <ArrowRight size={14} aria-hidden="true" /></span></Link>)}</div>}
+    {endpoint && data && items.length === 0 && <p className="mt-10 rounded-xl border border-line bg-surface p-5 text-slate-400">No published {title.toLowerCase()} are available yet.</p>}
+    {!endpoint && section === "tools" && <p className="mt-10 rounded-xl border border-line bg-surface p-5 text-slate-400">The developer-tool catalog is not connected to a database-backed API yet.</p>}
+    <Link href="/" className="mt-10 inline-flex items-center gap-2 text-indigo-300"><ArrowLeft size={16} aria-hidden="true" /> Back home</Link>
+  </section>;
+}
