@@ -21,6 +21,9 @@ def test_homepage_draft_publish_is_database_backed_and_public(client):
     assert client.get("/api/v1/site/homepage").json()["hero_title"] != "Managed homepage"
     published=client.post("/api/v1/admin/settings/homepage/publish",headers={"X-CSRF-Token":csrf}); assert published.status_code==200; assert published.json()["status"]=="published"
     public=client.get("/api/v1/site/homepage"); assert public.status_code==200; assert public.json()["hero_title"]=="Managed homepage"; assert public.json()["featured_courses"][0]["id"]==course_id; assert public.json()["featured_lessons"][0]["id"]==lesson_id; assert public.json()["featured_lessons"][0]["course_slug"]==course.slug
+    preview=client.get("/api/v1/admin/settings/homepage/preview"); assert preview.status_code==200; assert preview.json()["preview"] is True; assert preview.json()["hero_title"]=="Managed homepage"
+    revisions=client.get("/api/v1/admin/settings/homepage/revisions"); assert revisions.status_code==200; assert revisions.json()
+    restored=client.post(f"/api/v1/admin/settings/homepage/revisions/{revisions.json()[0]['id']}/restore",headers={"X-CSRF-Token":csrf}); assert restored.status_code==200; assert restored.json()["status"]=="draft"; assert client.get("/api/v1/site/homepage").json()["hero_title"]=="Managed homepage"
 
 def test_admin_lesson_read_route_is_get_and_returns_editor_metadata(client):
     from app.models import Course, CourseModule, Lesson

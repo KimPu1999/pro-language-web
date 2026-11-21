@@ -1,13 +1,14 @@
 import json, math
-from uuid import UUID
+from datetime import datetime, timezone
+from uuid import UUID, uuid4
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, normalize_email, now, require_csrf, verify_password
 from .db import get_db
-from .models import AdminAuditLog, AuthSession, CodeExample, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, LessonRevision, PlatformSetting, ProgrammingLanguage, PublishingReview, QuizAttempt, QuizQuestion, User
+from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeExample, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, LessonRevision, PlatformSetting, ProgrammingLanguage, ProjectTemplate, PublishingReview, QuizAttempt, QuizQuestion, User
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
-from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
+from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
@@ -15,6 +16,7 @@ BRANDING_KEY="branding"
 DEFAULT_BRANDING=BrandingSettings().model_dump()
 HOMEPAGE_DRAFT_KEY="homepage:draft"
 HOMEPAGE_PUBLISHED_KEY="homepage:published"
+HOMEPAGE_REVISION_PREFIX="homepage:revision:"
 DEFAULT_HOMEPAGE=HomepageSettings().model_dump(mode="json")
 def admin_user(user: User=Depends(current_user)):
     if user.role not in CONTENT_ADMIN_ROLES: raise HTTPException(403,"Admin access required")
@@ -30,12 +32,95 @@ def branding_value(db):
 def homepage_value(db, key=HOMEPAGE_PUBLISHED_KEY):
     row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==key))
     if not row: return HomepageSettings.model_validate(DEFAULT_HOMEPAGE)
-    try: return HomepageSettings.model_validate({**DEFAULT_HOMEPAGE, **json.loads(row.value_json or "{}")})
+    try: return normalize_homepage(HomepageSettings.model_validate({**DEFAULT_HOMEPAGE, **json.loads(row.value_json or "{}")}))
     except (TypeError, ValueError, json.JSONDecodeError): return HomepageSettings.model_validate(DEFAULT_HOMEPAGE)
 def homepage_choices(db):
     courses=db.scalars(select(Course).where(Course.published.is_(True)).order_by(Course.title).limit(100)).all()
     lessons=db.execute(select(Lesson, CourseModule, Course).join(CourseModule, Lesson.module_id==CourseModule.id).join(Course, CourseModule.course_id==Course.id).where(Course.published.is_(True), Lesson.published.is_(True), Lesson.status!="archived").order_by(Course.title, CourseModule.order_index, Lesson.order_index).limit(200)).all()
-    return ([{"id":row.id,"title":row.title,"slug":row.slug} for row in courses], [{"id":lesson.id,"title":lesson.title,"slug":lesson.slug,"course_id":course.id,"course_slug":course.slug,"course_title":course.title} for lesson,module,course in lessons])
+    projects=db.scalars(select(ProjectTemplate).where(ProjectTemplate.published.is_(True)).order_by(ProjectTemplate.title).limit(100)).all()
+    challenges=db.scalars(select(Challenge).where(Challenge.published.is_(True)).order_by(Challenge.title).limit(100)).all()
+    paths=db.scalars(select(CareerRoadmap).where(CareerRoadmap.published.is_(True)).order_by(CareerRoadmap.title).limit(100)).all()
+    return {"courses":[{"id":row.id,"title":row.title,"slug":row.slug} for row in courses],"lessons":[{"id":lesson.id,"title":lesson.title,"slug":lesson.slug,"course_id":course.id,"course_slug":course.slug,"course_title":course.title,"module_title":module.title,"duration_minutes":lesson.duration_minutes} for lesson,module,course in lessons],"projects":[{"id":row.id,"title":row.title,"slug":row.slug,"description":row.description_en,"estimated_hours":row.estimated_hours} for row in projects],"challenges":[{"id":row.id,"title":row.title,"slug":row.slug,"description":row.description_en,"difficulty":row.difficulty} for row in challenges],"paths":[{"id":row.id,"title":row.title,"slug":row.slug,"description":row.description_en,"estimated_hours":row.estimated_hours} for row in paths]}
+def normalize_homepage(settings: HomepageSettings):
+    values=settings.model_dump(mode="json")
+    if values["announcement"] and not values["announcements"]:
+        values["announcements"]=[{"id":"legacy-announcement","title":values["announcement"],"description":"","cta_label":"","cta_href":"/","visible":True,"display_priority":0,"status":"published"}]
+    known={"hero":"hero","featured-courses":"featured_courses","new-courses":"new_courses","featured-lessons":"featured_lessons","learning-paths":"learning_paths","projects":"projects","challenges":"challenges","announcements":"announcement"}
+    sections=[]
+    for index, section in enumerate(values["sections"]):
+        section["id"] = section.get("id") or section["key"]
+        section["type"] = section.get("type") if section.get("type") and section.get("type") != "custom" else known.get(section["key"], "custom")
+        section["display_order"] = index
+        sections.append(section)
+    values["sections"]=sections
+    return HomepageSettings.model_validate(values)
+def validate_homepage(db, settings: HomepageSettings):
+    settings=normalize_homepage(settings)
+    for field in ("featured_course_ids","new_course_ids","featured_lesson_ids","featured_path_ids","featured_project_ids","featured_challenge_ids"):
+        values=getattr(settings,field)
+        if len(values) != len(set(values)): raise HTTPException(422,f"Duplicate references are not allowed in {field}")
+    for field in ("hero_background_image","hero_illustration","social_image_url"):
+        value=getattr(settings,field)
+        if value and (not value.startswith("/") or value.startswith("//")): raise HTTPException(422,"Homepage media must use an internal path")
+    if len({section.key for section in settings.sections}) != len(settings.sections): raise HTTPException(422,"Homepage section keys must be unique")
+    for announcement in settings.announcements:
+        if announcement.image_url and (not announcement.image_url.startswith("/") or announcement.image_url.startswith("//")): raise HTTPException(422,"Announcement images must use an internal path")
+        if announcement.ends_at and announcement.starts_at and announcement.ends_at <= announcement.starts_at: raise HTTPException(422,"Announcement end date must be after its start date")
+    checks=(("featured_course_ids",Course,"published"),("new_course_ids",Course,"published"),("featured_lesson_ids",Lesson,"published"),("featured_path_ids",CareerRoadmap,"published"),("featured_project_ids",ProjectTemplate,"published"),("featured_challenge_ids",Challenge,"published"))
+    for field, model, publication_field in checks:
+        ids=getattr(settings,field)
+        if not ids: continue
+        column=getattr(model,publication_field)
+        found=set(db.scalars(select(model.id).where(model.id.in_(ids),column.is_(True))).all())
+        if found != set(ids): raise HTTPException(422,f"All {field.replace('_',' ')} must reference published content")
+    if settings.featured_lesson_ids:
+        valid=set(db.scalars(select(Lesson.id).join(CourseModule).join(Course).where(Lesson.id.in_(settings.featured_lesson_ids),Lesson.published.is_(True),Course.published.is_(True))).all())
+        if valid != set(settings.featured_lesson_ids): raise HTTPException(422,"Featured lessons must belong to published courses")
+    return settings
+def record_homepage_revision(db, user, settings, action):
+    revision_id=uuid4()
+    snapshot={"id":str(revision_id),"action":action,"created_at":datetime.now(timezone.utc).isoformat(),"snapshot":settings.model_dump(mode="json")}
+    db.add(PlatformSetting(key=f"{HOMEPAGE_REVISION_PREFIX}{revision_id}",value_json=json.dumps(snapshot),updated_by=user.id))
+    return revision_id
+def homepage_revisions(db):
+    rows=db.scalars(select(PlatformSetting).where(PlatformSetting.key.like(f"{HOMEPAGE_REVISION_PREFIX}%")).order_by(PlatformSetting.updated_at.desc()).limit(50)).all()
+    revisions=[]
+    for row in rows:
+        try:
+            value=json.loads(row.value_json or "{}")
+            revisions.append({"id":value.get("id",row.key.removeprefix(HOMEPAGE_REVISION_PREFIX)),"action":value.get("action","draft_saved"),"created_at":value.get("created_at",row.updated_at),"status":value.get("snapshot",{}).get("status","draft")})
+        except (TypeError,ValueError,json.JSONDecodeError): continue
+    return revisions
+def public_records(db, settings):
+    def selected(model, ids):
+        if not ids: return []
+        rows=db.scalars(select(model).where(model.id.in_(ids))).all(); by_id={str(row.id):row for row in rows}; return [by_id[str(item)] for item in ids if str(item) in by_id]
+    courses=selected(Course,settings.featured_course_ids)
+    lessons=selected(Lesson,settings.featured_lesson_ids)
+    paths=selected(CareerRoadmap,settings.featured_path_ids)
+    projects=selected(ProjectTemplate,settings.featured_project_ids)
+    challenges=selected(Challenge,settings.featured_challenge_ids)
+    published_times=dict(db.execute(select(PublishingReview.course_id,func.max(PublishingReview.created_at)).where(PublishingReview.decision=="publish").group_by(PublishingReview.course_id)).all())
+    new_candidates=db.scalars(select(Course).where(Course.published.is_(True))).all()
+    if settings.new_courses_mode=="manual": new_courses=selected(Course,settings.new_course_ids)
+    else: new_courses=sorted(new_candidates,key=lambda row: published_times.get(row.id) or row.updated_at,reverse=True)[:settings.new_courses_limit]
+    def course_view(row): return {"id":row.id,"title":row.title,"slug":row.slug,"short_description":row.short_description or "","thumbnail":row.thumbnail,"level":row.level,"duration_minutes":row.duration_minutes}
+    def lesson_view(row):
+        module=db.get(CourseModule,row.module_id); course=db.get(Course,module.course_id) if module else None
+        return {"id":row.id,"title":row.title,"slug":row.slug,"duration_minutes":row.duration_minutes,"course_slug":course.slug if course else None,"course_title":course.title if course else None,"module_title":module.title if module else None}
+    now_value=datetime.now(timezone.utc)
+    announcements=[]
+    for item in settings.announcements:
+        if not item.visible or item.status!="published": continue
+        starts=item.starts_at.replace(tzinfo=timezone.utc) if item.starts_at and item.starts_at.tzinfo is None else item.starts_at
+        ends=item.ends_at.replace(tzinfo=timezone.utc) if item.ends_at and item.ends_at.tzinfo is None else item.ends_at
+        if starts and starts>now_value: continue
+        if ends and ends<=now_value: continue
+        announcements.append(item.model_dump(mode="json"))
+    return {"featured_courses":[course_view(row) for row in courses if row.published],"new_courses":[course_view(row) for row in new_courses if row.published],"featured_lessons":[lesson_view(row) for row in lessons if row.published and db.scalar(select(Course.published).join(CourseModule,CourseModule.course_id==Course.id).where(CourseModule.id==row.module_id))],"featured_paths":[{"id":row.id,"title":row.title,"slug":row.slug,"description":row.description_en,"estimated_hours":row.estimated_hours} for row in paths if row.published],"featured_projects":[{"id":row.id,"title":row.title,"slug":row.slug,"description":row.description_en,"difficulty":row.difficulty,"estimated_hours":row.estimated_hours} for row in projects if row.published],"featured_challenges":[{"id":row.id,"title":row.title,"slug":row.slug,"description":row.description_en,"difficulty":row.difficulty} for row in challenges if row.published],"announcements":announcements}
+def public_homepage(db):
+    settings=homepage_value(db,HOMEPAGE_PUBLISHED_KEY)
+    return {**settings.model_dump(mode="json"),**public_records(db,settings)}
 def course_out(course): return {"id":course.id,"title":course.title,"slug":course.slug,"short_description":course.short_description or "","description":course.description,"target_audience":course.target_audience or "","technologies":course.technologies or "","seo_title":course.seo_title or "","seo_description":course.seo_description or "","language_id":course.language_id,"category_id":course.category_id,"level":course.level,"thumbnail":course.thumbnail,"estimated_duration":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"published":course.published,"outcomes":course.outcomes,"requirements":course.requirements}
 def load_course(db, course_id): return db.scalar(select(Course).options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples)).where(Course.id==course_id))
 def can_edit(course, user, db):
@@ -162,31 +247,58 @@ def update_navigation_settings(payload: NavigationSettings, user: User=Depends(f
 def get_homepage_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
     draft_exists=db.scalar(select(PlatformSetting).where(PlatformSetting.key==HOMEPAGE_DRAFT_KEY)) is not None
     settings=homepage_value(db, HOMEPAGE_DRAFT_KEY if draft_exists else HOMEPAGE_PUBLISHED_KEY)
-    courses, lessons=homepage_choices(db)
-    return {"settings": settings.model_dump(mode="json"), "courses": courses, "lessons": lessons}
-@router.patch("/settings/homepage", response_model=HomepageSettings)
-def update_homepage_settings(payload: HomepageSettings, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
-    values=payload.model_copy(update={"status": "draft"}).model_dump(mode="json")
+    return {"settings": settings.model_dump(mode="json"), **homepage_choices(db), "revisions": homepage_revisions(db)}
+@router.get("/settings/homepage/preview")
+def preview_homepage_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    settings=homepage_value(db,HOMEPAGE_DRAFT_KEY)
+    return {**settings.model_dump(mode="json"),**public_records(db,settings),"preview":True}
+def save_homepage_draft(db, user, payload: HomepageSettings, action="draft_saved"):
+    settings=validate_homepage(db,payload).model_copy(update={"status":"draft"})
+    values=settings.model_dump(mode="json")
     row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==HOMEPAGE_DRAFT_KEY))
     if row: row.value_json=json.dumps(values); row.updated_by=user.id
     else: db.add(PlatformSetting(key=HOMEPAGE_DRAFT_KEY,value_json=json.dumps(values),updated_by=user.id))
-    audit(db,user,"homepage_draft_saved","platform_setting"); db.commit(); return HomepageSettings.model_validate(values)
+    record_homepage_revision(db,user,settings,action); audit(db,user,"homepage_draft_saved","platform_setting"); db.commit(); return settings
+@router.patch("/settings/homepage", response_model=HomepageSettings)
+def update_homepage_settings(payload: HomepageSettings, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    return save_homepage_draft(db,user,payload)
+@router.patch("/settings/homepage/sections", response_model=HomepageSettings)
+def reorder_homepage_sections(payload: HomepageSectionsIn, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    current=homepage_value(db,HOMEPAGE_DRAFT_KEY); return save_homepage_draft(db,user,current.model_copy(update={"sections":payload.sections}),"sections_reordered")
+@router.post("/settings/homepage/announcements", response_model=HomepageSettings)
+def create_homepage_announcement(payload: HomepageAnnouncement, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    current=homepage_value(db,HOMEPAGE_DRAFT_KEY); announcement=payload.model_copy(update={"id":payload.id or str(uuid4())}); return save_homepage_draft(db,user,current.model_copy(update={"announcements":[*current.announcements,announcement]}),"announcement_created")
+@router.patch("/settings/homepage/announcements/{announcement_id}", response_model=HomepageSettings)
+def update_homepage_announcement(announcement_id: str, payload: HomepageAnnouncement, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    current=homepage_value(db,HOMEPAGE_DRAFT_KEY); if_not_found=next((item for item in current.announcements if item.id==announcement_id),None)
+    if not if_not_found: raise HTTPException(404,"Homepage announcement not found")
+    announcements=[payload.model_copy(update={"id":announcement_id}) if item.id==announcement_id else item for item in current.announcements]
+    return save_homepage_draft(db,user,current.model_copy(update={"announcements":announcements}),"announcement_updated")
+@router.delete("/settings/homepage/announcements/{announcement_id}", response_model=HomepageSettings)
+def delete_homepage_announcement(announcement_id: str, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    current=homepage_value(db,HOMEPAGE_DRAFT_KEY); announcements=[item for item in current.announcements if item.id!=announcement_id]
+    if len(announcements)==len(current.announcements): raise HTTPException(404,"Homepage announcement not found")
+    return save_homepage_draft(db,user,current.model_copy(update={"announcements":announcements}),"announcement_deleted")
+@router.get("/settings/homepage/revisions")
+def list_homepage_revisions(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    return homepage_revisions(db)
+@router.post("/settings/homepage/revisions/{revision_id}/restore", response_model=HomepageSettings)
+def restore_homepage_revision(revision_id: UUID, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==f"{HOMEPAGE_REVISION_PREFIX}{revision_id}"))
+    if not row: raise HTTPException(404,"Homepage revision not found")
+    try: snapshot=json.loads(row.value_json or "{}")["snapshot"]; settings=HomepageSettings.model_validate(snapshot)
+    except (KeyError,TypeError,ValueError,json.JSONDecodeError): raise HTTPException(422,"Homepage revision is invalid")
+    return save_homepage_draft(db,user,settings,"revision_restored")
 @router.post("/settings/homepage/publish", response_model=HomepageSettings)
 def publish_homepage_settings(user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
-    settings=homepage_value(db, HOMEPAGE_DRAFT_KEY)
-    if settings.featured_course_ids:
-        found=set(db.scalars(select(Course.id).where(Course.id.in_(settings.featured_course_ids), Course.published.is_(True))).all())
-        if found != set(settings.featured_course_ids): raise HTTPException(422,"Featured courses must be published before the homepage can be published")
-    if settings.featured_lesson_ids:
-        found=set(db.scalars(select(Lesson.id).join(CourseModule).join(Course).where(Lesson.id.in_(settings.featured_lesson_ids), Lesson.published.is_(True), Course.published.is_(True))).all())
-        if found != set(settings.featured_lesson_ids): raise HTTPException(422,"Featured lessons must belong to published courses")
+    settings=validate_homepage(db,homepage_value(db,HOMEPAGE_DRAFT_KEY))
     values=settings.model_copy(update={"status":"published"}).model_dump(mode="json")
     row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==HOMEPAGE_PUBLISHED_KEY))
     if row: row.value_json=json.dumps(values); row.updated_by=user.id
     else: db.add(PlatformSetting(key=HOMEPAGE_PUBLISHED_KEY,value_json=json.dumps(values),updated_by=user.id))
     draft=db.scalar(select(PlatformSetting).where(PlatformSetting.key==HOMEPAGE_DRAFT_KEY))
     if draft: draft.value_json=json.dumps(values); draft.updated_by=user.id
-    audit(db,user,"homepage_published","platform_setting"); db.commit(); return HomepageSettings.model_validate(values)
+    record_homepage_revision(db,user,HomepageSettings.model_validate(values),"published"); audit(db,user,"homepage_published","platform_setting"); db.commit(); return HomepageSettings.model_validate(values)
 @router.get("/settings/footer", response_model=FooterSettings)
 def get_footer_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
     return read_footer(db, FOOTER_DRAFT_KEY) if db.scalar(select(PlatformSetting).where(PlatformSetting.key == FOOTER_DRAFT_KEY)) else read_footer(db)

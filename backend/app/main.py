@@ -14,7 +14,7 @@ from .auth import current_user
 from .auth_routes import router as auth_router
 from .student_routes import router as student_router
 from .dashboard_routes import router as dashboard_router
-from .admin_routes import router as admin_router
+from .admin_routes import public_homepage, router as admin_router
 from .runner_routes import router as runner_router
 from .challenge_routes import router as challenge_router
 from .roadmap_routes import router as roadmap_router
@@ -123,16 +123,7 @@ def site_navigation(db: Session=Depends(get_db)):
     except (TypeError, ValueError, json.JSONDecodeError): return NavigationSettings(items=[])
 @app.get("/api/v1/site/homepage")
 def site_homepage(db: Session=Depends(get_db)):
-    defaults=HomepageSettings().model_copy(update={"status": "published"}).model_dump(mode="json")
-    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="homepage:published"))
-    if row:
-        try: defaults={**defaults, **HomepageSettings.model_validate(json.loads(row.value_json or "{}")).model_dump(mode="json")}
-        except (TypeError, ValueError, json.JSONDecodeError): pass
-    course_ids=[UUID(value) for value in defaults["featured_course_ids"]]
-    lesson_ids=[UUID(value) for value in defaults["featured_lesson_ids"]]
-    courses=db.scalars(select(Course).where(Course.id.in_(course_ids), Course.published.is_(True)).order_by(Course.title)).all() if course_ids else []
-    lessons=db.execute(select(Lesson, Course).join(CourseModule, Lesson.module_id==CourseModule.id).join(Course, CourseModule.course_id==Course.id).where(Lesson.id.in_(lesson_ids), Lesson.published.is_(True), Course.published.is_(True)).order_by(Lesson.title)).all() if lesson_ids else []
-    return {**defaults,"featured_courses":[{"id":course.id,"title":course.title,"slug":course.slug,"short_description":course.short_description or "","thumbnail":course.thumbnail} for course in courses],"featured_lessons":[{"id":lesson.id,"title":lesson.title,"slug":lesson.slug,"course_id":course.id,"course_slug":course.slug,"course_title":course.title} for lesson,course in lessons]}
+    return public_homepage(db)
 @app.get("/api/v1/site/footer", response_model=FooterSettings)
 @app.get("/api/platform/footer", response_model=FooterSettings)
 def site_footer(db: Session=Depends(get_db)):

@@ -1,5 +1,6 @@
 from uuid import UUID
 from datetime import datetime
+from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from .tool_registry import APPROVED_IMPLEMENTATION_KEYS
 class LanguageOut(BaseModel):
@@ -237,21 +238,76 @@ class NavigationSettings(BaseModel):
     items: list[NavigationItem] = Field(default_factory=list, max_length=100)
 
 class HomepageSection(BaseModel):
+    id: str = Field(default="", pattern=r"^[A-Za-z0-9_-]*$", max_length=80)
     key: str = Field(pattern=r"^[a-z0-9-]+$", min_length=1, max_length=60)
+    type: str = Field(default="custom", pattern=r"^[a-z0-9_-]+$", max_length=60)
     label: str = Field(min_length=1, max_length=100)
+    heading: str = Field(default="", max_length=180)
+    description: str = Field(default="", max_length=600)
     visible: bool = True
     display_order: int = Field(default=0, ge=0, le=50)
+    layout_variant: str = Field(default="grid", pattern=r"^[a-z0-9_-]+$", max_length=40)
+    content_ids: list[UUID] = Field(default_factory=list, max_length=50)
+    config: dict[str, Any] = Field(default_factory=dict)
+
+class HomepageAnnouncement(BaseModel):
+    id: str = Field(default="", pattern=r"^[A-Za-z0-9_-]*$", max_length=80)
+    title: str = Field(min_length=1, max_length=180)
+    description: str = Field(default="", max_length=600)
+    image_url: str | None = Field(default=None, max_length=500)
+    cta_label: str = Field(default="", max_length=80)
+    cta_href: str = Field(default="/", pattern=r"^/[A-Za-z0-9/_?=&.%-]*$", max_length=240)
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    visible: bool = True
+    display_priority: int = Field(default=0, ge=0, le=200)
+    status: str = Field(default="draft", pattern=r"^(draft|published|archived)$")
+
+    @field_validator("cta_href")
+    @classmethod
+    def internal_cta_href(cls, value: str):
+        if value.startswith("//"):
+            raise ValueError("CTA destination must be an internal route")
+        return value
 
 class HomepageSettings(BaseModel):
     status: str = Field(default="draft", pattern=r"^(draft|in_review|published|archived)$")
+    hero_eyebrow: str = Field(default="Learn-Coding", max_length=120)
     hero_title: str = Field(default="Learn to code. Build real projects.", min_length=2, max_length=180)
     hero_description: str = Field(default="Learn practical programming through guided courses, projects, and challenges.", max_length=600)
+    hero_background_image: str | None = Field(default=None, max_length=500)
+    hero_illustration: str | None = Field(default=None, max_length=500)
     hero_cta_label: str = Field(default="Explore courses", min_length=1, max_length=80)
     hero_cta_href: str = Field(default="/courses", pattern=r"^/[A-Za-z0-9/_?=&.%-]*$", max_length=240)
+    hero_secondary_cta_label: str = Field(default="", max_length=80)
+    hero_secondary_cta_href: str = Field(default="/projects", pattern=r"^/[A-Za-z0-9/_?=&.%-]*$", max_length=240)
+    hero_alignment: str = Field(default="left", pattern=r"^(left|center|right)$")
+    hero_visible: bool = True
     announcement: str = Field(default="", max_length=500)
     featured_course_ids: list[UUID] = Field(default_factory=list, max_length=12)
+    new_courses_mode: str = Field(default="auto", pattern=r"^(auto|manual)$")
+    new_course_ids: list[UUID] = Field(default_factory=list, max_length=12)
+    new_courses_limit: int = Field(default=6, ge=1, le=12)
     featured_lesson_ids: list[UUID] = Field(default_factory=list, max_length=12)
-    sections: list[HomepageSection] = Field(default_factory=lambda: [HomepageSection(key="featured-courses", label="Featured courses"), HomepageSection(key="featured-lessons", label="Featured lessons", display_order=1)], max_length=12)
+    featured_path_ids: list[UUID] = Field(default_factory=list, max_length=12)
+    featured_project_ids: list[UUID] = Field(default_factory=list, max_length=12)
+    featured_challenge_ids: list[UUID] = Field(default_factory=list, max_length=12)
+    announcements: list[HomepageAnnouncement] = Field(default_factory=list, max_length=20)
+    seo_title: str = Field(default="Learn-Coding", max_length=180)
+    seo_description: str = Field(default="Practical coding education and projects.", max_length=320)
+    social_image_url: str | None = Field(default=None, max_length=500)
+    canonical_url: str = Field(default="/", pattern=r"^/", max_length=240)
+    sections: list[HomepageSection] = Field(default_factory=lambda: [HomepageSection(id="hero", key="hero", type="hero", label="Hero", display_order=0), HomepageSection(id="featured-courses", key="featured-courses", type="featured_courses", label="Featured courses", display_order=1), HomepageSection(id="new-courses", key="new-courses", type="new_courses", label="New courses", display_order=2), HomepageSection(id="featured-lessons", key="featured-lessons", type="featured_lessons", label="Featured lessons", display_order=3), HomepageSection(id="learning-paths", key="learning-paths", type="learning_paths", label="Learning paths", display_order=4), HomepageSection(id="projects", key="projects", type="projects", label="Projects", display_order=5), HomepageSection(id="challenges", key="challenges", type="challenges", label="Challenges", display_order=6), HomepageSection(id="announcements", key="announcements", type="announcement", label="Announcements", display_order=7)], max_length=12)
+
+    @field_validator("hero_cta_href", "hero_secondary_cta_href", "canonical_url")
+    @classmethod
+    def internal_homepage_href(cls, value: str):
+        if value.startswith("//"):
+            raise ValueError("Destination must be an internal route")
+        return value
+
+class HomepageSectionsIn(BaseModel):
+    sections: list[HomepageSection] = Field(max_length=12)
 
 class FooterLink(BaseModel):
     id: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=80)
