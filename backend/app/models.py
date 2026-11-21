@@ -62,6 +62,57 @@ class PlatformSetting(TimestampMixin, Base):
     key: Mapped[str]=mapped_column(String(120),nullable=False,index=True)
     value_json: Mapped[str]=mapped_column(Text,default="{}",nullable=False)
     updated_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True)
+
+class ToolCategory(TimestampMixin, Base):
+    __tablename__ = "tool_categories"
+    __table_args__ = (Index("ix_tool_categories_active_order", "is_active", "display_order"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(120))
+    slug: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    icon_key: Mapped[str] = mapped_column(String(80), default="wrench")
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    tools = relationship("DeveloperTool", back_populates="category")
+
+class DeveloperTool(TimestampMixin, Base):
+    __tablename__ = "developer_tools"
+    __table_args__ = (
+        Index("ix_developer_tools_public_order", "status", "is_enabled", "display_order"),
+        Index("ix_developer_tools_category_order", "category_id", "display_order"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    category_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("tool_categories.id", ondelete="SET NULL"), nullable=True, index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    slug: Mapped[str] = mapped_column(String(160), unique=True, index=True)
+    short_description: Mapped[str] = mapped_column(Text, default="")
+    full_description: Mapped[str] = mapped_column(Text, default="")
+    icon_key: Mapped[str] = mapped_column(String(80), default="wrench")
+    route_path: Mapped[str] = mapped_column(String(240))
+    implementation_key: Mapped[str] = mapped_column(String(100))
+    tags: Mapped[str] = mapped_column(Text, default="")
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    status: Mapped[str] = mapped_column(String(20), default="draft", index=True)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    category = relationship("ToolCategory", back_populates="tools")
+
+class ToolFavorite(Base):
+    __tablename__ = "tool_favorites"
+    __table_args__ = (UniqueConstraint("user_id", "tool_id", name="uq_tool_favorites_user_tool"),)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    tool_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("developer_tools.id", ondelete="CASCADE"), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+class ToolAuditLog(Base):
+    __tablename__ = "tool_audit_logs"
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    tool_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("developer_tools.id", ondelete="SET NULL"), nullable=True, index=True)
+    actor_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    action: Mapped[str] = mapped_column(String(80))
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    metadata_json: Mapped[str] = mapped_column(Text, default="{}")
 class CodingExercise(TimestampMixin, Base):
     __tablename__="coding_exercises"; __table_args__=(UniqueConstraint("slug"),Index("ix_exercises_lesson_status","lesson_id","status")); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); lesson_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("lessons.id",ondelete="CASCADE")); title: Mapped[str]=mapped_column(String(180)); slug: Mapped[str]=mapped_column(String(180)); description_en: Mapped[str]=mapped_column(Text); description_mm: Mapped[str|None]=mapped_column(Text,nullable=True); difficulty: Mapped[str]=mapped_column(String(30)); language: Mapped[str]=mapped_column(String(30)); starter_code: Mapped[str]=mapped_column(Text,default=""); time_limit_ms: Mapped[int]=mapped_column(Integer,default=2000); memory_limit_mb: Mapped[int]=mapped_column(Integer,default=128); status: Mapped[str]=mapped_column(String(20),default="draft")
 class ExerciseStarterCode(TimestampMixin, Base):

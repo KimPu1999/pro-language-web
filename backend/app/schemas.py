@@ -1,6 +1,7 @@
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from .tool_registry import APPROVED_IMPLEMENTATION_KEYS
 class LanguageOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; name: str; slug: str; color: str
 class CategoryOut(BaseModel):
@@ -29,6 +30,36 @@ class CourseLearningOut(CourseOut):
     modules: list[LearningModuleOut]=Field(default_factory=list)
 class PageOut(BaseModel):
     items: list[CourseOut]; page: int; page_size: int; total: int; pages: int
+
+class ToolCategoryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID; name: str; slug: str; description: str = ""; icon_key: str = "wrench"; display_order: int = 0; is_active: bool = True
+
+class DeveloperToolOut(BaseModel):
+    id: UUID; name: str; slug: str; short_description: str; full_description: str = ""; icon_key: str; route_path: str; tags: list[str] = Field(default_factory=list); display_order: int; is_featured: bool; is_enabled: bool; category: ToolCategoryOut | None = None; implementation: str = ""; implementation_available: bool = True
+
+class ToolCatalogPage(BaseModel):
+    items: list[DeveloperToolOut]; page: int; page_size: int; total: int; pages: int
+
+class AdminToolCategoryIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120); slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=120); description: str = Field(default="", max_length=4000); icon_key: str = Field(default="wrench", max_length=80); display_order: int = Field(default=0, ge=0); is_active: bool = True
+
+class AdminToolIn(BaseModel):
+    name: str = Field(min_length=1, max_length=160); slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=160); short_description: str = Field(default="", max_length=1000); full_description: str = Field(default="", max_length=10000); icon_key: str = Field(default="wrench", max_length=80); route_path: str = Field(pattern=r"^/tools/[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=240); implementation_key: str = Field(max_length=100); tags: list[str] = Field(default_factory=list, max_length=20); category_id: UUID | None = None; display_order: int = Field(default=0, ge=0); is_featured: bool = False; is_enabled: bool = True; status: str = Field(default="draft", pattern=r"^(draft|in_review|published|archived)$")
+    @field_validator("implementation_key")
+    @classmethod
+    def approved_implementation(cls, value: str):
+        if value not in APPROVED_IMPLEMENTATION_KEYS: raise ValueError("Implementation key is not registered")
+        return value
+    @field_validator("tags")
+    @classmethod
+    def clean_tags(cls, value: list[str]):
+        cleaned = [item.strip().lower() for item in value if item.strip()]
+        if len(cleaned) != len(set(cleaned)): raise ValueError("Tags must be unique")
+        return cleaned
+
+class AdminToolOut(AdminToolIn):
+    id: UUID; published_at: datetime | None = None; created_at: datetime | None = None; updated_at: datetime | None = None; category: ToolCategoryOut | None = None
 class QuizAnswerIn(BaseModel):
     answers: dict[str, str] = Field(default_factory=dict)
 class QuizQuestionOut(BaseModel):

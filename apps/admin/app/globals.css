@@ -13,3 +13,4 @@ input::placeholder, textarea::placeholder { color: #64748B; }
 ::selection { background: rgba(99, 102, 241, .35); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
 @layer utilities { .scrollbar-thin { scrollbar-width: thin; scrollbar-color: #334155 transparent; } }
+@layer components { .input { width: 100%; border: 1px solid #263653; border-radius: .75rem; background: #0B1020; padding: .65rem .75rem; color: #F8FAFC; outline: none; } .input:focus { border-color: #818CF8; } }
