@@ -17,6 +17,17 @@
   password recovery; it revokes existing sessions and records an audit row.
 - Added split-platform regression tests covering branding, draft privacy,
   published pages, navigation persistence, and student denial.
+- Added a read-only data architecture inventory and validated all 653 existing
+  foreign-key constraints with zero orphan violations.
+- Connected existing project, challenge, career, user, instructor, submission,
+  and platform-page records to the split Admin sections without duplicating
+  records.
+- Added public project, challenge, and career-path detail pages using published
+  backend APIs only.
+- Added `DATA_ARCHITECTURE_REPORT.md` with the domain inventory, current counts,
+  relationship chains, and missing source-of-truth domains.
+- Created a current-state database backup at
+  `/private/tmp/learn-coding-codemaster-20261121-data-audit.dump`.
 - Updated the new public navigation/home to consume the shared published
   branding/navigation API.
 - Cleared stale generated Next.js caches and rebuilt the legacy frontend; the

@@ -42,3 +42,14 @@ def test_student_cannot_update_navigation(client):
     csrf = client.cookies.get("cm_csrf")
     response = client.patch("/api/v1/admin/settings/navigation", json={"items": []}, headers={"X-CSRF-Token": csrf})
     assert response.status_code == 403
+
+
+def test_admin_inventory_endpoints_use_existing_domain_records(client):
+    admin_login(client)
+    users = client.get("/api/v1/admin/users")
+    projects = client.get("/api/v1/admin/projects")
+    roadmaps = client.get("/api/v1/admin/roadmaps")
+    assert users.status_code == 200
+    assert users.json()["items"][0]["role"] == "platform_admin"
+    assert projects.status_code == 200
+    assert roadmaps.status_code == 200

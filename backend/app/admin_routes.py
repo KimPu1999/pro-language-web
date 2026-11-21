@@ -77,6 +77,16 @@ def dashboard(user: User=Depends(full_admin), db: Session=Depends(get_db)):
     popularity=db.execute(select(Course.title,func.count(Enrollment.id).label("enrollments")).join(Enrollment,Enrollment.course_id==Course.id).group_by(Course.id).order_by(func.count(Enrollment.id).desc()).limit(5)).all()
     activity=db.scalars(select(AdminAuditLog).order_by(AdminAuditLog.created_at.desc()).limit(8)).all()
     return {"total_courses":db.scalar(select(func.count(Course.id))) or 0,"published_courses":db.scalar(select(func.count(Course.id)).where(Course.published.is_(True))) or 0,"draft_courses":db.scalar(select(func.count(Course.id)).where(Course.status.in_(["draft","in_review"]))) or 0,"total_lessons":db.scalar(select(func.count(Lesson.id))) or 0,"total_students":db.scalar(select(func.count(User.id)).where(User.role=="student")) or 0,"active_enrollments":db.scalar(select(func.count(Enrollment.id))) or 0,"completed_courses":completed_courses,"quiz_attempts":db.scalar(select(func.count(QuizAttempt.id))) or 0,"total_instructors":db.scalar(select(func.count(User.id)).where(User.role=="instructor")) or 0,"recent_courses":[course_out(x) for x in db.scalars(select(Course).order_by(Course.updated_at.desc()).limit(5)).all()],"pending_reviews":db.scalar(select(func.count(PublishingReview.id)).where(PublishingReview.decision=="pending")) or 0,"recent_activity":[{"action":x.action,"entity_type":x.entity_type,"created_at":x.created_at} for x in activity],"course_popularity":[{"title":title,"enrollments":enrollments} for title,enrollments in popularity]}
+@router.get("/users")
+def list_users(search: str|None=None, page: int=Query(1,ge=1), page_size: int=Query(20,ge=1,le=100), user: User=Depends(full_admin), db: Session=Depends(get_db)):
+    query=select(User); count=select(func.count()).select_from(User)
+    if search:
+        pattern=f"%{search}%"
+        condition=User.email.ilike(pattern)|User.display_name.ilike(pattern)|User.role.ilike(pattern)
+        query=query.where(condition); count=count.where(condition)
+    total=db.scalar(count) or 0
+    rows=db.scalars(query.order_by(User.created_at.desc()).offset((page-1)*page_size).limit(page_size)).all()
+    return {"items":[{"id":row.id,"email":row.email,"display_name":row.display_name,"role":row.role,"account_status":row.account_status,"email_verified":row.email_verified_at is not None,"created_at":row.created_at} for row in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
 @router.get("/settings/branding", response_model=BrandingSettings)
 def get_branding_settings(user: User=Depends(full_admin), db: Session=Depends(get_db)):
     return branding_value(db)

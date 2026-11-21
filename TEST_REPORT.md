@@ -6,10 +6,10 @@ Audit date: 2026-11-21
 
 | Check | Result |
 | --- | --- |
-| Backend full pytest suite | 142 passed, 1 warning |
-| Backend admin/content/platform regression subset | 11 passed, 2 warnings |
+| Backend full pytest suite | 143 passed, 1 warning |
+| Backend admin/content/platform regression subset | 12 passed, 2 warnings |
 | `apps/platform` TypeScript check | Passed |
-| `apps/platform` production build | Passed; 5 generated routes |
+| `apps/platform` production build | Passed; 8 generated routes |
 | `apps/admin` TypeScript check | Passed |
 | `apps/admin` production build | Passed |
 | Legacy `frontend` production build | Passed; 456 static pages generated |
@@ -19,6 +19,7 @@ Audit date: 2026-11-21
 | FastAPI health/readiness smoke checks | Passed |
 | Public branding/navigation/course/project/challenge HTTP checks | Passed |
 | Unauthenticated admin session check | Correctly denied with HTTP 401 |
+| Read-only FK integrity audit | 653 constraints checked, 0 orphan violations |
 | `git diff --check` | Passed |
 
 ## Important warnings

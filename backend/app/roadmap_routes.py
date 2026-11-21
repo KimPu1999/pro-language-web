@@ -121,6 +121,17 @@ def roadmap_progress(roadmap_id:UUID,user:User=Depends(current_user),db:Session=
 def create_roadmap(payload:RoadmapIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     if db.scalar(select(CareerRoadmap).where(CareerRoadmap.slug==payload.slug)):raise HTTPException(409,"Slug already exists")
     row=CareerRoadmap(**payload.model_dump(),created_by=user.id);db.add(row);audit(db,user,"roadmap_created","roadmap",row.id);db.commit();return {"id":row.id,"slug":row.slug,"status":row.status}
+@router.get("/admin/roadmaps")
+def admin_roadmaps(search:str|None=None,status:str|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100),user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    query=select(CareerRoadmap);count=select(func.count()).select_from(CareerRoadmap)
+    if search:
+        condition=CareerRoadmap.title.ilike(f"%{search}%")|CareerRoadmap.slug.ilike(f"%{search}%")
+        query=query.where(condition);count=count.where(condition)
+    if status:
+        query=query.where(CareerRoadmap.status==status);count=count.where(CareerRoadmap.status==status)
+    total=db.scalar(count) or 0
+    rows=db.scalars(query.order_by(CareerRoadmap.updated_at.desc()).offset((page-1)*page_size).limit(page_size)).all()
+    return {"items":[roadmap_dict(row,db,False) for row in rows],"page":page,"page_size":page_size,"total":total,"pages":(total+page_size-1)//page_size if total else 0}
 @router.post("/admin/roadmaps/{roadmap_id}/stages",status_code=201)
 def create_stage(roadmap_id:UUID,payload:StageIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     if not db.get(CareerRoadmap,roadmap_id):raise HTTPException(404,"Roadmap not found")

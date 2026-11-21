@@ -12,6 +12,12 @@ Database: local PostgreSQL `codemaster` / schema `public`
 - SHA-256:
   `e7d5891efdfe2e0dfcee347fe8257628e0359972abd014db81bc9d31cd4413a7`
 - `pg_restore --list` reports 2,498 archive entries.
+- A second current-state backup was created after local administrator
+  provisioning and before this data-architecture audit:
+  `/private/tmp/learn-coding-codemaster-20261121-data-audit.dump`
+- Current backup SHA-256:
+  `311cc9425c5160a979dc2a5895d4da009b18a7083849ef4acfeed21d80447d92`
+- The current backup also contains 2,498 archive entries.
 - The backup was not restored during this audit because restore would change
   database state and was not authorized.
 - No table drops, truncations, database resets, destructive deletes, or data
@@ -33,7 +39,7 @@ branding labels to Learn-Coding without deleting user or learning records.
 
 | Table | Rows |
 | --- | ---: |
-| users | 1 |
+| users | 2 |
 | courses | 54 |
 | course_modules | 670 |
 | lessons | 1,249 |
@@ -43,7 +49,7 @@ branding labels to Learn-Coding without deleting user or learning records.
 | lesson_progress | 0 |
 | code_submissions | 0 |
 | platform_settings | 0 |
-| admin_audit_logs | 0 |
+| admin_audit_logs | 3 |
 
 ## Publication and account state
 
@@ -52,8 +58,9 @@ branding labels to Learn-Coding without deleting user or learning records.
 - Challenges: 10 published.
 - There are no enrollment, progress, or code-submission rows to migrate or
   repair in this snapshot.
-- The only user is an active student and is not email-verified.
-- No admin audit rows exist because no admin account or admin session existed.
+- One active student is not email-verified; one active, verified `super_admin`
+  was provisioned through the operator CLI.
+- Three admin audit rows record the local administrator bootstrap/login activity.
 - `platform_settings` is empty, so the API supplies the safe Learn-Coding/TKP
   defaults until an authorized admin saves settings.
 
