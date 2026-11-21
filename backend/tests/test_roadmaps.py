@@ -28,6 +28,7 @@ def test_admin_career_path_draft_builder_and_publish(client):
     created=client.post("/api/v1/admin/roadmaps",json={"title":"","slug":"career-builder-draft","description_en":"","career_category":""},headers={"X-CSRF-Token":csrf}); assert created.status_code==201
     roadmap_id=created.json()["id"]
     assert client.get(f"/api/v1/admin/roadmaps/{roadmap_id}").status_code==200
+    assert client.get(f"/api/v1/admin/roadmaps/{roadmap_id}/preview").status_code==200
     updated=client.patch(f"/api/v1/admin/roadmaps/{roadmap_id}",json={"title":"Frontend Engineer Path","description_en":"Build production interfaces.","goals":["Ship accessible interfaces"],"skills":["React"]},headers={"X-CSRF-Token":csrf}); assert updated.status_code==200
     stage=client.post(f"/api/v1/admin/roadmaps/{roadmap_id}/stages",json={"title":"Foundations","level":"beginner","position":0,"objectives":["Understand the web"],"skills":["HTML"]},headers={"X-CSRF-Token":csrf}); assert stage.status_code==201
     stage_id=stage.json()["id"]
@@ -42,3 +43,11 @@ def test_admin_career_path_requires_auth_and_preserves_drafts(client):
     created=client.post("/api/v1/admin/roadmaps",json={"title":"No access","slug":"no-access"}); assert created.status_code in {401,403}
     csrf=admin_client(client); draft=client.post("/api/v1/admin/roadmaps",json={"title":"Private draft","slug":"private-draft"},headers={"X-CSRF-Token":csrf}); assert draft.status_code==201
     detail=client.get(f"/api/v1/roadmaps/private-draft"); assert detail.status_code==404
+
+def test_admin_management_capability_endpoints_are_protected_and_live(client):
+    assert client.get("/api/v1/admin/audit-logs").status_code in {401,403}
+    csrf=admin_client(client)
+    for path in ("/api/v1/admin/audit-logs", "/api/v1/admin/media", "/api/v1/admin/settings/overview", "/api/v1/admin/settings/seo", "/api/v1/admin/security/overview"):
+        response=client.get(path)
+        assert response.status_code==200, (path, response.text)
+    assert csrf

@@ -10,7 +10,7 @@ from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeEx
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
 from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
-from .media_storage import remove_file_if_safe, save_course_image
+from .media_storage import ensure_media_root, remove_file_if_safe, save_course_image
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
 BRANDING_KEY="branding"
@@ -219,6 +219,52 @@ def list_users(search: str|None=None, page: int=Query(1,ge=1), page_size: int=Qu
     total=db.scalar(count) or 0
     rows=db.scalars(query.order_by(User.created_at.desc()).offset((page-1)*page_size).limit(page_size)).all()
     return {"items":[{"id":row.id,"email":row.email,"display_name":row.display_name,"role":row.role,"account_status":row.account_status,"email_verified":row.email_verified_at is not None,"created_at":row.created_at} for row in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+
+@router.get("/audit-logs")
+def list_admin_audit_logs(search: str|None=None, page: int=Query(1,ge=1), page_size: int=Query(20,ge=1,le=100), user: User=Depends(full_admin), db: Session=Depends(get_db)):
+    query=select(AdminAuditLog); count=select(func.count()).select_from(AdminAuditLog)
+    if search:
+        pattern=f"%{search}%"
+        condition=AdminAuditLog.action.ilike(pattern)|AdminAuditLog.entity_type.ilike(pattern)
+        query=query.where(condition); count=count.where(condition)
+    total=db.scalar(count) or 0
+    rows=db.scalars(query.order_by(AdminAuditLog.created_at.desc()).offset((page-1)*page_size).limit(page_size)).all()
+    return {"items":[{"id":row.id,"action":row.action,"entity_type":row.entity_type,"entity_id":row.entity_id,"actor_id":row.actor_id,"created_at":row.created_at} for row in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+
+@router.get("/media")
+def list_public_media(search: str|None=None, page: int=Query(1,ge=1), page_size: int=Query(24,ge=1,le=100), user: User=Depends(admin_user)):
+    """List persisted public media without exposing private filesystem paths."""
+    root=ensure_media_root().resolve(); rows=[]
+    for path in root.rglob("*"):
+        if not path.is_file() or "private" in path.parts or path.suffix.lower() not in {".jpg",".jpeg",".png",".webp"}:
+            continue
+        key=path.relative_to(root).as_posix()
+        if search and search.lower() not in key.lower(): continue
+        stat=path.stat()
+        rows.append({"id":key,"title":path.name,"path":f"/media/{key}","size":stat.st_size,"updated_at":datetime.fromtimestamp(stat.st_mtime,timezone.utc)})
+    rows.sort(key=lambda item:item["updated_at"],reverse=True)
+    total=len(rows); start=(page-1)*page_size
+    return {"items":rows[start:start+page_size],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+
+@router.get("/settings/overview")
+def settings_overview(user: User=Depends(full_admin), db: Session=Depends(get_db)):
+    keys={row.key for row in db.scalars(select(PlatformSetting).where(PlatformSetting.key.in_([BRANDING_KEY,"navigation",HOMEPAGE_PUBLISHED_KEY,HOMEPAGE_DRAFT_KEY,FOOTER_KEY]))).all()}
+    return {"items":[
+        {"id":"branding","title":"Branding","status":"configured" if BRANDING_KEY in keys else "default","details":"Website name, logo, favicon, and theme colors"},
+        {"id":"navigation","title":"Navigation","status":"configured" if "navigation" in keys else "default","details":"Public header and footer navigation"},
+        {"id":"homepage","title":"Homepage","status":"draft" if HOMEPAGE_DRAFT_KEY in keys else "published","details":"Homepage content and SEO settings"},
+        {"id":"footer","title":"Footer","status":"configured" if FOOTER_KEY in keys else "default","details":"Footer links, social links, and legal navigation"},
+    ]}
+
+@router.get("/security/overview")
+def admin_security_overview(user: User=Depends(full_admin), db: Session=Depends(get_db)):
+    active_sessions=db.scalar(select(func.count()).select_from(AuthSession).where(AuthSession.revoked_at.is_(None),AuthSession.expires_at>now())) or 0
+    return {"items":[
+        {"id":"sessions","title":"Active sessions","status":"active","details":f"{active_sessions} active authenticated session(s)"},
+        {"id":"csrf","title":"CSRF protection","status":"enabled","details":"State-changing Admin API requests require a CSRF token"},
+        {"id":"rbac","title":"Role authorization","status":"enabled","details":"Admin endpoints enforce server-side role checks"},
+        {"id":"audit","title":"Audit logging","status":"enabled","details":"Administrative changes are recorded in the audit log"},
+    ]}
 @router.get("/settings/branding", response_model=BrandingSettings)
 def get_branding_settings(user: User=Depends(full_admin), db: Session=Depends(get_db)):
     return branding_value(db)
@@ -252,6 +298,18 @@ def get_homepage_settings(user: User=Depends(admin_user), db: Session=Depends(ge
     draft_exists=db.scalar(select(PlatformSetting).where(PlatformSetting.key==HOMEPAGE_DRAFT_KEY)) is not None
     settings=homepage_value(db, HOMEPAGE_DRAFT_KEY if draft_exists else HOMEPAGE_PUBLISHED_KEY)
     return {"settings": settings.model_dump(mode="json"), **homepage_choices(db), "revisions": homepage_revisions(db)}
+
+@router.get("/settings/seo")
+def get_seo_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    draft_exists=db.scalar(select(PlatformSetting).where(PlatformSetting.key==HOMEPAGE_DRAFT_KEY)) is not None
+    settings=homepage_value(db,HOMEPAGE_DRAFT_KEY if draft_exists else HOMEPAGE_PUBLISHED_KEY)
+    return {"items":[
+        {"id":"seo-title","title":"SEO title","status":"draft" if draft_exists else "published","details":settings.seo_title or "Not configured"},
+        {"id":"seo-description","title":"SEO description","status":"draft" if draft_exists else "published","details":settings.seo_description or "Not configured"},
+        {"id":"social-image","title":"Social image","status":"draft" if draft_exists else "published","details":settings.social_image_url or "Not configured"},
+        {"id":"canonical-url","title":"Canonical URL","status":"draft" if draft_exists else "published","details":settings.canonical_url},
+    ],"edit_route":"/homepage"}
+
 @router.get("/settings/homepage/preview")
 def preview_homepage_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
     settings=homepage_value(db,HOMEPAGE_DRAFT_KEY)

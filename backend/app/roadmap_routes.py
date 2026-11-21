@@ -189,6 +189,17 @@ def admin_roadmap_detail(roadmap_id:UUID,user:User=Depends(admin_user),db:Sessio
     if not row: raise HTTPException(404,"Roadmap not found")
     return roadmap_dict(row,db)
 
+@router.get("/admin/roadmaps/{roadmap_id}/preview")
+def admin_roadmap_preview(roadmap_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    """Return the current draft to an authorized admin for previewing.
+
+    This intentionally uses the same persisted representation as the editor and
+    does not make unpublished content available through the public routes.
+    """
+    row=db.get(CareerRoadmap,roadmap_id)
+    if not row: raise HTTPException(404,"Roadmap not found")
+    return roadmap_dict(row,db)
+
 @router.patch("/admin/roadmaps/{roadmap_id}")
 def update_roadmap(roadmap_id:UUID,payload:RoadmapPatch,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=db.get(CareerRoadmap,roadmap_id)
