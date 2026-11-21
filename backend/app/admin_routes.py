@@ -7,12 +7,15 @@ from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_s
 from .db import get_db
 from .models import AdminAuditLog, AuthSession, CodeExample, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, LessonRevision, PlatformSetting, ProgrammingLanguage, PublishingReview, QuizAttempt, QuizQuestion, User
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
-from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
+from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
 BRANDING_KEY="branding"
 DEFAULT_BRANDING=BrandingSettings().model_dump()
+HOMEPAGE_DRAFT_KEY="homepage:draft"
+HOMEPAGE_PUBLISHED_KEY="homepage:published"
+DEFAULT_HOMEPAGE=HomepageSettings().model_dump(mode="json")
 def admin_user(user: User=Depends(current_user)):
     if user.role not in CONTENT_ADMIN_ROLES: raise HTTPException(403,"Admin access required")
     return user
@@ -24,6 +27,15 @@ def branding_value(db):
     if not row: return DEFAULT_BRANDING.copy()
     try: return BrandingSettings(**{**DEFAULT_BRANDING, **json.loads(row.value_json or "{}")}).model_dump()
     except (TypeError, ValueError, json.JSONDecodeError): return DEFAULT_BRANDING.copy()
+def homepage_value(db, key=HOMEPAGE_PUBLISHED_KEY):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==key))
+    if not row: return HomepageSettings.model_validate(DEFAULT_HOMEPAGE)
+    try: return HomepageSettings.model_validate({**DEFAULT_HOMEPAGE, **json.loads(row.value_json or "{}")})
+    except (TypeError, ValueError, json.JSONDecodeError): return HomepageSettings.model_validate(DEFAULT_HOMEPAGE)
+def homepage_choices(db):
+    courses=db.scalars(select(Course).where(Course.published.is_(True)).order_by(Course.title).limit(100)).all()
+    lessons=db.execute(select(Lesson, CourseModule, Course).join(CourseModule, Lesson.module_id==CourseModule.id).join(Course, CourseModule.course_id==Course.id).where(Course.published.is_(True), Lesson.published.is_(True), Lesson.status!="archived").order_by(Course.title, CourseModule.order_index, Lesson.order_index).limit(200)).all()
+    return ([{"id":row.id,"title":row.title,"slug":row.slug} for row in courses], [{"id":lesson.id,"title":lesson.title,"slug":lesson.slug,"course_id":course.id,"course_slug":course.slug,"course_title":course.title} for lesson,module,course in lessons])
 def course_out(course): return {"id":course.id,"title":course.title,"slug":course.slug,"short_description":course.short_description or "","description":course.description,"target_audience":course.target_audience or "","technologies":course.technologies or "","seo_title":course.seo_title or "","seo_description":course.seo_description or "","language_id":course.language_id,"category_id":course.category_id,"level":course.level,"thumbnail":course.thumbnail,"estimated_duration":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"published":course.published,"outcomes":course.outcomes,"requirements":course.requirements}
 def load_course(db, course_id): return db.scalar(select(Course).options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples)).where(Course.id==course_id))
 def can_edit(course, user, db):
@@ -146,6 +158,35 @@ def update_navigation_settings(payload: NavigationSettings, user: User=Depends(f
     if row: row.value_json=json.dumps(values); row.updated_by=user.id
     else: db.add(PlatformSetting(key="navigation",value_json=json.dumps(values),updated_by=user.id))
     audit(db,user,"navigation_updated","platform_setting"); db.commit(); return values
+@router.get("/settings/homepage")
+def get_homepage_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    draft_exists=db.scalar(select(PlatformSetting).where(PlatformSetting.key==HOMEPAGE_DRAFT_KEY)) is not None
+    settings=homepage_value(db, HOMEPAGE_DRAFT_KEY if draft_exists else HOMEPAGE_PUBLISHED_KEY)
+    courses, lessons=homepage_choices(db)
+    return {"settings": settings.model_dump(mode="json"), "courses": courses, "lessons": lessons}
+@router.patch("/settings/homepage", response_model=HomepageSettings)
+def update_homepage_settings(payload: HomepageSettings, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    values=payload.model_copy(update={"status": "draft"}).model_dump(mode="json")
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==HOMEPAGE_DRAFT_KEY))
+    if row: row.value_json=json.dumps(values); row.updated_by=user.id
+    else: db.add(PlatformSetting(key=HOMEPAGE_DRAFT_KEY,value_json=json.dumps(values),updated_by=user.id))
+    audit(db,user,"homepage_draft_saved","platform_setting"); db.commit(); return HomepageSettings.model_validate(values)
+@router.post("/settings/homepage/publish", response_model=HomepageSettings)
+def publish_homepage_settings(user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    settings=homepage_value(db, HOMEPAGE_DRAFT_KEY)
+    if settings.featured_course_ids:
+        found=set(db.scalars(select(Course.id).where(Course.id.in_(settings.featured_course_ids), Course.published.is_(True))).all())
+        if found != set(settings.featured_course_ids): raise HTTPException(422,"Featured courses must be published before the homepage can be published")
+    if settings.featured_lesson_ids:
+        found=set(db.scalars(select(Lesson.id).join(CourseModule).join(Course).where(Lesson.id.in_(settings.featured_lesson_ids), Lesson.published.is_(True), Course.published.is_(True))).all())
+        if found != set(settings.featured_lesson_ids): raise HTTPException(422,"Featured lessons must belong to published courses")
+    values=settings.model_copy(update={"status":"published"}).model_dump(mode="json")
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==HOMEPAGE_PUBLISHED_KEY))
+    if row: row.value_json=json.dumps(values); row.updated_by=user.id
+    else: db.add(PlatformSetting(key=HOMEPAGE_PUBLISHED_KEY,value_json=json.dumps(values),updated_by=user.id))
+    draft=db.scalar(select(PlatformSetting).where(PlatformSetting.key==HOMEPAGE_DRAFT_KEY))
+    if draft: draft.value_json=json.dumps(values); draft.updated_by=user.id
+    audit(db,user,"homepage_published","platform_setting"); db.commit(); return HomepageSettings.model_validate(values)
 @router.get("/settings/footer", response_model=FooterSettings)
 def get_footer_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
     return read_footer(db, FOOTER_DRAFT_KEY) if db.scalar(select(PlatformSetting).where(PlatformSetting.key == FOOTER_DRAFT_KEY)) else read_footer(db)
@@ -237,6 +278,19 @@ def list_courses(search:str|None=None,language_id:UUID|None=None,level:str|None=
     if level: q=q.where(Course.level==level); count=count.where(Course.level==level)
     if status: q=q.where(Course.status==status); count=count.where(Course.status==status)
     total=db.scalar(count) or 0; rows=db.scalars(q.order_by(Course.updated_at.desc()).offset((page-1)*page_size).limit(page_size)).all(); return {"items":[course_out(x) for x in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+@router.get("/lessons")
+def list_lessons(search: str|None=None, status: str|None=None, page: int=Query(1,ge=1), page_size: int=Query(20,ge=1,le=100), user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    query=select(Lesson, CourseModule, Course).join(CourseModule, Lesson.module_id==CourseModule.id).join(Course, CourseModule.course_id==Course.id)
+    count=select(func.count(Lesson.id)).select_from(Lesson).join(CourseModule, Lesson.module_id==CourseModule.id).join(Course, CourseModule.course_id==Course.id)
+    if search:
+        condition=Lesson.title.ilike(f"%{search}%")|Course.title.ilike(f"%{search}%")
+        query=query.where(condition); count=count.where(condition)
+    if status:
+        query=query.where(Lesson.status==status); count=count.where(Lesson.status==status)
+    total=db.scalar(count) or 0
+    rows=db.execute(query.order_by(Course.title, CourseModule.order_index, Lesson.order_index).offset((page-1)*page_size).limit(page_size)).all()
+    items=[{**lesson_payload(lesson),"course_id":course.id,"course_title":course.title,"module_title":module.title} for lesson,module,course in rows]
+    return {"items":items,"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
 @router.post("/courses",response_model=AdminCourseOut,status_code=201)
 def create_course(payload:AdminCourseIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     if db.scalar(select(Course).where(Course.slug==payload.slug)): raise HTTPException(409,"Slug already exists")

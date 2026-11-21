@@ -10,6 +10,18 @@ def admin_login(client):
 def test_students_cannot_access_admin_apis(client):
     assert client.get("/api/v1/admin/dashboard").status_code==401
 
+def test_homepage_draft_publish_is_database_backed_and_public(client):
+    from app.models import Course, CourseModule, Lesson
+    csrf=admin_login(client)
+    with client.session_factory() as db:
+        course=db.scalar(select(Course).where(Course.slug=="python-foundations")); module=db.scalar(select(CourseModule).where(CourseModule.course_id==course.id)); lesson=db.scalar(select(Lesson).where(Lesson.module_id==module.id)); course_id,lesson_id=str(course.id),str(lesson.id)
+    initial=client.get("/api/v1/admin/settings/homepage"); assert initial.status_code==200; assert "settings" in initial.json(); assert initial.json()["settings"]["status"] in {"draft","published"}; assert initial.json()["lessons"][0]["course_slug"]==course.slug
+    draft={"status":"draft","hero_title":"Managed homepage","hero_description":"Persisted homepage content","hero_cta_label":"Start learning","hero_cta_href":"/courses","announcement":"New content","featured_course_ids":[course_id],"featured_lesson_ids":[lesson_id],"sections":[{"key":"featured-courses","label":"Featured courses","visible":True,"display_order":0},{"key":"featured-lessons","label":"Featured lessons","visible":True,"display_order":1}]}
+    saved=client.patch("/api/v1/admin/settings/homepage",json=draft,headers={"X-CSRF-Token":csrf}); assert saved.status_code==200; assert saved.json()["status"]=="draft"
+    assert client.get("/api/v1/site/homepage").json()["hero_title"] != "Managed homepage"
+    published=client.post("/api/v1/admin/settings/homepage/publish",headers={"X-CSRF-Token":csrf}); assert published.status_code==200; assert published.json()["status"]=="published"
+    public=client.get("/api/v1/site/homepage"); assert public.status_code==200; assert public.json()["hero_title"]=="Managed homepage"; assert public.json()["featured_courses"][0]["id"]==course_id; assert public.json()["featured_lessons"][0]["id"]==lesson_id; assert public.json()["featured_lessons"][0]["course_slug"]==course.slug
+
 def test_admin_lesson_read_route_is_get_and_returns_editor_metadata(client):
     from app.models import Course, CourseModule, Lesson
     assert client.get("/api/v1/admin/lessons/00000000-0000-0000-0000-000000000000").status_code==401

@@ -236,6 +236,23 @@ class NavigationItem(BaseModel):
 class NavigationSettings(BaseModel):
     items: list[NavigationItem] = Field(default_factory=list, max_length=100)
 
+class HomepageSection(BaseModel):
+    key: str = Field(pattern=r"^[a-z0-9-]+$", min_length=1, max_length=60)
+    label: str = Field(min_length=1, max_length=100)
+    visible: bool = True
+    display_order: int = Field(default=0, ge=0, le=50)
+
+class HomepageSettings(BaseModel):
+    status: str = Field(default="draft", pattern=r"^(draft|in_review|published|archived)$")
+    hero_title: str = Field(default="Learn to code. Build real projects.", min_length=2, max_length=180)
+    hero_description: str = Field(default="Learn practical programming through guided courses, projects, and challenges.", max_length=600)
+    hero_cta_label: str = Field(default="Explore courses", min_length=1, max_length=80)
+    hero_cta_href: str = Field(default="/courses", pattern=r"^/[A-Za-z0-9/_?=&.%-]*$", max_length=240)
+    announcement: str = Field(default="", max_length=500)
+    featured_course_ids: list[UUID] = Field(default_factory=list, max_length=12)
+    featured_lesson_ids: list[UUID] = Field(default_factory=list, max_length=12)
+    sections: list[HomepageSection] = Field(default_factory=lambda: [HomepageSection(key="featured-courses", label="Featured courses"), HomepageSection(key="featured-lessons", label="Featured lessons", display_order=1)], max_length=12)
+
 class FooterLink(BaseModel):
     id: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=80)
     label: str = Field(min_length=1, max_length=100)
