@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session, selectinload
 from .config import settings
 from .db import get_db
 from .models import ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, LearningPath, Lesson, PlatformSetting, ProgrammingLanguage, StudentChallengeProgress, User, UserProfile
-from .schemas import BrandingSettings, CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut, LanguageOut, LessonOut, ModuleOut, NavigationSettings, PageOut, PathOut, PlatformPageOut
+from .schemas import BrandingSettings, CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut, FooterSettings, LanguageOut, LessonOut, ModuleOut, NavigationSettings, PageOut, PathOut, PlatformPageOut
+from .footer_config import read_footer
 from .auth import current_user
 from .auth_routes import router as auth_router
 from .student_routes import router as student_router
@@ -120,6 +121,12 @@ def site_navigation(db: Session=Depends(get_db)):
     if not row: return NavigationSettings(items=[])
     try: return NavigationSettings.model_validate(json.loads(row.value_json or "{}"))
     except (TypeError, ValueError, json.JSONDecodeError): return NavigationSettings(items=[])
+@app.get("/api/v1/site/footer", response_model=FooterSettings)
+@app.get("/api/platform/footer", response_model=FooterSettings)
+def site_footer(db: Session=Depends(get_db)):
+    footer = read_footer(db)
+    footer.status = "published"
+    return footer
 @app.get("/api/v1/site/pages/{slug}", response_model=PlatformPageOut)
 def site_page(slug: str, db: Session=Depends(get_db)):
     row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==f"page:{slug}"))

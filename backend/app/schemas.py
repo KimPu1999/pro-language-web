@@ -233,6 +233,38 @@ class NavigationItem(BaseModel):
 class NavigationSettings(BaseModel):
     items: list[NavigationItem] = Field(default_factory=list, max_length=100)
 
+class FooterLink(BaseModel):
+    id: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=80)
+    label: str = Field(min_length=1, max_length=100)
+    href: str = Field(pattern=r"^(?:/[A-Za-z0-9/_?=&.%-]*|https://[^\s]+)$", max_length=500)
+    position: int = Field(default=0, ge=0, le=200)
+    enabled: bool = True
+
+class FooterLinkGroup(BaseModel):
+    id: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=80)
+    title: str = Field(min_length=1, max_length=80)
+    position: int = Field(default=0, ge=0, le=50)
+    enabled: bool = True
+    links: list[FooterLink] = Field(default_factory=list, max_length=30)
+
+class FooterSocialLink(BaseModel):
+    id: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=80)
+    platform: str = Field(min_length=1, max_length=40)
+    url: str = Field(pattern=r"^https://[^\s]+$", max_length=500)
+    icon_key: str = Field(default="globe", pattern=r"^[a-z0-9_-]+$", max_length=40)
+    position: int = Field(default=0, ge=0, le=50)
+    enabled: bool = True
+
+class FooterSettings(BaseModel):
+    tagline: str = Field(default="Learn to code. Build your future.", max_length=240)
+    description: str = Field(default="Practical coding education, projects, and tools for your next step.", max_length=600)
+    groups: list[FooterLinkGroup] = Field(default_factory=list, max_length=12)
+    social_links: list[FooterSocialLink] = Field(default_factory=list, max_length=12)
+    newsletter_enabled: bool = False
+    newsletter_note: str = Field(default="Newsletter sign-ups are not available yet.", max_length=240)
+    copyright_text: str = Field(default="© 2026 Learn-Coding. All rights reserved.", max_length=240)
+    status: str = Field(default="published", pattern=r"^(draft|published)$")
+
 class PlatformPageIn(BaseModel):
     slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=120)
     title: str = Field(min_length=2, max_length=180)

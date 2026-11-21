@@ -44,6 +44,33 @@ def test_student_cannot_update_navigation(client):
     assert response.status_code == 403
 
 
+def test_footer_draft_stays_private_until_publish(client):
+    public_default = client.get("/api/v1/site/footer")
+    assert public_default.status_code == 200
+    assert public_default.json()["status"] == "published"
+    csrf = admin_login(client)
+    draft = {
+        "tagline": "Build your next skill.",
+        "description": "A managed footer.",
+        "groups": [{"id": "learn", "title": "Learn", "position": 0, "enabled": True, "links": [{"id": "courses", "label": "Courses", "href": "/courses", "position": 0, "enabled": True}]}],
+        "social_links": [{"id": "github", "platform": "GitHub", "url": "https://github.com/learn-coding", "icon_key": "github", "position": 0, "enabled": True}],
+        "newsletter_enabled": False,
+        "newsletter_note": "Unavailable.",
+        "copyright_text": "© Learn-Coding",
+        "status": "draft",
+    }
+    saved = client.patch("/api/v1/admin/settings/footer", json=draft, headers={"X-CSRF-Token": csrf})
+    assert saved.status_code == 200
+    assert client.get("/api/v1/admin/settings/footer").json()["status"] == "draft"
+    assert client.get("/api/v1/site/footer").json()["tagline"] != "Build your next skill."
+    assert client.post("/api/v1/admin/settings/footer/publish", headers={"X-CSRF-Token": csrf}).status_code == 200
+    published = client.get("/api/v1/site/footer")
+    assert published.status_code == 200
+    assert published.json()["tagline"] == "Build your next skill."
+    invalid = {**draft, "groups": [{**draft["groups"][0], "links": [{**draft["groups"][0]["links"][0], "href": "/not-a-real-route"}]}]}
+    assert client.patch("/api/v1/admin/settings/footer", json=invalid, headers={"X-CSRF-Token": csrf}).status_code == 422
+
+
 def test_admin_inventory_endpoints_use_existing_domain_records(client):
     admin_login(client)
     users = client.get("/api/v1/admin/users")

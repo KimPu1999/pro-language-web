@@ -7,7 +7,8 @@ from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_s
 from .db import get_db
 from .models import AdminAuditLog, AuthSession, CodeExample, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, PlatformSetting, ProgrammingLanguage, PublishingReview, QuizAttempt, QuizQuestion, User
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
-from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
+from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, FooterSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
+from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
 BRANDING_KEY="branding"
@@ -115,6 +116,27 @@ def update_navigation_settings(payload: NavigationSettings, user: User=Depends(f
     if row: row.value_json=json.dumps(values); row.updated_by=user.id
     else: db.add(PlatformSetting(key="navigation",value_json=json.dumps(values),updated_by=user.id))
     audit(db,user,"navigation_updated","platform_setting"); db.commit(); return values
+@router.get("/settings/footer", response_model=FooterSettings)
+def get_footer_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    return read_footer(db, FOOTER_DRAFT_KEY) if db.scalar(select(PlatformSetting).where(PlatformSetting.key == FOOTER_DRAFT_KEY)) else read_footer(db)
+@router.patch("/settings/footer", response_model=FooterSettings)
+def update_footer_settings(payload: FooterSettings, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    values = validate_footer(payload).model_copy(update={"status": "draft"}).model_dump(mode="json")
+    row = db.scalar(select(PlatformSetting).where(PlatformSetting.key == FOOTER_DRAFT_KEY))
+    if row: row.value_json = json.dumps(values); row.updated_by = user.id
+    else: db.add(PlatformSetting(key=FOOTER_DRAFT_KEY, value_json=json.dumps(values), updated_by=user.id))
+    audit(db, user, "footer_saved_draft", "platform_setting"); db.commit(); return values
+@router.post("/settings/footer/publish", response_model=FooterSettings)
+def publish_footer_settings(user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    draft_row = db.scalar(select(PlatformSetting).where(PlatformSetting.key == FOOTER_DRAFT_KEY))
+    payload = read_footer(db, FOOTER_DRAFT_KEY) if draft_row else read_footer(db)
+    values = validate_footer(payload).model_copy(update={"status": "published"}).model_dump(mode="json")
+    row = db.scalar(select(PlatformSetting).where(PlatformSetting.key == FOOTER_KEY))
+    if row: row.value_json = json.dumps(values); row.updated_by = user.id
+    else: db.add(PlatformSetting(key=FOOTER_KEY, value_json=json.dumps(values), updated_by=user.id))
+    if draft_row: draft_row.value_json = json.dumps(values); draft_row.updated_by = user.id
+    else: db.add(PlatformSetting(key=FOOTER_DRAFT_KEY, value_json=json.dumps(values), updated_by=user.id))
+    audit(db, user, "footer_published", "platform_setting"); db.commit(); return values
 @router.get("/pages")
 def list_platform_pages(user: User=Depends(admin_user), db: Session=Depends(get_db)):
     rows=db.scalars(select(PlatformSetting).where(PlatformSetting.key.like("page:%")).order_by(PlatformSetting.key)).all()
