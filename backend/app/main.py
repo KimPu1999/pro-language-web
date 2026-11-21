@@ -141,6 +141,16 @@ def my_challenge_progress(user: User=Depends(current_user), db: Session=Depends(
 @app.get("/api/v1/course-categories",response_model=list[CategoryOut])
 def categories(db: Session=Depends(get_db)): return db.scalars(select(CourseCategory).where(CourseCategory.status=="active").order_by(CourseCategory.display_order, CourseCategory.name)).all()
 def course_query(): return select(Course).options(selectinload(Course.language),selectinload(Course.category)).where(Course.published.is_(True))
+def course_payload(course, module_count=0, lesson_count=0, modules=None):
+    payload={"id":course.id,"title":course.title,"slug":course.slug,"description":course.description,"short_description":course.short_description or "","thumbnail":course.thumbnail,"level":course.level,"duration_minutes":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"module_count":module_count,"lesson_count":lesson_count,"outcomes":course.outcomes,"requirements":course.requirements,"language":course.language,"category":course.category}
+    if modules is not None: payload["modules"] = modules
+    return payload
+def public_modules(modules, summaries=False):
+    result=[]
+    for module in modules:
+        lessons=[lesson for lesson in module.lessons if lesson.published and lesson.status != "archived"]
+        result.append({"id":module.id,"title":module.title,"order_index":module.order_index,"lessons":[{"id":lesson.id,"title":lesson.title,"slug":lesson.slug,"order_index":lesson.order_index,"duration_minutes":lesson.duration_minutes} for lesson in lessons] if summaries else lessons})
+    return result
 @app.get("/api/v1/courses",response_model=PageOut)
 def courses(search: str|None=None, language: str|None=None, level: str|None=None, difficulty: str|None=None, category: str|None=None, sort: str=Query("title_asc", pattern=r"^(title_asc|title_desc|newest|duration_asc|duration_desc)$"), page: int=Query(1,ge=1), page_size: int=Query(10,ge=1,le=50), db: Session=Depends(get_db)):
     if level and difficulty and level.lower() != difficulty.lower():
@@ -167,18 +177,23 @@ def courses(search: str|None=None, language: str|None=None, level: str|None=None
     }[sort]
     total=db.scalar(count_query) or 0
     rows=db.scalars(query.order_by(*order_by).offset((page-1)*page_size).limit(page_size)).all()
-    return {"items":rows,"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+    course_ids=[row.id for row in rows]
+    module_counts=dict(db.execute(select(CourseModule.course_id,func.count(CourseModule.id)).where(CourseModule.course_id.in_(course_ids)).group_by(CourseModule.course_id)).all()) if course_ids else {}
+    lesson_counts=dict(db.execute(select(CourseModule.course_id,func.count(Lesson.id)).join(Lesson,Lesson.module_id==CourseModule.id).where(CourseModule.course_id.in_(course_ids),Lesson.published.is_(True)).group_by(CourseModule.course_id)).all()) if course_ids else {}
+    return {"items":[course_payload(row,module_counts.get(row.id,0),lesson_counts.get(row.id,0)) for row in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
 @app.get("/api/v1/courses/{slug}",response_model=CourseDetailOut)
 def course(slug: str, db: Session=Depends(get_db)):
     row=db.scalar(course_query().options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples)).where(Course.slug==slug))
     if not row: raise HTTPException(404,"Published course not found")
-    return row
+    modules=public_modules(row.modules)
+    return course_payload(row, len(modules), sum(len(module["lessons"]) for module in modules), modules)
 @app.get("/api/v1/courses/{slug}/learning",response_model=CourseLearningOut)
 def course_learning(slug: str, db: Session=Depends(get_db)):
     """Return course structure without downloading all lesson bodies."""
     row=db.scalar(course_query().options(selectinload(Course.modules).selectinload(CourseModule.lessons)).where(Course.slug==slug))
     if not row: raise HTTPException(404,"Published course not found")
-    return row
+    modules=public_modules(row.modules, summaries=True)
+    return course_payload(row, len(modules), sum(len(module["lessons"]) for module in modules), modules)
 @app.get("/api/v1/courses/{slug}/lessons/{lesson_slug}",response_model=LessonOut)
 def course_lesson(slug: str, lesson_slug: str, db: Session=Depends(get_db)):
     # Accept old links that encoded the punctuation from pre-sanitized lesson

@@ -7,7 +7,7 @@ Audit date: 2026-11-21
 | Check | Result |
 | --- | --- |
 | Backend full pytest suite | 143 passed, 1 warning |
-| Backend admin/content/platform regression subset | 12 passed, 2 warnings |
+| Backend course/admin/content regression subset | 15 passed, 2 warnings |
 | `apps/platform` TypeScript check | Passed |
 | `apps/platform` production build | Passed; 8 generated routes |
 | `apps/admin` TypeScript check | Passed |
@@ -18,6 +18,7 @@ Audit date: 2026-11-21
 | Legacy frontend unit tests | 4 passed |
 | FastAPI health/readiness smoke checks | Passed |
 | Public branding/navigation/course/project/challenge HTTP checks | Passed |
+| Public course catalog/detail/lesson and Admin course routes | Passed; HTTP 200 after clean `.next` restart |
 | Unauthenticated admin session check | Correctly denied with HTTP 401 |
 | Read-only FK integrity audit | 653 constraints checked, 0 orphan violations |
 | `git diff --check` | Passed |

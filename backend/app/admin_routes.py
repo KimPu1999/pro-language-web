@@ -192,11 +192,21 @@ def create_course(payload:AdminCourseIn,user:User=Depends(admin_user),_:None=Dep
     row=Course(title=payload.title,slug=payload.slug,short_description=payload.short_description,description=payload.description,language_id=payload.language_id,category_id=payload.category_id,level=payload.level,thumbnail=payload.thumbnail,duration_minutes=payload.estimated_duration,status="draft",published=False,outcomes="|".join(payload.outcomes),requirements="|".join(payload.requirements),created_by=user.id,updated_by=user.id); db.add(row); db.flush(); audit(db,user,"course_created","course",row.id); db.commit(); return course_out(row)
 @router.get("/courses/{course_id}/builder",response_model=AdminCourseOut)
 def builder(course_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)): return course_out(require_edit(course_id,user,db))
+@router.get("/courses/{course_id}/stats")
+def course_stats(course_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    course=require_edit(course_id,user,db)
+    module_count=db.scalar(select(func.count(CourseModule.id)).where(CourseModule.course_id==course.id)) or 0
+    lesson_count=db.scalar(select(func.count(Lesson.id)).join(CourseModule).where(CourseModule.course_id==course.id)) or 0
+    published_lesson_count=db.scalar(select(func.count(Lesson.id)).join(CourseModule).where(CourseModule.course_id==course.id,Lesson.published.is_(True))) or 0
+    enrollment_count=db.scalar(select(func.count(Enrollment.id)).where(Enrollment.course_id==course.id)) or 0
+    return {"course_id":course.id,"module_count":module_count,"lesson_count":lesson_count,"published_lesson_count":published_lesson_count,"enrollment_count":enrollment_count,"status":course.status,"published":course.published}
 @router.patch("/courses/{course_id}",response_model=AdminCourseOut)
 def update_course(course_id:UUID,payload:AdminCourseIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=require_edit(course_id,user,db); duplicate=db.scalar(select(Course).where(Course.slug==payload.slug,Course.id!=course_id))
     if duplicate: raise HTTPException(409,"Slug already exists")
-    for key,value in payload.model_dump().items(): setattr(row,key,value if key not in {"outcomes","requirements","estimated_duration"} else value)
+    for key,value in payload.model_dump().items():
+        if key in {"estimated_duration","outcomes","requirements"}: continue
+        setattr(row,key,value)
     row.duration_minutes=payload.estimated_duration; row.outcomes="|".join(payload.outcomes); row.requirements="|".join(payload.requirements); row.updated_by=user.id; db.add(CourseRevision(course_id=row.id,changed_by=user.id,status=row.status,snapshot_json=json.dumps(course_out(row),default=str))); audit(db,user,"course_updated","course",row.id); db.commit(); return course_out(row)
 @router.post("/courses/{course_id}/duplicate",response_model=AdminCourseOut,status_code=201)
 def duplicate_course(course_id:UUID,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):

@@ -53,3 +53,30 @@ def test_admin_inventory_endpoints_use_existing_domain_records(client):
     assert users.json()["items"][0]["role"] == "platform_admin"
     assert projects.status_code == 200
     assert roadmaps.status_code == 200
+
+
+def test_course_catalog_exposes_real_curriculum_counts(client):
+    from app.models import CourseModule, Lesson
+
+    with client.session_factory() as db:
+        module = db.scalar(select(CourseModule))
+        db.add(Lesson(module_id=module.id, title="Private draft", slug="private-draft", content_en="Do not expose", order_index=2, published=False, status="draft"))
+        db.commit()
+    response = client.get("/api/v1/courses?page_size=1")
+    assert response.status_code == 200
+    item = response.json()["items"][0]
+    assert item["module_count"] == 1
+    assert item["lesson_count"] == 1
+    detail = client.get(f"/api/v1/courses/{item['slug']}")
+    assert detail.status_code == 200
+    assert detail.json()["modules"][0]["lessons"][0]["title"] == "Hello"
+    assert all(lesson["title"] != "Private draft" for module in detail.json()["modules"] for lesson in module["lessons"])
+
+
+def test_admin_course_stats_use_shared_records(client):
+    admin_login(client)
+    course_id = client.get("/api/v1/admin/courses?page_size=1").json()["items"][0]["id"]
+    response = client.get(f"/api/v1/admin/courses/{course_id}/stats")
+    assert response.status_code == 200
+    assert response.json()["module_count"] == 1
+    assert response.json()["lesson_count"] == 1
