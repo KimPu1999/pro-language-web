@@ -1,2 +1,2 @@
 import type { Config } from "tailwindcss";
-export default { content:["./app/**/*.{ts,tsx}","./components/**/*.{ts,tsx}"], theme:{extend:{colors:{ink:"#0B1020",surface:"#111827",line:"#1E293B",primary:"#6366F1"}}},plugins:[] } satisfies Config;
+export default { content:["./app/**/*.{ts,tsx}","./components/**/*.{ts,tsx}"], darkMode:"class", theme:{extend:{colors:{ink:"var(--background)",surface:"var(--surface)",elevated:"var(--surface-elevated)",line:"var(--border)",primary:"var(--primary)",accent:"var(--primary-hover)",muted:"var(--text-muted)",foreground:"var(--foreground)",code:"var(--code-background)"},boxShadow:{panel:"var(--shadow-panel)"}}},plugins:[] } satisfies Config;
