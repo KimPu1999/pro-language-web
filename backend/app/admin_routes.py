@@ -5,9 +5,9 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, normalize_email, now, require_csrf, verify_password
 from .db import get_db
-from .models import AdminAuditLog, AuthSession, CodeExample, Course, CourseCategory, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, PlatformSetting, ProgrammingLanguage, PublishingReview, QuizAttempt, QuizQuestion, User
+from .models import AdminAuditLog, AuthSession, CodeExample, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, PlatformSetting, ProgrammingLanguage, PublishingReview, QuizAttempt, QuizQuestion, User
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
-from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
+from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
 BRANDING_KEY="branding"
@@ -23,7 +23,7 @@ def branding_value(db):
     if not row: return DEFAULT_BRANDING.copy()
     try: return BrandingSettings(**{**DEFAULT_BRANDING, **json.loads(row.value_json or "{}")}).model_dump()
     except (TypeError, ValueError, json.JSONDecodeError): return DEFAULT_BRANDING.copy()
-def course_out(course): return {"id":course.id,"title":course.title,"slug":course.slug,"short_description":course.short_description or "","description":course.description,"language_id":course.language_id,"category_id":course.category_id,"level":course.level,"thumbnail":course.thumbnail,"estimated_duration":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"published":course.published,"outcomes":course.outcomes,"requirements":course.requirements}
+def course_out(course): return {"id":course.id,"title":course.title,"slug":course.slug,"short_description":course.short_description or "","description":course.description,"target_audience":course.target_audience or "","technologies":course.technologies or "","seo_title":course.seo_title or "","seo_description":course.seo_description or "","language_id":course.language_id,"category_id":course.category_id,"level":course.level,"thumbnail":course.thumbnail,"estimated_duration":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"published":course.published,"outcomes":course.outcomes,"requirements":course.requirements}
 def load_course(db, course_id): return db.scalar(select(Course).options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples)).where(Course.id==course_id))
 def can_edit(course, user, db):
     if user.role in ADMIN: return True
@@ -189,7 +189,7 @@ def list_courses(search:str|None=None,language_id:UUID|None=None,level:str|None=
 def create_course(payload:AdminCourseIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     if db.scalar(select(Course).where(Course.slug==payload.slug)): raise HTTPException(409,"Slug already exists")
     if not db.get(ProgrammingLanguage,payload.language_id) or not db.get(CourseCategory,payload.category_id): raise HTTPException(422,"Language and category are required")
-    row=Course(title=payload.title,slug=payload.slug,short_description=payload.short_description,description=payload.description,language_id=payload.language_id,category_id=payload.category_id,level=payload.level,thumbnail=payload.thumbnail,duration_minutes=payload.estimated_duration,status="draft",published=False,outcomes="|".join(payload.outcomes),requirements="|".join(payload.requirements),created_by=user.id,updated_by=user.id); db.add(row); db.flush(); audit(db,user,"course_created","course",row.id); db.commit(); return course_out(row)
+    row=Course(title=payload.title,slug=payload.slug,short_description=payload.short_description,description=payload.description,target_audience=payload.target_audience,technologies="|".join(payload.technologies),seo_title=payload.seo_title,seo_description=payload.seo_description,language_id=payload.language_id,category_id=payload.category_id,level=payload.level,thumbnail=payload.thumbnail,duration_minutes=payload.estimated_duration,status="draft",published=False,outcomes="|".join(payload.outcomes),requirements="|".join(payload.requirements),created_by=user.id,updated_by=user.id); db.add(row); db.flush(); audit(db,user,"course_created","course",row.id); db.commit(); return course_out(row)
 @router.get("/courses/{course_id}/builder",response_model=AdminCourseOut)
 def builder(course_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)): return course_out(require_edit(course_id,user,db))
 @router.get("/courses/{course_id}/stats")
@@ -207,16 +207,35 @@ def update_course(course_id:UUID,payload:AdminCourseIn,user:User=Depends(admin_u
     for key,value in payload.model_dump().items():
         if key in {"estimated_duration","outcomes","requirements"}: continue
         setattr(row,key,value)
-    row.duration_minutes=payload.estimated_duration; row.outcomes="|".join(payload.outcomes); row.requirements="|".join(payload.requirements); row.updated_by=user.id; db.add(CourseRevision(course_id=row.id,changed_by=user.id,status=row.status,snapshot_json=json.dumps(course_out(row),default=str))); audit(db,user,"course_updated","course",row.id); db.commit(); return course_out(row)
+    row.duration_minutes=payload.estimated_duration; row.target_audience=payload.target_audience; row.technologies="|".join(payload.technologies); row.seo_title=payload.seo_title; row.seo_description=payload.seo_description; row.outcomes="|".join(payload.outcomes); row.requirements="|".join(payload.requirements); row.updated_by=user.id; db.add(CourseRevision(course_id=row.id,changed_by=user.id,status=row.status,snapshot_json=json.dumps(course_out(row),default=str))); audit(db,user,"course_updated","course",row.id); db.commit(); return course_out(row)
 @router.post("/courses/{course_id}/duplicate",response_model=AdminCourseOut,status_code=201)
 def duplicate_course(course_id:UUID,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
-    source=require_edit(course_id,user,db); row=Course(title=f"{source.title} Copy",slug=f"{source.slug}-copy",short_description=source.short_description,description=source.description,language_id=source.language_id,category_id=source.category_id,level=source.level,duration_minutes=source.duration_minutes,status="draft",published=False,outcomes=source.outcomes,requirements=source.requirements,created_by=user.id,updated_by=user.id); db.add(row); db.flush(); audit(db,user,"course_duplicated","course",row.id); db.commit(); return course_out(row)
+    source=require_edit(course_id,user,db); row=Course(title=f"{source.title} Copy",slug=f"{source.slug}-copy",short_description=source.short_description,description=source.description,target_audience=source.target_audience,technologies=source.technologies,seo_title=source.seo_title,seo_description=source.seo_description,language_id=source.language_id,category_id=source.category_id,level=source.level,duration_minutes=source.duration_minutes,status="draft",published=False,outcomes=source.outcomes,requirements=source.requirements,created_by=user.id,updated_by=user.id); db.add(row); db.flush(); audit(db,user,"course_duplicated","course",row.id); db.commit(); return course_out(row)
 @router.post("/courses/{course_id}/archive",response_model=AdminCourseOut)
 def archive_course(course_id:UUID,user:User=Depends(full_admin),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=require_edit(course_id,user,db); row.status="archived"; row.published=False; row.updated_by=user.id; audit(db,user,"course_archived","course",row.id); db.commit(); return course_out(row)
 @router.get("/courses/{course_id}/curriculum")
 def curriculum(course_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
     row=require_edit(course_id,user,db); return [{"id":m.id,"title":m.title,"position":m.order_index,"lessons":[{"id":l.id,"title":l.title,"slug":l.slug,"description":l.description,"position":l.order_index,"status":l.status,"content_en":l.content_en,"content_mm":l.content_mm,"duration_minutes":l.duration_minutes} for l in m.lessons]} for m in row.modules]
+@router.get("/courses/{course_id}/faqs")
+def list_course_faqs(course_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    course=require_edit(course_id,user,db)
+    return [{"id":faq.id,"question":faq.question,"answer":faq.answer,"position":faq.position,"status":faq.status} for faq in db.scalars(select(CourseFAQ).where(CourseFAQ.course_id==course.id).order_by(CourseFAQ.position,CourseFAQ.created_at)).all()]
+@router.post("/courses/{course_id}/faqs",status_code=201)
+def create_course_faq(course_id:UUID,payload:AdminCourseFAQIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    course=require_edit(course_id,user,db); row=CourseFAQ(course_id=course.id,**payload.model_dump()); db.add(row); audit(db,user,"course_faq_created","course_faq",row.id); db.commit(); return {"id":row.id,"question":row.question,"answer":row.answer,"position":row.position,"status":row.status}
+@router.patch("/faqs/{faq_id}")
+def update_course_faq(faq_id:UUID,payload:AdminCourseFAQIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    row=db.get(CourseFAQ,faq_id)
+    if not row: raise HTTPException(404,"FAQ not found")
+    require_edit(row.course_id,user,db)
+    for key,value in payload.model_dump().items(): setattr(row,key,value)
+    audit(db,user,"course_faq_updated","course_faq",row.id); db.commit(); return {"id":row.id,"question":row.question,"answer":row.answer,"position":row.position,"status":row.status}
+@router.delete("/faqs/{faq_id}",status_code=204)
+def delete_course_faq(faq_id:UUID,user:User=Depends(full_admin),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    row=db.get(CourseFAQ,faq_id)
+    if not row: raise HTTPException(404,"FAQ not found")
+    require_edit(row.course_id,user,db); audit(db,user,"course_faq_deleted","course_faq",row.id); db.delete(row); db.commit()
 @router.post("/courses/{course_id}/modules",status_code=201)
 def create_module(course_id:UUID,payload:AdminModuleIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     course=require_edit(course_id,user,db); row=CourseModule(course_id=course.id,title=payload.title,order_index=payload.position); db.add(row); audit(db,user,"module_created","course_module",row.id); db.commit(); return {"id":row.id,"title":row.title,"position":row.order_index}

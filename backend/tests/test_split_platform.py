@@ -80,3 +80,24 @@ def test_admin_course_stats_use_shared_records(client):
     assert response.status_code == 200
     assert response.json()["module_count"] == 1
     assert response.json()["lesson_count"] == 1
+
+
+def test_course_detail_faq_workflow_keeps_drafts_private(client):
+    csrf = admin_login(client)
+    course_id = client.get("/api/v1/admin/courses?page_size=1").json()["items"][0]["id"]
+    created = client.post(
+        f"/api/v1/admin/courses/{course_id}/faqs",
+        json={"question": "Who is this for?", "answer": "Learners building a foundation.", "position": 0, "status": "published"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert created.status_code == 201
+    public = client.get("/api/v1/courses/python-foundations")
+    assert public.status_code == 200
+    assert public.json()["faqs"][0]["question"] == "Who is this for?"
+    updated = client.patch(
+        f"/api/v1/admin/faqs/{created.json()['id']}",
+        json={"question": "Who is this for?", "answer": "Private answer.", "position": 0, "status": "draft"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert updated.status_code == 200
+    assert client.get("/api/v1/courses/python-foundations").json()["faqs"] == []

@@ -1,20 +1,27 @@
-"use client";
+import type { Metadata } from "next";
+import CourseDetail from "@/components/course-detail";
 
-import Link from "next/link";
-import { use, useEffect, useMemo, useState } from "react";
+type CoursePreview = { title: string; slug: string; description?: string; short_description?: string; seo_title?: string; seo_description?: string; thumbnail?: string | null };
+const apiBase = process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000";
 
-type Lesson = { id: string; title: string; slug: string; description?: string; order_index: number; duration_minutes?: number };
-type Module = { id: string; title: string; order_index: number; lessons: Lesson[] };
-type Course = { title: string; slug: string; description: string; level: string; duration_minutes: number; outcomes?: string[]; requirements?: string[]; modules: Module[]; category: { name: string }; language: { name: string } };
-type Progress = { lessons: { lesson_id: string; completed: boolean }[]; progress_percent: number };
-const csrf = () => document.cookie.match(/(?:^|; )cm_csrf=([^;]+)/)?.[1] ?? "";
+async function getCourse(slug: string): Promise<CoursePreview | null> {
+  try {
+    const response = await fetch(`${apiBase}/api/v1/courses/${encodeURIComponent(slug)}`, { next: { revalidate: 60 } });
+    return response.ok ? response.json() : null;
+  } catch {
+    return null;
+  }
+}
 
-export default function CourseDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params); const [course, setCourse] = useState<Course | null>(null); const [enrolled, setEnrolled] = useState(false); const [progress, setProgress] = useState<Progress | null>(null); const [message, setMessage] = useState(""); const [busy, setBusy] = useState(false);
-  useEffect(() => { Promise.all([fetch(`/api/v1/courses/${slug}`).then(response => response.ok ? response.json() : Promise.reject(new Error("Course not found."))), fetch("/api/v1/me/enrollments", { credentials: "include" }).then(response => response.ok ? response.json() : [])]).then(([courseValue, enrollmentRows]) => { setCourse(courseValue); setEnrolled(enrollmentRows.some((row: { course: { slug: string } }) => row.course.slug === slug)); }).catch(reason => setMessage(reason instanceof Error ? reason.message : "Unable to load this course.")); }, [slug]);
-  useEffect(() => { if (!enrolled) return; fetch(`/api/v1/me/courses/${slug}/progress`, { credentials: "include" }).then(response => response.ok ? response.json() : null).then(setProgress).catch(() => setProgress(null)); }, [enrolled, slug]);
-  const firstIncomplete = useMemo(() => { if (!course) return null; const completed = new Set((progress?.lessons ?? []).filter(item => item.completed).map(item => item.lesson_id)); return course.modules.flatMap(module => module.lessons).find(lesson => !completed.has(lesson.id)) ?? course.modules[0]?.lessons[0] ?? null; }, [course, progress]);
-  async function enroll() { setBusy(true); setMessage(""); const response = await fetch(`/api/v1/me/enrollments/${slug}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() }, body: "{}" }); if (response.ok) { setEnrolled(true); setMessage("You are enrolled. Your progress will be saved as you learn."); } else if (response.status === 401) window.location.href = `/login?next=${encodeURIComponent(`/courses/${slug}`)}`; else setMessage((await response.json().catch(() => ({}))).detail ?? "Enrollment could not be completed. Verify your email and try again."); setBusy(false); }
-  if (!course) return <section className="mx-auto max-w-6xl px-6 py-16"><p className="text-slate-400">{message || "Loading course…"}</p></section>;
-  return <section className="mx-auto max-w-6xl px-6 py-12 sm:py-16"><Link href="/courses" className="text-sm text-indigo-300">← All courses</Link><div className="mt-6 grid gap-10 lg:grid-cols-[1fr_320px]"><div><div className="flex flex-wrap gap-2 text-sm"><span className="rounded-full bg-indigo-500/15 px-3 py-1 text-indigo-200">{course.level}</span><span className="rounded-full bg-white/5 px-3 py-1 text-slate-400">{course.category.name}</span><span className="rounded-full bg-white/5 px-3 py-1 text-slate-400">{course.language.name}</span></div><h1 className="mt-5 text-4xl font-bold tracking-tight sm:text-6xl">{course.title}</h1><p className="mt-6 max-w-3xl text-lg leading-8 text-slate-400">{course.description}</p><div className="mt-6 flex flex-wrap gap-5 text-sm text-slate-500"><span>{course.modules.length} modules</span><span>{course.modules.reduce((total, module) => total + module.lessons.length, 0)} lessons</span><span>{Math.ceil(course.duration_minutes / 60)} hours estimated</span>{progress && <span className="text-indigo-300">{Math.round(progress.progress_percent)}% complete</span>}</div></div><aside className="h-fit rounded-2xl border border-line bg-surface p-6 lg:sticky lg:top-24"><h2 className="font-semibold">Ready to learn?</h2><p className="mt-2 text-sm leading-6 text-slate-400">{enrolled ? "Continue from your next incomplete lesson." : "Enroll to save lesson completion and quiz activity."}</p>{enrolled ? <Link href={firstIncomplete ? `/courses/${slug}/learn/${firstIncomplete.slug}` : `/courses/${slug}`} className="mt-6 block rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold">Continue learning</Link> : <button type="button" onClick={enroll} disabled={busy} className="mt-6 w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold disabled:opacity-50">{busy ? "Enrolling…" : "Enroll in course"}</button>}{message && <p className="mt-4 text-sm text-amber-200" role="status">{message}</p>}</aside></div><div className="mt-14 grid gap-10 lg:grid-cols-[1fr_320px]"><main><section><h2 className="text-2xl font-bold">What you will learn</h2><ul className="mt-5 grid gap-3 sm:grid-cols-2">{(course.outcomes ?? []).map(outcome => <li key={outcome} className="rounded-xl border border-line bg-surface p-4 text-sm leading-6 text-slate-300">✓ {outcome}</li>)}</ul></section><section className="mt-12"><h2 className="text-2xl font-bold">Curriculum</h2><div className="mt-5 space-y-4">{course.modules.map((module, index) => <details key={module.id} open={index === 0} className="rounded-2xl border border-line bg-surface"><summary className="cursor-pointer list-none px-5 py-4 font-semibold">Module {index + 1}: {module.title}<span className="float-right text-sm font-normal text-slate-500">{module.lessons.length} lessons</span></summary><div className="border-t border-line px-5 py-2">{module.lessons.map((lesson, lessonIndex) => <Link key={lesson.id} href={enrolled ? `/courses/${slug}/learn/${lesson.slug}` : "#enroll"} onClick={event => { if (!enrolled) { event.preventDefault(); setMessage("Enroll to start lessons and save progress."); } }} className="flex items-center justify-between gap-4 border-b border-line/60 py-4 text-sm last:border-0 hover:text-indigo-200"><span>{lessonIndex + 1}. {lesson.title}</span><span className="shrink-0 text-xs text-slate-500">{lesson.duration_minutes ?? 0} min</span></Link>)}</div></details>)}</div></section></main><aside className="h-fit rounded-2xl border border-line bg-surface p-6"><h2 className="font-semibold">Prerequisites</h2><p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-400">{(course.requirements ?? []).join("\n") || "No prerequisites listed."}</p></aside></div></section>;
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const course = await getCourse(slug);
+  if (!course) return { title: "Course not found | Learn-Coding", robots: { index: false, follow: false } };
+  const description = course.seo_description || course.short_description || course.description || "Learn with Learn-Coding.";
+  return { title: `${course.seo_title || course.title} | Learn-Coding`, description, alternates: { canonical: `/courses/${course.slug}` }, openGraph: { title: course.seo_title || course.title, description, type: "website", images: course.thumbnail ? [{ url: course.thumbnail }] : undefined } };
+}
+
+export default async function CoursePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  return <CourseDetail slug={slug} />;
 }

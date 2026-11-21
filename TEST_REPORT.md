@@ -6,8 +6,8 @@ Audit date: 2026-11-21
 
 | Check | Result |
 | --- | --- |
-| Backend full pytest suite | 143 passed, 1 warning |
-| Backend course/admin/content regression subset | 15 passed, 2 warnings |
+| Backend full pytest suite | 146 passed, 2 warnings |
+| Backend course/admin/content regression subset | 16 passed, 2 warnings |
 | `apps/platform` TypeScript check | Passed |
 | `apps/platform` production build | Passed; 8 generated routes |
 | `apps/admin` TypeScript check | Passed |
@@ -19,6 +19,8 @@ Audit date: 2026-11-21
 | FastAPI health/readiness smoke checks | Passed |
 | Public branding/navigation/course/project/challenge HTTP checks | Passed |
 | Public course catalog/detail/lesson and Admin course routes | Passed; HTTP 200 after clean `.next` restart |
+| Public course detail metadata/FAQ fields | Passed; HTTP 200 with real curriculum, related courses, and empty-safe detail fields |
+| Additive course-detail migration | Applied locally: `0045_course_detail_content` |
 | Unauthenticated admin session check | Correctly denied with HTTP 401 |
 | Read-only FK integrity audit | 653 constraints checked, 0 orphan violations |
 | `git diff --check` | Passed |
@@ -40,9 +42,8 @@ Audit date: 2026-11-21
   the first admin account.
 - Browser-level Playwright coverage, mobile visual review, and accessibility
   review were not run in this audit.
-- Full end-to-end admin branding/media/content publishing was not claimed: the
-  new admin UI is incomplete even though the protected backend endpoints and
-  regression tests exist.
+- Full end-to-end admin branding/media/content publishing was not claimed: media
+  upload and rich lesson editing remain outside this course-detail slice.
 - Backup restore, production CORS, rate-limit load behavior, and external object
   storage were not tested.
 

@@ -7,7 +7,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 from .config import settings
 from .db import get_db
-from .models import ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseModule, LearningPath, Lesson, PlatformSetting, ProgrammingLanguage, StudentChallengeProgress, User
+from .models import ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, LearningPath, Lesson, PlatformSetting, ProgrammingLanguage, StudentChallengeProgress, User, UserProfile
 from .schemas import BrandingSettings, CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut, LanguageOut, LessonOut, ModuleOut, NavigationSettings, PageOut, PathOut, PlatformPageOut
 from .auth import current_user
 from .auth_routes import router as auth_router
@@ -141,9 +141,17 @@ def my_challenge_progress(user: User=Depends(current_user), db: Session=Depends(
 @app.get("/api/v1/course-categories",response_model=list[CategoryOut])
 def categories(db: Session=Depends(get_db)): return db.scalars(select(CourseCategory).where(CourseCategory.status=="active").order_by(CourseCategory.display_order, CourseCategory.name)).all()
 def course_query(): return select(Course).options(selectinload(Course.language),selectinload(Course.category)).where(Course.published.is_(True))
-def course_payload(course, module_count=0, lesson_count=0, modules=None):
+def pipe_values(value):
+    return [item.strip() for item in (value or "").split("|") if item.strip()]
+def course_payload(course, module_count=0, lesson_count=0, modules=None, instructors=None, related_courses=None):
     payload={"id":course.id,"title":course.title,"slug":course.slug,"description":course.description,"short_description":course.short_description or "","thumbnail":course.thumbnail,"level":course.level,"duration_minutes":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"module_count":module_count,"lesson_count":lesson_count,"outcomes":course.outcomes,"requirements":course.requirements,"language":course.language,"category":course.category}
-    if modules is not None: payload["modules"] = modules
+    if modules is not None:
+        payload["target_audience"] = course.target_audience or ""
+        payload["technologies"] = pipe_values(course.technologies)
+        payload["instructors"] = instructors or []
+        payload["faqs"] = [{"id":faq.id,"question":faq.question,"answer":faq.answer,"position":faq.position} for faq in getattr(course, "faqs", []) if faq.status == "published"]
+        payload["related_courses"] = related_courses or []
+        payload["modules"] = modules
     return payload
 def public_modules(modules, summaries=False):
     result=[]
@@ -183,10 +191,14 @@ def courses(search: str|None=None, language: str|None=None, level: str|None=None
     return {"items":[course_payload(row,module_counts.get(row.id,0),lesson_counts.get(row.id,0)) for row in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
 @app.get("/api/v1/courses/{slug}",response_model=CourseDetailOut)
 def course(slug: str, db: Session=Depends(get_db)):
-    row=db.scalar(course_query().options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples)).where(Course.slug==slug))
+    row=db.scalar(course_query().options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples),selectinload(Course.faqs)).where(Course.slug==slug))
     if not row: raise HTTPException(404,"Published course not found")
     modules=public_modules(row.modules)
-    return course_payload(row, len(modules), sum(len(module["lessons"]) for module in modules), modules)
+    instructor_rows=db.execute(select(User,UserProfile).join(CourseInstructor,CourseInstructor.user_id==User.id).outerjoin(UserProfile,UserProfile.user_id==User.id).where(CourseInstructor.course_id==row.id,User.role=="instructor",User.account_status=="active").order_by(User.display_name)).all()
+    instructors=[{"id":user.id,"name":user.display_name,"avatar_url":profile.avatar_url if profile else None,"bio":profile.bio if profile else None} for user,profile in instructor_rows]
+    related_rows=db.scalars(course_query().where(Course.category_id==row.category_id,Course.id!=row.id).order_by(Course.updated_at.desc()).limit(3)).all()
+    related=[{"id":item.id,"title":item.title,"slug":item.slug,"thumbnail":item.thumbnail,"level":item.level,"short_description":item.short_description or ""} for item in related_rows]
+    return course_payload(row, len(modules), sum(len(module["lessons"]) for module in modules), modules, instructors, related)
 @app.get("/api/v1/courses/{slug}/learning",response_model=CourseLearningOut)
 def course_learning(slug: str, db: Session=Depends(get_db)):
     """Return course structure without downloading all lesson bodies."""
