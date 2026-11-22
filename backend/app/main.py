@@ -52,6 +52,8 @@ from .community_network_routes import router as community_network_router
 from .gamification_network_routes import router as gamification_network_router
 from .developer_tools_routes import router as developer_tools_router
 from .media_storage import ensure_media_root
+from .contact_routes import router as contact_router
+from .legal_routes import router as legal_router
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger=logging.getLogger("codemaster.api")
 app=FastAPI(title="CodeMaster Academy API", version="1.0.0")
@@ -103,6 +105,8 @@ app.include_router(career_network_router)
 app.include_router(community_network_router)
 app.include_router(gamification_network_router)
 app.include_router(developer_tools_router)
+app.include_router(contact_router)
+app.include_router(legal_router)
 @app.get("/api/v1/health")
 def health(db: Session=Depends(get_db)): db.execute(select(1)); return {"status":"ok","service":"codemaster-api"}
 @app.get("/api/v1/ready")

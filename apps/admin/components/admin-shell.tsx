@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, BookOpen, BriefcaseBusiness, ChartNoAxesCombined, ChevronRight, CircleUserRound, ClipboardCheck, Code2, FolderCode, GraduationCap, Images, LayoutDashboard, LogOut, Menu, NotebookText, Palette, PanelBottom, PanelLeftClose, PanelLeftOpen, Search, ScrollText, Search as SearchIcon, Settings, ShieldCheck, Wrench, X, Users } from "lucide-react";
+import { Bell, BookOpen, BriefcaseBusiness, ChartNoAxesCombined, ChevronRight, CircleUserRound, ClipboardCheck, Code2, FileText, FolderCode, GraduationCap, Images, LayoutDashboard, LogOut, Mail, Menu, NotebookText, Palette, PanelBottom, PanelLeftClose, PanelLeftOpen, Search, ScrollText, Search as SearchIcon, Settings, ShieldCheck, Wrench, X, Users } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ThemeSwitcher } from "@/components/theme-provider";
 
@@ -14,7 +14,7 @@ const groups: NavGroup[] = [
   { label: "Learning", items: [{ label: "Courses", href: "/courses", icon: BookOpen }, { label: "Lessons", href: "/lessons", icon: NotebookText }, { label: "Projects", href: "/projects", icon: FolderCode }, { label: "Challenges", href: "/challenges", icon: Code2 }] },
   { label: "Career & tools", items: [{ label: "Career Paths", href: "/career-paths", icon: BriefcaseBusiness }, { label: "Developer Tools", href: "/developer-tools", icon: Wrench }] },
   { label: "People", items: [{ label: "Students", href: "/users", icon: Users }, { label: "Instructors", href: "/instructors", icon: GraduationCap }, { label: "Submissions", href: "/submissions", icon: ClipboardCheck }] },
-  { label: "Content", items: [{ label: "Platform Pages", href: "/pages", icon: NotebookText }, { label: "Media Library", href: "/media", icon: Images }] },
+  { label: "Content", items: [{ label: "Platform Pages", href: "/pages", icon: NotebookText }, { label: "Legal Pages", href: "/legal", icon: FileText, roles: ["admin", "platform_admin", "super_admin"] }, { label: "Media Library", href: "/media", icon: Images }, { label: "Contact Messages", href: "/contact-messages", icon: Mail, roles: ["admin", "platform_admin", "super_admin"] }] },
   { label: "Appearance", items: [{ label: "Homepage", href: "/homepage", icon: LayoutDashboard }, { label: "Branding", href: "/appearance", icon: Palette }, { label: "Navigation", href: "/navigation", icon: Menu }, { label: "Footer", href: "/footer", icon: PanelBottom }, { label: "SEO", href: "/seo", icon: SearchIcon }] },
   { label: "System", items: [{ label: "Settings", href: "/settings", icon: Settings, roles: ["admin", "platform_admin", "super_admin"] }, { label: "Security", href: "/security", icon: ShieldCheck, roles: ["admin", "platform_admin", "super_admin"] }, { label: "Audit Logs", href: "/audit-logs", icon: ScrollText, roles: ["admin", "platform_admin", "super_admin"] }] }
 ];
