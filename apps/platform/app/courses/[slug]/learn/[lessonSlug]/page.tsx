@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronDown, Clipboard, Minus, PanelLeftClose, PanelLeftOpen, Plus, SunMoon, X } from "lucide-react";
 import { ThemeSwitcher } from "@/components/theme-provider";
 
@@ -10,8 +9,6 @@ type Lesson = { id: string; title: string; slug: string; description?: string; c
 type LearningLesson = { id: string; title: string; slug: string; duration_minutes: number };
 type Learning = { title?: string; modules: { id?: string; title: string; lessons: LearningLesson[] }[] };
 type Quiz = { title: string; explanation?: string; questions: { id: string; prompt: string; options: string[]; question_type: string }[]; latest_attempt?: { score: number; total: number } | null };
-type Technology = { name: string; slug: string; color?: string; published_course_count?: number };
-
 const csrf = () => document.cookie.match(/(?:^|; )cm_csrf=([^;]+)/)?.[1] ?? "";
 
 function ContentBlocks({ content }: { content: string }) {
@@ -74,48 +71,6 @@ function CodeExample({ example }: { example: NonNullable<Lesson["code_examples"]
   }
 
   return <section className="overflow-hidden rounded-2xl border border-line bg-[#0D1628]" aria-label={`${example.language} code example`}><div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3 text-xs"><span className="font-medium text-slate-200">{example.filename || example.title}</span><div className="flex items-center gap-3"><span className="uppercase tracking-[.14em] text-slate-400">{example.language}</span><button type="button" onClick={copy} className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-slate-300 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-400/70"><Clipboard size={14} aria-hidden="true" /> {copied ? "Copied" : "Copy"}</button></div></div><pre className="max-w-full overflow-x-auto p-5 text-sm leading-7 text-indigo-100"><code>{example.code}</code></pre></section>;
-}
-
-function TechnologySidebar({ courseSlug }: { courseSlug: string }) {
-  const router = useRouter();
-  const [technologies, setTechnologies] = useState<Technology[]>([]);
-  const [collapsed, setCollapsed] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [active, setActive] = useState("");
-
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/v1/languages", { cache: "no-store" }).then(response => response.ok ? response.json() : []),
-      fetch(`/api/v1/courses/${encodeURIComponent(courseSlug)}/learning`, { cache: "no-store" }).then(response => response.ok ? response.json() : null),
-    ]).then(([items, course]) => { setTechnologies(Array.isArray(items) ? items : []); setActive(course?.language?.slug || ""); }).catch(() => undefined);
-  }, [courseSlug]);
-
-  async function choose(item: Technology) {
-    try {
-      const response = await fetch(`/api/v1/courses?technology=${encodeURIComponent(item.slug)}&page=1&page_size=2`, { cache: "no-store" });
-      const result = await response.json() as { total: number; items: { slug: string }[] };
-      if (result.total > 1) { router.push(`/courses?technology=${encodeURIComponent(item.slug)}`); return; }
-      const selectedSlug = result.items?.[0]?.slug;
-      if (!selectedSlug) return;
-      const [learningResponse, progressResponse] = await Promise.all([
-        fetch(`/api/v1/courses/${encodeURIComponent(selectedSlug)}/learning`, { cache: "no-store" }),
-        fetch(`/api/v1/me/courses/${encodeURIComponent(selectedSlug)}/progress`, { credentials: "include", cache: "no-store" }),
-      ]);
-      const learning = await learningResponse.json() as { modules?: { lessons?: { id: string; slug: string }[] }[] };
-      const lessons = (learning.modules ?? []).flatMap(module => module.lessons ?? []);
-      const progress = progressResponse.ok ? await progressResponse.json() as { last_visited_lesson_id?: string | null } : null;
-      const lesson = lessons.find(candidate => candidate.id === progress?.last_visited_lesson_id) ?? lessons[0];
-      if (lesson?.slug) router.push(`/courses/${encodeURIComponent(selectedSlug)}/learn/${encodeURIComponent(lesson.slug)}`);
-    } catch { /* Keep the current lesson open if navigation data is unavailable. */ }
-  }
-
-  return <>
-    {!open && <button type="button" aria-label="Open technology navigation" onClick={() => setOpen(true)} className="fixed left-3 top-20 z-40 rounded-lg border border-line bg-surface p-2 text-primary shadow-lg lg:hidden"><PanelLeftOpen size={17} /></button>}
-    <aside className={`${open ? "fixed inset-y-0 left-0 z-50 block w-60 shadow-2xl" : "hidden"} lg:sticky lg:top-16 lg:block lg:h-[calc(100vh-4rem)] ${collapsed ? "lg:w-14" : "lg:w-56"} shrink-0 overflow-y-auto border-r border-line bg-surface p-2`} aria-label="Technology navigation">
-      <div className="flex items-center justify-between gap-2 border-b border-line px-2 py-2"><span className={`text-xs font-semibold uppercase tracking-[.14em] text-muted ${collapsed ? "lg:hidden" : ""}`}>Technologies</span><div className="flex items-center gap-1"><button type="button" aria-label={collapsed ? "Expand technology navigation" : "Collapse technology navigation"} onClick={() => setCollapsed(value => !value)} className="rounded-lg p-2 text-muted hover:bg-surface-hover hover:text-foreground"><PanelLeftClose size={16} className={collapsed ? "hidden" : ""} /><PanelLeftOpen size={16} className={collapsed ? "" : "hidden"} /></button><button type="button" aria-label="Close technology navigation" onClick={() => setOpen(false)} className="rounded-lg p-2 text-muted hover:bg-surface-hover lg:hidden"><X size={16} /></button></div></div>
-      <nav className="mt-2 space-y-1">{technologies.map(item => <button key={item.slug} type="button" title={collapsed ? item.name : undefined} onClick={() => { setActive(item.slug); setOpen(false); void choose(item); }} className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition ${active === item.slug ? "bg-primary/12 font-medium text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`}><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-semibold text-white" style={{ backgroundColor: item.color || "#6366F1" }}>{item.name.slice(0, 1).toUpperCase()}</span><span className={`min-w-0 truncate ${collapsed ? "lg:hidden" : ""}`}>{item.name}</span></button>)}</nav>
-    </aside>
-  </>;
 }
 
 function LessonQuiz({ lessonId }: { lessonId: string }) {
@@ -206,7 +161,7 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
       <div className="flex items-center gap-1 rounded-xl border border-line bg-surface p-1" aria-label="Reading settings"><button type="button" aria-label="Decrease text size" onClick={() => setFontScale(value => Math.max(.9, Number((value - .1).toFixed(1))))} className="rounded-lg p-2 text-muted transition hover:bg-surface-hover hover:text-foreground"><Minus size={15} /></button><span className="min-w-10 text-center text-xs text-muted">{Math.round(fontScale * 100)}%</span><button type="button" aria-label="Increase text size" onClick={() => setFontScale(value => Math.min(1.2, Number((value + .1).toFixed(1))))} className="rounded-lg p-2 text-muted transition hover:bg-surface-hover hover:text-foreground"><Plus size={15} /></button><span className="mx-1 h-5 w-px bg-line" /><ThemeSwitcher /><button type="button" aria-pressed={focusMode} aria-label={focusMode ? "Exit focus mode" : "Enter focus mode"} onClick={() => setFocusMode(value => !value)} className={`rounded-lg p-2 transition ${focusMode ? "bg-primary/15 text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`}><SunMoon size={16} /></button></div>
     </div>
 
-    <div className="lesson-body grid min-h-0 min-w-0 flex-1 lg:grid-cols-[auto_minmax(0,1fr)]"><TechnologySidebar courseSlug={slug} /><div className={`${focusMode || sidebarCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[310px_minmax(0,1fr)]"} lesson-workspace grid min-h-0 min-w-0 flex-1 overflow-hidden`}>
+    <div className="lesson-body grid min-h-0 min-w-0 flex-1 lg:grid-cols-[minmax(0,1fr)]"><div className={`${focusMode || sidebarCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[310px_minmax(0,1fr)]"} lesson-workspace grid min-h-0 min-w-0 flex-1 overflow-hidden`}>
       <aside id="lesson-curriculum" className={`${sidebarOpen ? "fixed inset-y-0 left-0 z-50 block w-[min(86vw,320px)] shadow-2xl" : "hidden"} ${focusMode || sidebarCollapsed ? "lg:hidden" : "lg:block"} lesson-sidebar min-h-0 overflow-y-auto overscroll-contain border-r border-line bg-surface p-4`}><div className="flex items-start justify-between gap-3 border-b border-line pb-4"><div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-[.16em] text-muted">Course curriculum</p><p className="mt-2 break-words font-semibold text-foreground">{learning.title || "Course lessons"}</p><div className="mt-4 h-1.5 overflow-hidden rounded-full bg-ink"><div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${progressPercent}%` }} /></div><p className="mt-2 text-xs text-muted">{Math.round(progressPercent)}% complete</p></div><button type="button" aria-label="Close lesson menu" onClick={() => setSidebarOpen(false)} className="shrink-0 rounded-lg p-2 text-muted hover:bg-surface-hover lg:hidden"><X size={17} /></button></div><nav className="mt-4 space-y-3" aria-label="Course curriculum">{orderedModules.map((module, moduleIndex) => <details key={module.id ?? module.title} open={moduleIndex === currentModuleIndex} className="group"><summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm font-medium text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"><span className="break-words">{moduleIndex + 1}. {module.title}</span><ChevronDown size={15} className="shrink-0 text-muted transition group-open:rotate-180" /></summary><div className="mt-2 space-y-1 pl-1">{module.lessons.map(item => <Link key={item.id} href={`/courses/${slug}/learn/${item.slug}`} onClick={() => setSidebarOpen(false)} className={`flex items-start gap-2 rounded-xl px-2.5 py-2.5 text-sm transition ${item.slug === lessonSlug ? "bg-primary/12 font-medium text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`}><span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink text-[10px]">{item.slug === lessonSlug ? <Check size={12} /> : ""}</span><span className="min-w-0 flex-1 whitespace-normal break-words leading-5">{item.title}</span><span className="shrink-0 text-[11px] text-muted">{item.duration_minutes ?? 0}m</span></Link>)}</div></details>)}</nav></aside>
       {sidebarOpen && <button type="button" aria-label="Close curriculum drawer" onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 bg-slate-950/50 lg:hidden" />}
       <div className="lesson-main min-h-0 min-w-0 overflow-y-auto overscroll-contain"><div className="mx-auto w-full max-w-[720px] px-4 py-6 sm:px-6 lg:py-8"><div className="flex items-start justify-between gap-4"><div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-[.18em] text-primary">Lesson {currentIndex + 1} of {flatLessons.length}</p><h1 className="mt-2 break-words text-2xl font-semibold text-foreground sm:text-3xl">{lesson.title}</h1></div><span className="shrink-0 pt-1 text-sm text-muted">{lesson.duration_minutes ?? 0} min</span></div><div className="mt-4 h-1.5 overflow-hidden rounded-full bg-ink"><div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${progressPercent}%` }} /></div><article className="mt-8" style={{ fontSize: `${fontScale}em` }}>{lesson.description && <p className="mb-8 text-lg leading-[1.8] text-muted">{lesson.description}</p>}<ContentBlocks content={lesson.content_en} />{lesson.code_examples?.length ? <div className="mt-10 space-y-6">{lesson.code_examples.map(example => <CodeExample key={example.id} example={example} />)}</div> : null}<LessonQuiz lessonId={lesson.id} /></article></div></div>
