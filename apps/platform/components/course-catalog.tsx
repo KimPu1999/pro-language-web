@@ -5,15 +5,13 @@ import { ArrowRight, BookOpen, ChevronLeft, ChevronRight, Search } from "lucide-
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CourseCover } from "@/components/course-cover";
-import CourseDetail from "@/components/course-detail";
 
 type Course = { id: string; title: string; slug: string; description: string; short_description?: string; thumbnail?: string | null; level: string; duration_minutes: number; lesson_count?: number; language: { name: string; slug: string }; category: { name: string; slug: string } };
 type Page = { items: Course[]; page: number; page_size: number; total: number; pages: number };
 type Option = { name: string; slug: string; color?: string; published_course_count?: number };
 const emptyPage: Page = { items: [], page: 1, page_size: 12, total: 0, pages: 0 };
 function Link(props: LinkProps & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
-  const href = typeof props.href === "string" && props.href.startsWith("/courses/") && !props.href.includes("#") ? `${props.href}#curriculum` : props.href;
-  return <NextLink {...props} href={href} />;
+  return <NextLink {...props} />;
 }
 
 export function CourseCatalog() {
@@ -33,8 +31,6 @@ export function CourseCatalog() {
   const selectedTechnology = technology || language;
   const data = courses ? (() => { const items = selectedTechnology ? courses.items.filter(course => course.language.slug === selectedTechnology) : courses.items; return { ...courses, items, total: selectedTechnology ? items.length : courses.total, pages: selectedTechnology ? (items.length ? 1 : 0) : courses.pages }; })() : emptyPage;
   const levelOptions = useMemo(() => ["beginner", "intermediate", "advanced", "professional"], []);
-
-  if (courses && selectedTechnology && data.items.length === 1 && data.items[0]) return <CourseDetail slug={data.items[0].slug} />;
 
   return <>
     <section className="mx-auto max-w-7xl px-6 pb-12 pt-8 sm:pb-16 sm:pt-10">
