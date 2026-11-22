@@ -153,7 +153,10 @@ def site_page(slug: str, db: Session=Depends(get_db)):
     if page.status != "published": raise HTTPException(404, "Published page not found")
     return page
 @app.get("/api/v1/languages",response_model=list[LanguageOut])
-def languages(db: Session=Depends(get_db)): return db.scalars(select(ProgrammingLanguage).order_by(ProgrammingLanguage.name)).all()
+def languages(db: Session=Depends(get_db)):
+    rows = db.scalars(select(ProgrammingLanguage).where(ProgrammingLanguage.status == "active").order_by(ProgrammingLanguage.display_order, ProgrammingLanguage.name)).all()
+    counts = dict(db.execute(select(Course.language_id, func.count(Course.id)).where(Course.published.is_(True)).group_by(Course.language_id)).all())
+    return [{"id": row.id, "name": row.name, "slug": row.slug, "color": row.color, "published_course_count": counts.get(row.id, 0)} for row in rows]
 @app.get("/api/v1/challenge-categories")
 def challenge_categories(db: Session=Depends(get_db)): return db.scalars(select(ChallengeCategory).where(ChallengeCategory.status=="active").order_by(ChallengeCategory.name)).all()
 @app.get("/api/v1/me/challenge-progress")
@@ -184,7 +187,7 @@ def public_modules(modules, summaries=False):
         result.append({"id":module.id,"title":module.title,"order_index":module.order_index,"lessons":[{"id":lesson.id,"title":lesson.title,"slug":lesson.slug,"order_index":lesson.order_index,"duration_minutes":lesson.duration_minutes} for lesson in lessons] if summaries else lessons})
     return result
 @app.get("/api/v1/courses",response_model=PageOut)
-def courses(search: str|None=None, language: str|None=None, level: str|None=None, difficulty: str|None=None, category: str|None=None, sort: str=Query("title_asc", pattern=r"^(title_asc|title_desc|newest|duration_asc|duration_desc)$"), page: int=Query(1,ge=1), page_size: int=Query(10,ge=1,le=50), db: Session=Depends(get_db)):
+def courses(search: str|None=None, language: str|None=None, technology: str|None=None, level: str|None=None, difficulty: str|None=None, category: str|None=None, sort: str=Query("title_asc", pattern=r"^(title_asc|title_desc|newest|duration_asc|duration_desc)$"), page: int=Query(1,ge=1), page_size: int=Query(10,ge=1,le=50), db: Session=Depends(get_db)):
     if level and difficulty and level.lower() != difficulty.lower():
         raise HTTPException(status_code=422, detail="level and difficulty must match when both are provided")
     effective_level = difficulty or level
@@ -192,8 +195,9 @@ def courses(search: str|None=None, language: str|None=None, level: str|None=None
     if search:
         pattern = f"%{search.strip()}%"
         filters.append(or_(Course.title.ilike(pattern), Course.description.ilike(pattern), Course.short_description.ilike(pattern)))
-    if language:
-        filters.append(Course.language.has(ProgrammingLanguage.slug == language))
+    selected_language = technology or language
+    if selected_language:
+        filters.append(Course.language.has(ProgrammingLanguage.slug == selected_language))
     if category:
         filters.append(Course.category.has(CourseCategory.slug == category))
     if effective_level:

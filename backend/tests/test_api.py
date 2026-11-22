@@ -18,6 +18,7 @@ def test_unhandled_errors_are_safe_and_correlated(client):
     assert response.json() == {"detail": "Internal server error", "request_id": "error-request"}
 def test_course_filter_and_pagination(client):
     response=client.get("/api/v1/courses?language=python&page=1&page_size=1"); assert response.status_code==200; assert response.json()["total"]==1
+    technology_response=client.get("/api/v1/courses?technology=python&page=1&page_size=1"); assert technology_response.status_code==200; assert technology_response.json()["total"]==1
 
 def test_course_filters_sort_and_published_scope(client):
     from app.models import Course, CourseCategory, ProgrammingLanguage

@@ -54,6 +54,8 @@ button, input, select, textarea { font: inherit; }
 input::placeholder, textarea::placeholder { color: var(--text-muted); }
 :focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 ::selection { background: color-mix(in srgb, var(--primary) 35%, transparent); }
+.scrollbar-hidden { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-hidden::-webkit-scrollbar { display: none; }
 .bg-primary { color: #FFFFFF; }
 
 html:not(.dark) .text-slate-100, html:not(.dark) .text-slate-200, html:not(.dark) .text-slate-300 { color: var(--text-secondary); }

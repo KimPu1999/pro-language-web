@@ -4,7 +4,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from .tool_registry import APPROVED_IMPLEMENTATION_KEYS
 class LanguageOut(BaseModel):
-    model_config=ConfigDict(from_attributes=True); id: UUID; name: str; slug: str; color: str
+    model_config=ConfigDict(from_attributes=True); id: UUID; name: str; slug: str; color: str; published_course_count: int = 0
 class CategoryOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; name: str; slug: str
 class ExampleOut(BaseModel):
