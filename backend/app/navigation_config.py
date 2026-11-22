@@ -27,6 +27,8 @@ DEFAULT_NAVIGATION = {
         {"id": "challenges", "label": "Challenges", "href": "/challenges", "enabled": True, "position": 2, "area": "header"},
         {"id": "careers", "label": "Careers", "href": "/careers", "enabled": True, "position": 3, "area": "header"},
         {"id": "tools", "label": "Developer Tools", "href": "/tools", "enabled": True, "position": 4, "area": "header"},
+        {"id": "about", "label": "About", "href": "/about", "enabled": True, "position": 5, "area": "header"},
+        {"id": "contact", "label": "Contact", "href": "/contact", "enabled": True, "position": 6, "area": "header"},
     ],
 }
 

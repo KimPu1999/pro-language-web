@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState, type Ref } from "react";
 import { ThemeSwitcher } from "@/components/theme-provider";
 
 const fallbackLinks = [{ id: "courses", label: "Courses", href: "/courses", enabled: true, position: 0, area: "header" as const, link_type: "internal" as const }, { id: "projects", label: "Projects", href: "/projects", enabled: true, position: 1, area: "header" as const, link_type: "internal" as const }, { id: "challenges", label: "Challenges", href: "/challenges", enabled: true, position: 2, area: "header" as const, link_type: "internal" as const }, { id: "careers", label: "Careers", href: "/careers", enabled: true, position: 3, area: "header" as const, link_type: "internal" as const }, { id: "tools", label: "Developer Tools", href: "/tools", enabled: true, position: 4, area: "header" as const, link_type: "internal" as const }];
+const requiredPublicLinks: PublicLink[] = [{ id: "about", label: "About", href: "/about", enabled: true, position: 90, area: "header", link_type: "internal", parent_id: null }, { id: "contact", label: "Contact", href: "/contact", enabled: true, position: 91, area: "header", link_type: "internal", parent_id: null }];
 type PublicLink = { id: string; label: string; href: string; enabled: boolean; position: number; area: "header" | "footer"; link_type?: "internal" | "external"; external_url?: string | null; parent_id?: string | null; target_blank?: boolean };
 type Branding = { website_name: string; logo_url: string };
 type AuthUser = { full_name: string; email: string; role: string };
@@ -53,7 +54,7 @@ export function PlatformNav() {
     }).catch(() => undefined);
   }, []);
 
-  const navigationLinks = useMemo(() => [{ id: "home", label: "Home", href: "/", enabled: true, position: -1, area: "header" as const, link_type: "internal" as const }, ...links.filter(link => link.href !== "/" && !link.parent_id)], [links]);
+  const navigationLinks = useMemo(() => { const existing = new Set(links.map(link => link.href)); const merged = [...links, ...requiredPublicLinks.filter(link => !existing.has(link.href))]; return [{ id: "home", label: "Home", href: "/", enabled: true, position: -1, area: "header" as const, link_type: "internal" as const }, ...merged.filter(link => link.href !== "/" && !link.parent_id).sort((a, b) => a.position - b.position)]; }, [links]);
 
   useEffect(() => {
     setOpen(false);
@@ -116,7 +117,7 @@ export function PlatformNav() {
         </button>
       </div>
 
-      <nav aria-label="Public navigation" className="ml-auto hidden items-center gap-2 lg:flex">
+      <nav aria-label="Public navigation" className="ml-auto hidden items-center gap-1.5 lg:flex">
         {navigationLinks.map(link => { const href = destination(link); const active = isActiveRoute(pathname, href); const children = links.filter(child => child.parent_id === link.id && child.enabled).sort((a, b) => a.position - b.position); return children.length ? <div key={link.id} className="group relative"><button type="button" className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm transition ${active ? "bg-primary/10 font-medium text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`} aria-haspopup="menu">{link.label}<ChevronDown size={14} aria-hidden="true" /></button><div className="invisible absolute left-0 top-full z-10 min-w-48 translate-y-1 rounded-xl border border-line bg-surface p-1 opacity-0 shadow-xl transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">{children.map(child => <span key={child.id}>{linkView(child, `flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${isActiveRoute(pathname, destination(child)) ? "bg-primary/10 text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`, true, undefined, isActiveRoute(pathname, destination(child)))}</span>)}</div></div> : linkView(link, `rounded-lg px-3 py-2 text-sm transition ${active ? "bg-primary/10 font-medium text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"}`, false, undefined, active); })}
         <ThemeSwitcher />
         {user ? <div className="flex items-center gap-2"><Link href="/profile" onClick={closeMenu} className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-surface-hover hover:text-foreground"><UserRound size={16} aria-hidden="true" /> Profile</Link><button type="button" onClick={signOut} className="rounded-lg border border-line px-3 py-2 text-sm text-muted transition hover:bg-surface-hover hover:text-foreground">Sign out</button></div> : <Link href="/login" onClick={closeMenu} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-primary-hover"><LogIn size={16} aria-hidden="true" /> Sign in</Link>}
