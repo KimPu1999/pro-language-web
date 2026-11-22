@@ -377,5 +377,36 @@ class PlatformPageIn(BaseModel):
     body: str = Field(default="", max_length=100000)
     status: str = Field(default="draft", pattern=r"^(draft|in_review|published|archived)$")
 
+class PlatformGeneralSettings(BaseModel):
+    website_name: str = Field(default="Learn-Coding", min_length=2, max_length=120)
+    website_description: str = Field(default="Practical coding education, projects, and tools.", max_length=600)
+    contact_email: str = Field(default="", max_length=254)
+    contact_phone: str = Field(default="", max_length=40)
+    timezone: str = Field(default="Asia/Yangon", pattern=r"^[A-Za-z_]+/[A-Za-z_]+(?:/[A-Za-z_]+)?$")
+    supported_languages: list[str] = Field(default_factory=lambda: ["en"], min_length=1, max_length=10)
+    registration_enabled: bool = True
+    announcement_enabled: bool = False
+    announcement_text: str = Field(default="", max_length=500)
+
+    @field_validator("contact_email")
+    @classmethod
+    def valid_contact_email(cls, value: str):
+        if value and ("@" not in value or " " in value): raise ValueError("Contact email must be valid")
+        return value
+
+    @field_validator("supported_languages")
+    @classmethod
+    def english_only(cls, value: list[str]):
+        normalized = [item.strip().lower() for item in value if item.strip()]
+        if normalized != ["en"]: raise ValueError("Only English is currently supported")
+        return normalized
+
+class PlatformFeatureSettings(BaseModel):
+    courses_enabled: bool = True
+    challenges_enabled: bool = True
+    projects_enabled: bool = True
+    career_paths_enabled: bool = True
+    developer_tools_enabled: bool = True
+
 class PlatformPageOut(PlatformPageIn):
     updated_at: datetime | None = None

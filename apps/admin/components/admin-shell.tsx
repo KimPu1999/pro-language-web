@@ -10,7 +10,7 @@ import { ThemeSwitcher } from "@/components/theme-provider";
 type NavItem = { label: string; href: string; icon: typeof LayoutDashboard; roles?: string[] };
 type NavGroup = { label: string; items: NavItem[] };
 const groups: NavGroup[] = [
-  { label: "Overview", items: [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }, { label: "Analytics", href: "/analytics", icon: ChartNoAxesCombined }] },
+  { label: "Overview", items: [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }, { label: "Platform", href: "/platform", icon: Settings }, { label: "Analytics", href: "/analytics", icon: ChartNoAxesCombined }] },
   { label: "Learning", items: [{ label: "Courses", href: "/courses", icon: BookOpen }, { label: "Lessons", href: "/lessons", icon: NotebookText }, { label: "Projects", href: "/projects", icon: FolderCode }, { label: "Challenges", href: "/challenges", icon: Code2 }] },
   { label: "Career & tools", items: [{ label: "Career Paths", href: "/career-paths", icon: BriefcaseBusiness }, { label: "Developer Tools", href: "/developer-tools", icon: Wrench }] },
   { label: "People", items: [{ label: "Students", href: "/users", icon: Users }, { label: "Instructors", href: "/instructors", icon: GraduationCap }, { label: "Submissions", href: "/submissions", icon: ClipboardCheck }] },

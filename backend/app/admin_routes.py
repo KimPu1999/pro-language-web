@@ -8,7 +8,7 @@ from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_s
 from .db import get_db
 from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeExample, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, LessonRevision, MediaAsset, PlatformSetting, ProgrammingLanguage, ProjectTemplate, PublishingReview, QuizAttempt, QuizQuestion, User
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
-from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, MediaMetadataIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
+from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, MediaMetadataIn, NavigationSettings, PlatformFeatureSettings, PlatformGeneralSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
 from .media_storage import ALLOWED_MIME_TYPES, ensure_media_root, remove_file_if_safe, safe_media_path, save_course_image, save_media_upload
 from .navigation_config import NAVIGATION_DRAFT_KEY, NAVIGATION_KEY, NAVIGATION_PUBLISHED_KEY, read_admin_navigation, read_navigation, save_navigation, validate_navigation
@@ -19,6 +19,10 @@ DEFAULT_BRANDING=BrandingSettings().model_dump()
 HOMEPAGE_DRAFT_KEY="homepage:draft"
 HOMEPAGE_PUBLISHED_KEY="homepage:published"
 HOMEPAGE_REVISION_PREFIX="homepage:revision:"
+PLATFORM_GENERAL_KEY="platform:general"
+PLATFORM_FEATURES_KEY="platform:features"
+DEFAULT_PLATFORM_GENERAL=PlatformGeneralSettings().model_dump()
+DEFAULT_PLATFORM_FEATURES=PlatformFeatureSettings().model_dump()
 DEFAULT_HOMEPAGE=HomepageSettings().model_dump(mode="json")
 def admin_user(user: User=Depends(current_user)):
     if user.role not in CONTENT_ADMIN_ROLES: raise HTTPException(403,"Admin access required")
@@ -34,6 +38,17 @@ def branding_value(db):
     if not row: return DEFAULT_BRANDING.copy()
     try: return BrandingSettings(**{**DEFAULT_BRANDING, **json.loads(row.value_json or "{}")}).model_dump()
     except (TypeError, ValueError, json.JSONDecodeError): return DEFAULT_BRANDING.copy()
+def platform_setting_value(db, key, schema, default):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==key))
+    if not row: return schema.model_validate(default)
+    try: return schema.model_validate({**default, **json.loads(row.value_json or "{}")})
+    except (TypeError, ValueError, json.JSONDecodeError): return schema.model_validate(default)
+def save_platform_setting(db, user, key, value, action):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==key))
+    encoded=json.dumps(value.model_dump(mode="json"))
+    if row: row.value_json=encoded; row.updated_by=user.id
+    else: db.add(PlatformSetting(key=key,value_json=encoded,updated_by=user.id))
+    audit(db,user,action,"platform_setting")
 def homepage_value(db, key=HOMEPAGE_PUBLISHED_KEY):
     row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==key))
     if not row: return HomepageSettings.model_validate(DEFAULT_HOMEPAGE)
@@ -319,6 +334,44 @@ def settings_overview(user: User=Depends(full_admin), db: Session=Depends(get_db
         {"id":"homepage","title":"Homepage","status":"draft" if HOMEPAGE_DRAFT_KEY in keys else "published","details":"Homepage content and SEO settings"},
         {"id":"footer","title":"Footer","status":"configured" if FOOTER_KEY in keys else "default","details":"Footer links, social links, and legal navigation"},
     ]}
+
+@router.get("/platform/general", response_model=PlatformGeneralSettings)
+def get_platform_general(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    return platform_setting_value(db, PLATFORM_GENERAL_KEY, PlatformGeneralSettings, DEFAULT_PLATFORM_GENERAL)
+
+@router.patch("/platform/general", response_model=PlatformGeneralSettings)
+def update_platform_general(payload: PlatformGeneralSettings, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    save_platform_setting(db, user, PLATFORM_GENERAL_KEY, payload, "platform_general_updated")
+    db.commit()
+    return payload
+
+@router.get("/platform/features", response_model=PlatformFeatureSettings)
+def get_platform_features(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    return platform_setting_value(db, PLATFORM_FEATURES_KEY, PlatformFeatureSettings, DEFAULT_PLATFORM_FEATURES)
+
+@router.patch("/platform/features", response_model=PlatformFeatureSettings)
+def update_platform_features(payload: PlatformFeatureSettings, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    save_platform_setting(db, user, PLATFORM_FEATURES_KEY, payload, "platform_features_updated")
+    db.commit()
+    return payload
+
+@router.get("/platform/health")
+def platform_health(user: User=Depends(full_admin), db: Session=Depends(get_db)):
+    checks=[]
+    try:
+        db.execute(select(1)); checks.append({"name":"database","status":"healthy","detail":"PostgreSQL query succeeded"})
+    except Exception:
+        checks.append({"name":"database","status":"unavailable","detail":"Database query failed"})
+    try:
+        media_root=ensure_media_root()
+        checks.append({"name":"media_storage","status":"healthy" if media_root.exists() and media_root.is_dir() else "unavailable","detail":"Configured media storage is accessible" if media_root.exists() else "Configured media storage is missing"})
+    except Exception:
+        checks.append({"name":"media_storage","status":"unavailable","detail":"Configured media storage could not be checked"})
+    checks.extend([
+        {"name":"backend_api","status":"healthy","detail":"This authenticated health request reached FastAPI"},
+        {"name":"authentication","status":"healthy","detail":"Administrator session and RBAC checks succeeded"},
+    ])
+    return {"checks":checks,"source":"live_request_checks"}
 
 @router.get("/security/overview")
 def admin_security_overview(user: User=Depends(full_admin), db: Session=Depends(get_db)):

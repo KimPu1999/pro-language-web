@@ -116,7 +116,14 @@ def readiness(db: Session=Depends(get_db)):
 @app.get("/api/v1/site/branding", response_model=BrandingSettings)
 def site_branding(db: Session=Depends(get_db)):
     row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="branding"))
-    if not row: return BrandingSettings()
+    if not row:
+        general=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="platform:general"))
+        if general:
+            try:
+                values=json.loads(general.value_json or "{}")
+                return BrandingSettings(website_name=values.get("website_name", "Learn-Coding"))
+            except (TypeError, ValueError, json.JSONDecodeError): pass
+        return BrandingSettings()
     try: return BrandingSettings(**json.loads(row.value_json or "{}"))
     except (TypeError, ValueError, json.JSONDecodeError): return BrandingSettings()
 @app.get("/api/v1/site/navigation", response_model=NavigationSettings)

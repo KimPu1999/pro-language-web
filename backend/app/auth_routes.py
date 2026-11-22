@@ -1,4 +1,5 @@
 from datetime import timedelta
+import json
 import logging
 import time
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, Cookie
@@ -8,7 +9,7 @@ from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_s
 from .config import settings
 from .db import get_db
 from .mailer import mailer
-from .models import AuthSession, EmailVerificationToken, PasswordResetToken, SecurityAuditLog, User, UserProfile
+from .models import AuthSession, EmailVerificationToken, PasswordResetToken, PlatformSetting, SecurityAuditLog, User, UserProfile
 from .schemas import ChangePasswordIn, ForgotPasswordIn, LoginIn, RegisterIn, ResetPasswordIn, UserOut
 router=APIRouter(prefix="/api/v1/auth", tags=["auth"])
 logger = logging.getLogger("codemaster.auth")
@@ -18,8 +19,14 @@ def profile_payload(user: User, db: Session):
 def log_event(db, event, user_id=None, request=None): db.add(SecurityAuditLog(user_id=user_id,event=event,ip_address=request.client.host if request and request.client else None))
 def send_verification(db, user, request):
     raw=new_token(); db.add(EmailVerificationToken(user_id=user.id,token_hash=hash_token(raw),expires_at=now()+timedelta(hours=settings.verification_ttl_hours))); mailer.send(user.email,"Verify your CodeMaster Academy email",f"Open {settings.app_base_url}/verify-email?token={raw}"); log_event(db,"verification_requested",user.id,request)
+def public_registration_enabled(db):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="platform:general"))
+    if not row: return True
+    try: return bool(json.loads(row.value_json or "{}").get("registration_enabled", True))
+    except (TypeError, ValueError, json.JSONDecodeError): return True
 @router.post("/register", response_model=UserOut, status_code=201)
 def register(payload: RegisterIn, request: Request, response: Response, db: Session=Depends(get_db)):
+    if not public_registration_enabled(db): raise HTTPException(403,"Public registration is currently closed")
     check_rate_limit(f"register:{request.client.host if request.client else 'unknown'}", 5)
     validate_password(payload.password); email=normalize_email(payload.email)
     if db.scalar(select(User).where(User.email_normalized==email)): raise HTTPException(400,"Unable to create account with those details")
