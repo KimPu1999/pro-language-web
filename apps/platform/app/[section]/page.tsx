@@ -12,13 +12,13 @@ const sectionIcons = { courses: BookOpen, projects: FolderCode, challenges: Code
 export default function Section({ params }: { params: Promise<{ section: string }> }) {
   const { section } = use(params);
   const title = section.replaceAll("-", " ").replace(/\b\w/g, character => character.toUpperCase());
-  const [data, setData] = useState<any>(null); const [pageData, setPageData] = useState<any>(null);
+  const [data, setData] = useState<any>(null); const [pageData, setPageData] = useState<any>(null); const [pageState, setPageState] = useState<"idle" | "loading" | "not_found" | "error">("idle");
   const endpoint = endpoints[section];
   const Icon = sectionIcons[section as keyof typeof sectionIcons] ?? Compass;
 
   useEffect(() => {
     if (endpoint) fetch(endpoint).then(response => response.ok ? response.json() : null).then(setData).catch(() => setData(null));
-    else if (!["tools", "dashboard", "profile", "achievements"].includes(section)) fetch(`/api/v1/site/pages/${section}`).then(response => response.ok ? response.json() : null).then(setPageData).catch(() => setPageData(null));
+    else if (!["tools", "dashboard", "profile", "achievements"].includes(section)) { setPageState("loading"); fetch(`/api/v1/site/pages/${section}`).then(async response => { if (response.status === 404) { setPageState("not_found"); return null; } if (!response.ok) throw new Error("page request failed"); setPageState("idle"); return response.json(); }).then(setPageData).catch(() => { setPageState("error"); setPageData(null); }); }
   }, [endpoint, section]);
 
   const items = data?.items ?? [];
@@ -29,7 +29,9 @@ export default function Section({ params }: { params: Promise<{ section: string 
     {endpoint && data && <div className="mt-10 grid gap-4 md:grid-cols-3">{items.map((item: any) => <Link key={item.slug ?? item.id} href={`${detailPaths[section]}/${item.slug}`} className="group rounded-xl border border-line bg-surface p-5 hover:border-indigo-400"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-300"><Icon size={18} aria-hidden="true" /></div><h2 className="mt-4 font-semibold group-hover:text-indigo-200">{item.title}</h2><p className="mt-2 text-sm text-slate-400">{item.description ?? item.description_en ?? "Published Learn-Coding resource."}</p><span className="mt-4 inline-flex items-center gap-1 text-xs text-indigo-300">Open resource <ArrowRight size={14} aria-hidden="true" /></span></Link>)}</div>}
     {endpoint && data && items.length === 0 && <p className="mt-10 rounded-xl border border-line bg-surface p-5 text-slate-400">No published {title.toLowerCase()} are available yet.</p>}
     {!endpoint && pageData && <article className="prose prose-invert mt-10 max-w-3xl rounded-xl border border-line bg-surface p-6 whitespace-pre-wrap text-slate-300">{pageData.body}</article>}
-    {!endpoint && !pageData && section !== "tools" && <p className="mt-10 rounded-xl border border-line bg-surface p-5 text-slate-400">This public page has not been published yet.</p>}
+    {!endpoint && !pageData && pageState === "loading" && <p className="mt-10 rounded-xl border border-line bg-surface p-5 text-slate-400">Loading page…</p>}
+    {!endpoint && !pageData && pageState === "not_found" && <p className="mt-10 rounded-xl border border-line bg-surface p-5 text-slate-400">This page is not available.</p>}
+    {!endpoint && !pageData && pageState === "error" && <p role="alert" className="mt-10 rounded-xl border border-red-400/20 bg-red-500/10 p-5 text-red-200">Unable to load this page. Please try again later.</p>}
     <Link href="/" className="mt-10 inline-flex items-center gap-2 text-indigo-300"><ArrowLeft size={16} aria-hidden="true" /> Back home</Link>
   </section>;
 }

@@ -19,6 +19,7 @@ DEFAULT_BRANDING=BrandingSettings().model_dump()
 HOMEPAGE_DRAFT_KEY="homepage:draft"
 HOMEPAGE_PUBLISHED_KEY="homepage:published"
 HOMEPAGE_REVISION_PREFIX="homepage:revision:"
+CMS_RESERVED_SLUGS={"courses","challenges","projects","careers","tools","dashboard","profile","achievements","login"}
 PLATFORM_GENERAL_KEY="platform:general"
 PLATFORM_FEATURES_KEY="platform:features"
 DEFAULT_PLATFORM_GENERAL=PlatformGeneralSettings().model_dump()
@@ -516,18 +517,66 @@ def publish_footer_settings(user: User=Depends(full_admin), _: None=Depends(requ
     else: db.add(PlatformSetting(key=FOOTER_DRAFT_KEY, value_json=json.dumps(values), updated_by=user.id))
     audit(db, user, "footer_published", "platform_setting"); db.commit(); return values
 @router.get("/pages")
-def list_platform_pages(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+def list_platform_pages(search: str|None=None, status: str|None=None, page: int=Query(1,ge=1), page_size: int=Query(20,ge=1,le=100), user: User=Depends(admin_user), db: Session=Depends(get_db)):
     rows=db.scalars(select(PlatformSetting).where(PlatformSetting.key.like("page:%")).order_by(PlatformSetting.key)).all()
     pages=[]
     for row in rows:
         try: pages.append(PlatformPageOut.model_validate(json.loads(row.value_json or "{}")))
         except (TypeError, ValueError, json.JSONDecodeError): continue
-    return pages
+    if search: pages=[item for item in pages if search.lower() in item.title.lower() or search.lower() in item.slug.lower()]
+    if status: pages=[item for item in pages if item.status==status]
+    total=len(pages); start=(page-1)*page_size
+    return {"items":pages[start:start+page_size],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+@router.get("/pages/diagnostics")
+def platform_page_diagnostics(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    listing=list_platform_pages(page=1,page_size=100,user=user,db=db)
+    navigation=read_admin_navigation(db)
+    links=getattr(navigation,"items",[])
+    result=[]
+    for item in listing["items"]:
+        references=[link.label for link in links if getattr(link,"href","")==f"/{item.slug}"]
+        result.append({"slug":item.slug,"route":f"/{item.slug}","exists":True,"status":item.status,"published":item.status=="published","published_at":item.published_at,"updated_at":item.updated_at,"navigation_references":references,"recommendation":"No action required" if item.status=="published" else "Publish the page after reviewing its content"})
+    return {"items":result,"source":"database_and_published_navigation"}
+@router.get("/pages/{slug}", response_model=PlatformPageOut)
+def get_platform_page(slug: str, user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==f"page:{slug}"))
+    if not row: raise HTTPException(404, "Page not found")
+    try: return PlatformPageOut.model_validate(json.loads(row.value_json or "{}"))
+    except (TypeError, ValueError, json.JSONDecodeError): raise HTTPException(500, "Stored page content is invalid")
+@router.get("/pages/{slug}/preview", response_model=PlatformPageOut)
+def preview_platform_page(slug: str, user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    return get_platform_page(slug, user, db)
+def _page_status(slug: str, status: str, user: User, db: Session):
+    page=get_platform_page(slug,user,db)
+    return upsert_platform_page(slug,page.model_copy(update={"status":status}),user,None,db)
+@router.post("/pages/{slug}/publish", response_model=PlatformPageOut)
+def publish_platform_page(slug: str, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    page=get_platform_page(slug,user,db)
+    if not page.title or not page.body.strip(): raise HTTPException(422,"A page title and content are required before publishing")
+    return _page_status(slug,"published",user,db)
+@router.post("/pages/{slug}/unpublish", response_model=PlatformPageOut)
+def unpublish_platform_page(slug: str, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    return _page_status(slug,"draft",user,db)
+@router.post("/pages/{slug}/archive", response_model=PlatformPageOut)
+def archive_platform_page(slug: str, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    return _page_status(slug,"archived",user,db)
+@router.post("/pages/{slug}/restore", response_model=PlatformPageOut)
+def restore_platform_page(slug: str, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    return _page_status(slug,"draft",user,db)
 @router.put("/pages/{slug}", response_model=PlatformPageOut)
 def upsert_platform_page(slug: str, payload: PlatformPageIn, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
     if slug != payload.slug: raise HTTPException(422, "Page slug does not match path")
-    values=payload.model_dump()
-    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==f"page:{slug}"))
+    if slug in CMS_RESERVED_SLUGS: raise HTTPException(409, "This slug belongs to an application route and cannot be used for a CMS page")
+    existing=db.scalar(select(PlatformSetting).where(PlatformSetting.key==f"page:{slug}"))
+    previous={}
+    if existing:
+        try: previous=json.loads(existing.value_json or "{}")
+        except (TypeError, ValueError, json.JSONDecodeError): previous={}
+    published_at=previous.get("published_at")
+    if payload.status == "published" and previous.get("status") != "published": published_at=datetime.now(timezone.utc).isoformat()
+    if payload.status != "published": published_at=None
+    values={**payload.model_dump(mode="json"), "published_at": published_at}
+    row=existing
     if row: row.value_json=json.dumps(values); row.updated_by=user.id
     else: db.add(PlatformSetting(key=f"page:{slug}",value_json=json.dumps(values),updated_by=user.id))
     audit(db,user,f"page_{payload.status}","platform_page"); db.commit(); return values

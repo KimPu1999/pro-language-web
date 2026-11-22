@@ -36,6 +36,25 @@ def test_admin_navigation_and_published_page_reach_public_api(client):
     assert public.status_code == 200
     assert public.json()["title"] == "About Learn-Coding"
 
+def test_public_page_management_diagnostics_and_restore(client):
+    csrf = admin_login(client)
+    page = {"slug": "contact", "title": "Contact", "body": "Contact us.", "status": "draft"}
+    created = client.put("/api/v1/admin/pages/contact", json=page, headers={"X-CSRF-Token": csrf})
+    assert created.status_code == 200 and created.json()["published_at"] is None
+    assert client.get("/api/v1/admin/pages/contact/preview").status_code == 200
+    assert client.get("/api/v1/site/pages/contact").status_code == 404
+    published = client.post("/api/v1/admin/pages/contact/publish", headers={"X-CSRF-Token": csrf})
+    assert published.status_code == 200 and published.json()["published_at"]
+    assert client.get("/api/v1/site/pages/contact").status_code == 200
+    diagnostics = client.get("/api/v1/admin/pages/diagnostics")
+    assert diagnostics.status_code == 200 and diagnostics.json()["items"][0]["route"] == "/contact"
+    assert client.post("/api/v1/admin/pages/contact/archive", headers={"X-CSRF-Token": csrf}).status_code == 200
+    assert client.get("/api/v1/site/pages/contact").status_code == 404
+    assert client.post("/api/v1/admin/pages/contact/restore", headers={"X-CSRF-Token": csrf}).status_code == 200
+    assert client.post("/api/v1/admin/pages/contact/publish", headers={"X-CSRF-Token": csrf}).status_code == 200
+    assert client.get("/api/v1/site/pages/contact").status_code == 200
+    assert client.put("/api/v1/admin/pages/courses", json={**page, "slug": "courses"}, headers={"X-CSRF-Token": csrf}).status_code == 409
+
 
 def test_navigation_draft_is_private_until_publish_and_supports_safe_dropdowns(client):
     csrf = admin_login(client)

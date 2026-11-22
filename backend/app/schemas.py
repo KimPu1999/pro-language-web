@@ -375,6 +375,9 @@ class PlatformPageIn(BaseModel):
     slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=120)
     title: str = Field(min_length=2, max_length=180)
     body: str = Field(default="", max_length=100000)
+    featured_image_url: str | None = Field(default=None, max_length=500)
+    seo_title: str = Field(default="", max_length=180)
+    meta_description: str = Field(default="", max_length=320)
     status: str = Field(default="draft", pattern=r"^(draft|in_review|published|archived)$")
 
 class PlatformGeneralSettings(BaseModel):
@@ -410,3 +413,4 @@ class PlatformFeatureSettings(BaseModel):
 
 class PlatformPageOut(PlatformPageIn):
     updated_at: datetime | None = None
+    published_at: datetime | None = None
