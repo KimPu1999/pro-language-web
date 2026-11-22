@@ -1,16 +1,16 @@
 import json, math
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
-from fastapi import APIRouter, Cookie, Depends, File, HTTPException, Query, Request, Response, UploadFile
+from fastapi import APIRouter, Cookie, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, normalize_email, now, require_csrf, verify_password
 from .db import get_db
-from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeExample, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, LessonRevision, PlatformSetting, ProgrammingLanguage, ProjectTemplate, PublishingReview, QuizAttempt, QuizQuestion, User
+from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeExample, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, LessonRevision, MediaAsset, PlatformSetting, ProgrammingLanguage, ProjectTemplate, PublishingReview, QuizAttempt, QuizQuestion, User
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
-from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
+from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, MediaMetadataIn, NavigationSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
-from .media_storage import ensure_media_root, remove_file_if_safe, save_course_image
+from .media_storage import ALLOWED_MIME_TYPES, ensure_media_root, remove_file_if_safe, safe_media_path, save_course_image, save_media_upload
 from .navigation_config import NAVIGATION_DRAFT_KEY, NAVIGATION_KEY, NAVIGATION_PUBLISHED_KEY, read_admin_navigation, read_navigation, save_navigation, validate_navigation
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
@@ -232,20 +232,83 @@ def list_admin_audit_logs(search: str|None=None, page: int=Query(1,ge=1), page_s
     rows=db.scalars(query.order_by(AdminAuditLog.created_at.desc()).offset((page-1)*page_size).limit(page_size)).all()
     return {"items":[{"id":row.id,"action":row.action,"entity_type":row.entity_type,"entity_id":row.entity_id,"actor_id":row.actor_id,"created_at":row.created_at} for row in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
 
-@router.get("/media")
-def list_public_media(search: str|None=None, page: int=Query(1,ge=1), page_size: int=Query(24,ge=1,le=100), user: User=Depends(admin_user)):
-    """List persisted public media without exposing private filesystem paths."""
-    root=ensure_media_root().resolve(); rows=[]
+def _media_response(row: MediaAsset, db: Session):
+    url = f"/media/{row.storage_key}"
+    used_in = []
+    for course in db.scalars(select(Course).where(Course.thumbnail == url)).all(): used_in.append({"type": "course", "id": str(course.id), "title": course.title})
+    for project in db.scalars(select(ProjectTemplate).where(ProjectTemplate.cover_image == url)).all(): used_in.append({"type": "project", "id": str(project.id), "title": project.title})
+    for roadmap in db.scalars(select(CareerRoadmap).where(CareerRoadmap.cover_image == url)).all(): used_in.append({"type": "career_path", "id": str(roadmap.id), "title": roadmap.title})
+    return {"id": row.id, "original_filename": row.original_filename, "storage_key": row.storage_key, "url": url, "mime_type": row.mime_type, "size_bytes": row.size_bytes, "width": row.width, "height": row.height, "title": row.title or row.original_filename, "alt_text": row.alt_text, "caption": row.caption, "collection": row.collection, "status": row.status, "uploaded_by": row.uploaded_by, "created_at": row.created_at, "updated_at": row.updated_at, "used_in": used_in}
+
+def _sync_legacy_media(db: Session):
+    root = ensure_media_root().resolve()
+    known = set(db.scalars(select(MediaAsset.storage_key)).all())
+    changed = False
+    mime_by_suffix = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".pdf": "application/pdf"}
     for path in root.rglob("*"):
-        if not path.is_file() or "private" in path.parts or path.suffix.lower() not in {".jpg",".jpeg",".png",".webp"}:
-            continue
-        key=path.relative_to(root).as_posix()
-        if search and search.lower() not in key.lower(): continue
-        stat=path.stat()
-        rows.append({"id":key,"title":path.name,"path":f"/media/{key}","size":stat.st_size,"updated_at":datetime.fromtimestamp(stat.st_mtime,timezone.utc)})
-    rows.sort(key=lambda item:item["updated_at"],reverse=True)
-    total=len(rows); start=(page-1)*page_size
-    return {"items":rows[start:start+page_size],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+        if not path.is_file() or "private" in path.parts or path.suffix.lower() not in mime_by_suffix: continue
+        key = path.relative_to(root).as_posix()
+        if key in known: continue
+        stat = path.stat()
+        db.add(MediaAsset(original_filename=path.name, storage_key=key, mime_type=mime_by_suffix[path.suffix.lower()], size_bytes=stat.st_size, title=path.stem, collection=path.parts[0] if len(path.parts) > 1 else "general", status="active"))
+        changed = True
+    if changed: db.commit()
+
+@router.get("/media")
+def list_public_media(search: str|None=None, media_type: str|None=None, collection: str|None=None, sort: str=Query("date", pattern="^(date|name|size)$"), page: int=Query(1,ge=1), page_size: int=Query(24,ge=1,le=100), user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    """List database-backed public assets; legacy files are imported idempotently."""
+    _sync_legacy_media(db)
+    query = select(MediaAsset).where(MediaAsset.status == "active")
+    if search: query = query.where(MediaAsset.title.ilike(f"%{search}%") | MediaAsset.original_filename.ilike(f"%{search}%") | MediaAsset.alt_text.ilike(f"%{search}%"))
+    if media_type: query = query.where(MediaAsset.mime_type.like(f"{media_type}%"))
+    if collection: query = query.where(MediaAsset.collection == collection)
+    ordering = MediaAsset.original_filename.asc() if sort == "name" else MediaAsset.size_bytes.desc() if sort == "size" else MediaAsset.created_at.desc()
+    rows = db.scalars(query.order_by(ordering).offset((page - 1) * page_size).limit(page_size)).all()
+    count = select(func.count()).select_from(MediaAsset).where(MediaAsset.status == "active")
+    if search: count = count.where(MediaAsset.title.ilike(f"%{search}%") | MediaAsset.original_filename.ilike(f"%{search}%") | MediaAsset.alt_text.ilike(f"%{search}%"))
+    if media_type: count = count.where(MediaAsset.mime_type.like(f"{media_type}%"))
+    if collection: count = count.where(MediaAsset.collection == collection)
+    total = db.scalar(count) or 0
+    return {"items": [_media_response(row, db) for row in rows], "page": page, "page_size": page_size, "total": total, "pages": math.ceil(total / page_size) if total else 0}
+
+@router.post("/media", status_code=201)
+async def upload_media(file: UploadFile=File(...), title: str=Form(""), alt_text: str=Form(""), caption: str=Form(""), collection: str=Form("general"), user: User=Depends(admin_user), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    if not collection or len(collection) > 80 or not all(char.isalnum() or char in "_-" for char in collection): raise HTTPException(422, "Collection must contain only letters, numbers, hyphens, or underscores")
+    url, _, mime_type, size_bytes, width, height = await save_media_upload(file)
+    key = url.removeprefix("/media/")
+    row = MediaAsset(original_filename=(file.filename or "upload")[:255], storage_key=key, mime_type=mime_type, size_bytes=size_bytes, width=width, height=height, title=title[:180] or (file.filename or "upload")[:180], alt_text=alt_text[:240], caption=caption[:2000], collection=collection, uploaded_by=user.id)
+    db.add(row); audit(db, user, "media_uploaded", "media", row.id); db.commit(); db.refresh(row)
+    return _media_response(row, db)
+
+@router.get("/media/{media_id}")
+def get_media(media_id: UUID, user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    row = db.get(MediaAsset, media_id)
+    if not row: raise HTTPException(404, "Media not found")
+    return _media_response(row, db)
+
+@router.patch("/media/{media_id}")
+def update_media(media_id: UUID, payload: MediaMetadataIn, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    row = db.get(MediaAsset, media_id)
+    if not row: raise HTTPException(404, "Media not found")
+    for key, value in payload.model_dump().items(): setattr(row, key, value)
+    audit(db, user, "media_metadata_updated", "media", row.id); db.commit(); db.refresh(row)
+    return _media_response(row, db)
+
+@router.delete("/media/{media_id}")
+def archive_media(media_id: UUID, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    row = db.get(MediaAsset, media_id)
+    if not row: raise HTTPException(404, "Media not found")
+    used = _media_response(row, db)["used_in"]
+    if used: raise HTTPException(409, {"message": "Media is still in use", "used_in": used})
+    row.status = "archived"; audit(db, user, "media_archived", "media", row.id); db.commit()
+    return {"id": row.id, "status": row.status}
+
+@router.post("/media/{media_id}/restore")
+def restore_media(media_id: UUID, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    row = db.get(MediaAsset, media_id)
+    if not row: raise HTTPException(404, "Media not found")
+    if not safe_media_path(f"/media/{row.storage_key}") or not safe_media_path(f"/media/{row.storage_key}").is_file(): raise HTTPException(410, "Stored media file is no longer available")
+    row.status = "active"; audit(db, user, "media_restored", "media", row.id); db.commit(); return _media_response(row, db)
 
 @router.get("/settings/overview")
 def settings_overview(user: User=Depends(full_admin), db: Session=Depends(get_db)):

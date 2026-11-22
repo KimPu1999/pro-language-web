@@ -261,6 +261,12 @@ class NavigationSettings(BaseModel):
     items: list[NavigationItem] = Field(default_factory=list, max_length=100)
     status: str = Field(default="published", pattern=r"^(draft|published)$")
 
+class MediaMetadataIn(BaseModel):
+    title: str = Field(default="", max_length=180)
+    alt_text: str = Field(default="", max_length=240)
+    caption: str = Field(default="", max_length=2000)
+    collection: str = Field(default="general", pattern=r"^[A-Za-z0-9_-]{1,80}$")
+
 class HomepageSection(BaseModel):
     id: str = Field(default="", pattern=r"^[A-Za-z0-9_-]*$", max_length=80)
     key: str = Field(pattern=r"^[a-z0-9-]+$", min_length=1, max_length=60)

@@ -14,6 +14,7 @@ ALLOWED_MIME_TYPES = {
     "image/png": "png",
     "image/webp": "webp",
 }
+ALLOWED_DOCUMENT_TYPES = {"application/pdf": "pdf"}
 MEDIA_PREFIX = "/media/"
 
 
@@ -124,6 +125,26 @@ async def save_roadmap_image(upload: UploadFile) -> tuple[str, Path, tuple[int, 
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)
     return f"{settings.media_url_prefix.rstrip('/')}/{key.as_posix()}", path, (width, height)
+
+
+async def save_media_upload(upload: UploadFile) -> tuple[str, Path, str, int, int | None, int | None]:
+    """Validate and persist a library asset in the durable shared media root."""
+    data = await upload.read(settings.media_max_bytes + 1)
+    if len(data) > settings.media_max_bytes:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Media file is too large")
+    declared = upload.content_type or ""
+    if data.startswith(b"%PDF-"):
+        detected, extension, dimensions = "application/pdf", "pdf", (None, None)
+    else:
+        detected, width, height = inspect_image(data, declared, upload.filename)
+        extension, dimensions = ALLOWED_MIME_TYPES[detected], (width, height)
+    if declared and declared not in {"application/octet-stream", "application/binary"} and declared != detected:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "The file type does not match its content")
+    key = Path("library") / f"{uuid4().hex}.{extension}"
+    path = ensure_media_root() / key
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    return f"{settings.media_url_prefix.rstrip('/')}/{key.as_posix()}", path, detected, len(data), dimensions[0], dimensions[1]
 
 
 async def save_project_submission_archive(upload: UploadFile) -> tuple[str, Path, str, int]:

@@ -64,6 +64,22 @@ class PlatformSetting(TimestampMixin, Base):
     key: Mapped[str]=mapped_column(String(120),nullable=False,index=True)
     value_json: Mapped[str]=mapped_column(Text,default="{}",nullable=False)
     updated_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True)
+class MediaAsset(TimestampMixin, Base):
+    __tablename__="media_assets"
+    __table_args__=(Index("ix_media_assets_status_created","status","created_at"), Index("ix_media_assets_collection","collection"))
+    id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4)
+    original_filename: Mapped[str]=mapped_column(String(255))
+    storage_key: Mapped[str]=mapped_column(String(500),unique=True,index=True)
+    mime_type: Mapped[str]=mapped_column(String(120))
+    size_bytes: Mapped[int]=mapped_column(Integer)
+    width: Mapped[int|None]=mapped_column(Integer,nullable=True)
+    height: Mapped[int|None]=mapped_column(Integer,nullable=True)
+    title: Mapped[str]=mapped_column(String(180),default="")
+    alt_text: Mapped[str]=mapped_column(String(240),default="")
+    caption: Mapped[str]=mapped_column(Text,default="")
+    collection: Mapped[str]=mapped_column(String(80),default="general")
+    status: Mapped[str]=mapped_column(String(20),default="active",index=True)
+    uploaded_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True,index=True)
 
 class ToolCategory(TimestampMixin, Base):
     __tablename__ = "tool_categories"

@@ -2,6 +2,7 @@
 
 import { ImagePlus, RefreshCw, Trash2, UploadCloud } from "lucide-react";
 import { DragEvent, useEffect, useRef, useState } from "react";
+import { MediaPicker } from "@/components/media-picker";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -111,6 +112,7 @@ export function CourseCoverUpload({ courseId, courseTitle, value, disabled = fal
       <div className="flex flex-col justify-center gap-3">
         <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={busy || disabled || !courseId} onChange={event => { const file = event.target.files?.[0]; if (file) upload(file); event.currentTarget.value = ""; }} />
         <button type="button" disabled={busy || disabled || !courseId} onClick={() => inputRef.current?.click()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"><UploadCloud size={17} /> {value ? "Replace image" : "Choose file"}</button>
+        <MediaPicker value={value} onSelect={asset => { onChange(asset.url); setMessage("Media library image selected. Save the course to apply it."); setError(""); }} />
         {!courseId && <p className="text-center text-xs leading-5 text-muted">Create the course draft first, then upload its cover.</p>}
         {value && !busy && <p className="flex items-center justify-center gap-2 text-xs text-emerald-700 dark:text-emerald-200"><RefreshCw size={13} /> Saved to this course</p>}
       </div>
