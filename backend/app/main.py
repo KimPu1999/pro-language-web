@@ -224,9 +224,7 @@ def course(slug: str, db: Session=Depends(get_db)):
     modules=public_modules(row.modules)
     instructor_rows=db.execute(select(User,UserProfile).join(CourseInstructor,CourseInstructor.user_id==User.id).outerjoin(UserProfile,UserProfile.user_id==User.id).where(CourseInstructor.course_id==row.id,User.role=="instructor",User.account_status=="active").order_by(User.display_name)).all()
     instructors=[{"id":user.id,"name":user.display_name,"avatar_url":profile.avatar_url if profile else None,"bio":profile.bio if profile else None} for user,profile in instructor_rows]
-    related_rows=db.scalars(course_query().where(Course.category_id==row.category_id,Course.id!=row.id).order_by(Course.updated_at.desc()).limit(3)).all()
-    related=[{"id":item.id,"title":item.title,"slug":item.slug,"thumbnail":item.thumbnail,"level":item.level,"short_description":item.short_description or ""} for item in related_rows]
-    return course_payload(row, len(modules), sum(len(module["lessons"]) for module in modules), modules, instructors, related)
+    return course_payload(row, len(modules), sum(len(module["lessons"]) for module in modules), modules, instructors, [])
 @app.get("/api/v1/courses/{slug}/learning",response_model=CourseLearningOut)
 def course_learning(slug: str, db: Session=Depends(get_db)):
     """Return course structure without downloading all lesson bodies."""
