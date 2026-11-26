@@ -26,4 +26,6 @@ a { color: inherit; text-decoration: none; }
 button, a, input, select { outline-offset: 3px; }
 :focus-visible { outline: 2px solid #818cf8; }
 ::selection { background: #6366f1; color: white; }
+.dashboard-shell .dashboard-main > section[class*="max-w-"],
+.dashboard-shell .dashboard-main > div[class*="max-w-"] { width: 100%; max-width: 1440px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
