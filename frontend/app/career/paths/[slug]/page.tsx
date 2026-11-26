@@ -1,2 +1,5 @@
-import { CareerPath } from "@/components/career-pages";
-export default async function Page({params}:{params:Promise<{slug:string}>}){return <CareerPath slug={(await params).slug}/>;}
+import { redirect } from "next/navigation";
+
+export default async function Page({params}:{params:Promise<{slug:string}>}){
+  redirect(`/careers/paths/${encodeURIComponent((await params).slug)}`);
+}

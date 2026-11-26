@@ -72,7 +72,6 @@ const groups: ManagementNavGroup[] = [
     items: [
       { label: "Content Studio", href: "/platform/content-studio", icon: Terminal, roles: PLATFORM_ROLES },
       { label: "Content Review", href: "/platform/content-review", icon: ShieldCheck, roles: PLATFORM_ROLES },
-      { label: "Syntax References", href: "/admin/courses", icon: Code2, roles: CONTENT_ROLES },
       { label: "Media Library", href: "/platform/media", icon: Images, roles: PLATFORM_ROLES },
       { label: "Translations", href: "/admin/translations", icon: Languages, roles: PLATFORM_ROLES },
       { label: "Categories", href: "/admin/categories", icon: Tags, roles: PLATFORM_ROLES },

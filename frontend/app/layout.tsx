@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en">
+  return <html lang="en" suppressHydrationWarning>
     <body><I18nProvider><PwaRegister /><SiteFrame>{children}</SiteFrame></I18nProvider></body>
   </html>;
 }

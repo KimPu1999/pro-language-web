@@ -5,8 +5,8 @@
 
 :root { color-scheme: dark; }
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; background: #0B1020; color: #F8FAFC; font-family: Inter, 'Noto Sans Myanmar', sans-serif; }
+html { max-width: 100%; overflow-x: hidden; scroll-behavior: smooth; }
+body { min-width: 320px; max-width: 100%; margin: 0; overflow-x: hidden; background: #0B1020; color: #F8FAFC; font-family: Inter, 'Noto Sans Myanmar', sans-serif; }
 .theme-light body { background: #f8fafc; color: #0f172a; }
 .theme-light .bg-ink { background-color: #f8fafc; }
 .theme-light .bg-surface { background-color: #ffffff; }
@@ -24,6 +24,8 @@ body { margin: 0; background: #0B1020; color: #F8FAFC; font-family: Inter, 'Noto
 .theme-light .dashboard-shell .border-line { border-color: #263653; }
 a { color: inherit; text-decoration: none; }
 button, a, input, select { outline-offset: 3px; }
+img, video, canvas { max-width: 100%; }
+pre { max-width: 100%; overflow-x: auto; }
 :focus-visible { outline: 2px solid #818cf8; }
 ::selection { background: #6366f1; color: white; }
 .dashboard-shell .dashboard-main > section[class*="max-w-"],

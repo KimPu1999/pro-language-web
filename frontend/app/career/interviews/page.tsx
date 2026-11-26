@@ -1,2 +1,3 @@
-import { Interviews } from "@/components/career-pages";
-export default function Page(){return <Interviews/>;}
+import { redirect } from "next/navigation";
+
+export default function Page(){ redirect("/careers/interview"); }

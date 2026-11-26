@@ -1,3 +1,5 @@
-import QualityPage from "../quality/page";
+import { redirect } from "next/navigation";
 
-export default QualityPage;
+export default function QualityCenterPage() {
+  redirect("/platform/quality");
+}

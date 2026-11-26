@@ -1,2 +1,3 @@
-import { ResumeBuilder } from "@/components/career-pages";
-export default function Page(){return <ResumeBuilder/>;}
+import { redirect } from "next/navigation";
+
+export default function Page(){ redirect("/careers/resume-builder"); }
