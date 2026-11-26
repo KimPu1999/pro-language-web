@@ -24,6 +24,7 @@ import { AWSArchitectureExplorer } from "@/components/aws-architecture-explorer"
 import { CICDPipelineVisualizer } from "@/components/ci-cd-pipeline-visualizer";
 import { CybersecurityVisualizer } from "@/components/cybersecurity-visualizer";
 import { LessonNotes } from "@/components/notebook-page";
+import { useI18n } from "@/lib/i18n";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -34,6 +35,7 @@ function ProgressBar({ value }: { value: number }) {
 }
 
 export function LessonReader({ lesson, courseId, courseSlug, courseTitle, moduleTitle, modulePosition }: { lesson: Lesson; courseId: string; courseSlug: string; courseTitle: string; moduleTitle?: string; modulePosition?: number }) {
+  const { locale, t, localized } = useI18n();
   const [exampleIndex, setExampleIndex] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -45,6 +47,7 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
   const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [progress, setProgress] = useState<CourseProgress | null>(null);
   const example = lesson.code_examples[exampleIndex];
+  const lessonContent = localized(lesson.content_en, lesson.content_mm);
   const visitedLesson = useRef<string | null>(null);
 
   const lessonProgress = progress?.lessons.find(item => item.lesson_id === lesson.id);
@@ -77,10 +80,10 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
     try {
       await api.progress(lesson.id, true, csrf());
       setCompleted(true);
-      setMessage("Lesson marked complete.");
+      setMessage(t("lessonMarked"));
       api.courseProgress(courseSlug).then(setProgress).catch(() => {});
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Sign in and enroll to save progress.");
+      setMessage(error instanceof Error ? error.message : t("signInProgress"));
     }
   }
   async function toggleBookmark() {
@@ -89,7 +92,7 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
       const result = await api.bookmark(lesson.id, csrf());
       setBookmarked(result.bookmarked);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Sign in to bookmark this lesson.");
+      setMessage(error instanceof Error ? error.message : t("signInBookmark"));
     }
   }
 
@@ -101,13 +104,13 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs text-slate-500">
-              <span className="text-indigo-300">{courseTitle}</span> · Lesson {lesson.order_index}
-              {moduleTitle ? ` · Module ${modulePosition ?? ""} ${moduleTitle}` : ""}
+              <span className="text-indigo-300">{courseTitle}</span> · {t("lesson")} {lesson.order_index}
+              {moduleTitle ? ` · ${t("module")} ${modulePosition ?? ""} ${moduleTitle}` : ""}
             </p>
             <div className="mt-2 flex items-center gap-3">
               <div className="w-full max-w-xs"><ProgressBar value={percentage} /></div>
               <span className="shrink-0 text-[11px] text-slate-500">
-                {progress ? `${progress.completed_lessons}/${progress.total_lessons} complete` : "Sign in and enroll to save progress"}
+                {progress ? `${progress.completed_lessons}/${progress.total_lessons} ${t("complete")}` : t("signInProgress")}
               </span>
             </div>
           </div>
@@ -117,10 +120,10 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
               className={`rounded-lg border px-3 py-2 text-sm ${bookmarked ? "border-indigo-400 bg-indigo-500/15 text-indigo-200" : "border-line text-slate-300"}`}
               aria-pressed={bookmarked}
             >
-              {bookmarked ? "Bookmarked" : "Bookmark"}
+              {bookmarked ? t("bookmarked") : t("bookmark")}
             </button>
             <button onClick={complete} disabled={completed} className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold disabled:cursor-default disabled:opacity-60">
-              {completed ? "Completed" : "Mark complete"}
+              {completed ? t("completed") : t("markComplete")}
             </button>
           </div>
         </div>
@@ -132,15 +135,16 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
       <LessonNotes courseId={courseId} lessonId={lesson.id} courseSlug={courseSlug} lessonSlug={lesson.slug} />
 
       <article aria-label="Lesson content">
-        <LessonContent content={lesson.content_en} />
+        {locale === "my" && !lesson.content_mm?.trim() && <p className="mb-5 rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-amber-200" role="status">{t("myanmarMissing")}</p>}
+        <LessonContent content={lessonContent} />
       </article>
 
       {lesson.code_examples.length > 0 && (
         <section className="mt-10" aria-label="Explained code examples">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-bold">Explained examples</h2>
-              <p className="mt-1 text-sm text-slate-500">Read the code and expected behavior before trying it yourself.</p>
+              <h2 className="text-xl font-bold">{t("explainedExamples")}</h2>
+              <p className="mt-1 text-sm text-slate-500">{t("readCode")}</p>
             </div>
             <div className="flex flex-wrap gap-2" role="tablist" aria-label="Code examples">
               {lesson.code_examples.map((item, index) => (
@@ -151,7 +155,7 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
                   onClick={() => setExampleIndex(index)}
                   className={`rounded-lg px-3 py-2 text-xs ${index === exampleIndex ? "bg-indigo-500/20 text-indigo-200" : "bg-surface text-slate-400"}`}
                 >
-                  Example {index + 1}
+                  {t("example")} {index + 1}
                 </button>
               ))}
             </div>

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, current_user, require_csrf, verified_user, hash_token, now
 from .db import get_db
 from .models import AuthSession, Course, CourseModule, Enrollment, IssuedCertificate, LearningStreak, Lesson, LessonBookmark, LessonProgress, LessonQuiz, QuizAttempt, QuizQuestion, User, UserProfile
-from .schemas import DashboardOut, EnrollmentOut, ProfileIn, ProgressIn, QuizAnswerIn, QuizOut, UserOut
+from .schemas import DashboardOut, EnrollmentOut, LocaleIn, ProfileIn, ProgressIn, QuizAnswerIn, QuizOut, UserOut
 router=APIRouter(prefix="/api/v1/me", tags=["student"])
 def course_base(): return select(Course).options(selectinload(Course.language),selectinload(Course.category)).where(Course.published.is_(True))
 def profile_payload(user, profile): return {"id":user.id,"email":user.email,"full_name":user.display_name,"role":user.role,"email_verified":bool(user.email_verified_at),"email_verified_at":user.email_verified_at,"profile":{"bio":profile.bio if profile else None,"learning_interests":profile.learning_interests.split("|") if profile and profile.learning_interests else [],"preferred_language":profile.preferred_language if profile else None,"learning_level":profile.learning_level if profile else None,"show_myanmar":profile.show_myanmar if profile else False,"avatar_url":profile.avatar_url if profile else None}}
@@ -16,6 +16,15 @@ def get_profile(user: User=Depends(current_user), db: Session=Depends(get_db)): 
 @router.patch("/profile", response_model=UserOut)
 def update_profile(payload: ProfileIn, user: User=Depends(current_user), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
     user.display_name=payload.full_name.strip(); profile=db.scalar(select(UserProfile).where(UserProfile.user_id==user.id)) or UserProfile(user_id=user.id); profile.bio=payload.bio; profile.learning_interests="|".join(payload.learning_interests); profile.preferred_language=payload.preferred_language; profile.learning_level=payload.learning_level; profile.show_myanmar=payload.show_myanmar; db.add(profile); db.commit(); return profile_payload(user,profile)
+@router.patch("/locale")
+def update_locale(payload: LocaleIn, user: User=Depends(current_user), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    """Persist only the UI locale so switching language never replaces profile data."""
+    language = "my" if payload.language == "mm" else payload.language
+    profile=db.scalar(select(UserProfile).where(UserProfile.user_id==user.id)) or UserProfile(user_id=user.id)
+    profile.preferred_language=language
+    profile.show_myanmar=language == "my"
+    db.add(profile); db.commit()
+    return {"language": language}
 @router.post("/enrollments/{course_slug}",response_model=EnrollmentOut,status_code=201)
 def enroll(course_slug: str, user: User=Depends(verified_user), __: None=Depends(require_csrf), db: Session=Depends(get_db)):
     course=db.scalar(course_base().where(Course.slug==course_slug))

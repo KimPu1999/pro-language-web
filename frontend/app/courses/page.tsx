@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import { api, coursesApi } from "@/lib/api";
 import type { Course, Language } from "@/lib/types";
 import { Badge, Card, Skeleton } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 
 type Category = { id: string; name: string; slug: string };
 type SortOrder = "title_asc" | "title_desc" | "newest" | "duration_asc" | "duration_desc";
@@ -35,6 +36,7 @@ function toQuery(filters: Filters) {
 }
 
 export default function Courses() {
+  const { t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -87,10 +89,10 @@ export default function Courses() {
   ].filter(Boolean), [categories, filters, languages]);
 
   return <section className="mx-auto max-w-7xl px-5 py-14 lg:px-8">
-    <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-300">Free course catalog</p><h1 className="mt-2 text-4xl font-bold tracking-tight">Learn programming from first principles</h1><p className="mt-4 max-w-3xl text-slate-400">Choose a language, follow its prerequisites, and learn the theory before you ever need to write or execute code.</p></div>
+    <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-300">{t("courses")}</p><h1 className="mt-2 text-4xl font-bold tracking-tight">{t("learnProgramming")}</h1><p className="mt-4 max-w-3xl text-slate-400">{t("chooseLanguage")}</p></div>
     <div className="mt-6 grid gap-2.5 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_150px_150px_150px_165px]">
-      <div className="relative"><Search className="absolute left-3.5 top-3 text-slate-500" size={17}/><input aria-label="Search courses" value={filters.search} onChange={event => updateFilters({ search: event.target.value })} placeholder="Search Python, C, SQL..." className="h-10 w-full rounded-lg border border-line bg-surface px-10 text-sm text-white placeholder:text-slate-500"/></div>
-      <select aria-label="Programming language" value={filters.language} onChange={event => updateFilters({ language: event.target.value })} className="h-10 min-w-0 rounded-lg border border-line bg-surface px-3 text-sm"><option value="">All languages</option>{languages.map(item => <option key={item.id} value={item.slug}>{item.name}</option>)}</select>
+      <div className="relative"><Search className="absolute left-3.5 top-3 text-slate-500" size={17}/><input aria-label={`${t("search")} ${t("courses")}`} value={filters.search} onChange={event => updateFilters({ search: event.target.value })} placeholder="Search Python, C, SQL..." className="h-10 w-full rounded-lg border border-line bg-surface px-10 text-sm text-white placeholder:text-slate-500"/></div>
+      <select aria-label={t("language")} value={filters.language} onChange={event => updateFilters({ language: event.target.value })} className="h-10 min-w-0 rounded-lg border border-line bg-surface px-3 text-sm"><option value="">All languages</option>{languages.map(item => <option key={item.id} value={item.slug}>{item.name}</option>)}</select>
       <select aria-label="Course difficulty" value={filters.difficulty} onChange={event => updateFilters({ difficulty: event.target.value })} className="h-10 min-w-0 rounded-lg border border-line bg-surface px-3 text-sm"><option value="">All difficulties</option><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option><option value="professional">Professional</option></select>
       <select aria-label="Course category" value={filters.category} onChange={event => updateFilters({ category: event.target.value })} className="h-10 min-w-0 rounded-lg border border-line bg-surface px-3 text-sm"><option value="">All categories</option>{categories.map(item => <option key={item.id} value={item.slug}>{item.name}</option>)}</select>
       <select aria-label="Sort courses" value={filters.sort} onChange={event => updateFilters({ sort: event.target.value as SortOrder })} className="h-10 min-w-0 rounded-lg border border-line bg-surface px-3 text-sm"><option value="title_asc">Title A–Z</option><option value="title_desc">Title Z–A</option><option value="newest">Newest</option><option value="duration_asc">Shortest first</option><option value="duration_desc">Longest first</option></select>

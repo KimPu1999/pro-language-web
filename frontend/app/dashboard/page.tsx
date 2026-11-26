@@ -41,7 +41,7 @@ export default function DashboardPage() {
   };
   useEffect(load, []);
 
-  if (error) return <div className="mx-auto max-w-3xl" role="alert"><Card className="border-red-400/20 bg-red-500/[.06] p-6"><div className="flex gap-3"><X className="shrink-0 text-red-300" /><div><h1 className="font-semibold text-red-100">{language === "mm" ? "လေ့လာမှုဒေတာကို မဖတ်နိုင်ပါ" : "We couldn’t load your learning data"}</h1><p className="mt-2 text-sm leading-6 text-red-200/70">{error}</p><button type="button" onClick={load} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-400/15 px-4 py-2 text-sm font-semibold text-red-100"><RefreshCw size={16} /> Retry</button></div></div></Card></div>;
+  if (error) return <div className="mx-auto max-w-3xl" role="alert"><Card className="border-red-400/20 bg-red-500/[.06] p-6"><div className="flex gap-3"><X className="shrink-0 text-red-300" /><div><h1 className="font-semibold text-red-100">{language === "my" ? "လေ့လာမှုဒေတာကို မဖတ်နိုင်ပါ" : "We couldn’t load your learning data"}</h1><p className="mt-2 text-sm leading-6 text-red-200/70">{error}</p><button type="button" onClick={load} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-400/15 px-4 py-2 text-sm font-semibold text-red-100"><RefreshCw size={16} /> Retry</button></div></div></Card></div>;
   if (!data || !user) return <DashboardSkeleton />;
 
   const firstName = user.full_name.trim().split(/\s+/)[0] || "Learner";

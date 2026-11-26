@@ -138,6 +138,8 @@ class ChangePasswordIn(BaseModel):
         return self
 class ProfileIn(BaseModel):
     full_name: str = Field(min_length=2, max_length=120); bio: str|None = Field(default=None, max_length=1000); learning_interests: list[str] = Field(default_factory=list); preferred_language: str|None = Field(default=None, max_length=80); learning_level: str|None = Field(default=None, max_length=30); show_myanmar: bool=False
+class LocaleIn(BaseModel):
+    language: str = Field(pattern=r"^(en|my|mm)$")
 class UserOut(BaseModel):
     id: UUID; email: str; full_name: str; role: str; email_verified: bool; email_verified_at: datetime|None; profile: dict
 class EnrollmentOut(BaseModel):

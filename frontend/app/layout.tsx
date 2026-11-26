@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { PwaRegister } from "@/components/pwa-register";
 import { SiteFrame } from "@/components/site-frame";
+import { I18nProvider } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: { default: "Learn-Coding | Master Coding. Build Your Future.", template: "%s | Learn-Coding" },
@@ -11,6 +12,6 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en">
-    <body><PwaRegister /><SiteFrame>{children}</SiteFrame></body>
+    <body><I18nProvider><PwaRegister /><SiteFrame>{children}</SiteFrame></I18nProvider></body>
   </html>;
 }

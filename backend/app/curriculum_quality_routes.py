@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, selectinload
 from .auth import current_user, require_csrf
 from .db import get_db
 from .models import (
+    Challenge,
     CodingExercise,
     ContentReviewEvent,
     ContentReviewItem,
@@ -72,6 +73,26 @@ def _admin(user: User = Depends(current_user)) -> User:
     if user.role not in PLATFORM_ADMIN_ROLES:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Platform admin access required")
     return user
+
+@router.get("/translation-coverage")
+def translation_coverage(user: User = Depends(_admin), db: Session = Depends(get_db)):
+    """Report stored Burmese coverage without treating English fallback as a translation."""
+    courses = db.scalars(select(Course).options(selectinload(Course.modules).selectinload(CourseModule.lessons), selectinload(Course.syntax_references).selectinload(SyntaxReference.examples)).order_by(Course.title)).all()
+    challenges = db.scalars(select(Challenge).order_by(Challenge.title)).all()
+    projects = db.scalars(select(ProjectTemplate).order_by(ProjectTemplate.title)).all()
+    items = []
+    for course in courses:
+        lessons = [lesson for module in course.modules for lesson in module.lessons]
+        for lesson in lessons:
+            items.append({"source_type": "lesson", "source_id": str(lesson.id), "course_id": str(course.id), "title": lesson.title, "status": lesson.status, "published": lesson.published, "has_burmese": bool(lesson.content_mm and lesson.content_mm.strip()), "edit_url": f"/admin/courses/{course.id}/builder"})
+        for reference in course.syntax_references:
+            items.append({"source_type": "syntax_reference", "source_id": str(reference.id), "course_id": str(course.id), "title": reference.title, "status": reference.status, "published": reference.status == "published", "has_burmese": False, "edit_url": "/admin/translations"})
+    for challenge in challenges:
+        items.append({"source_type": "challenge", "source_id": str(challenge.id), "title": challenge.title, "status": challenge.status, "published": challenge.published, "has_burmese": bool(challenge.description_mm and challenge.description_mm.strip()), "edit_url": "/platform/challenges"})
+    for project in projects:
+        items.append({"source_type": "project", "source_id": str(project.id), "title": project.title, "status": project.status, "published": project.published, "has_burmese": bool(project.description_mm and project.description_mm.strip()), "edit_url": "/admin/projects"})
+    published = [item for item in items if item["published"]]
+    return {"items": items, "summary": {"total": len(items), "available": sum(1 for item in items if item["has_burmese"]), "missing": sum(1 for item in items if not item["has_burmese"]), "published_total": len(published), "published_missing": sum(1 for item in published if not item["has_burmese"]), "data_source": "database"}}
 
 
 def _tokens(course: Course) -> str:
