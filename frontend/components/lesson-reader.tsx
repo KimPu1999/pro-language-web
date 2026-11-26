@@ -127,26 +127,26 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
             </button>
           </div>
         </div>
-        {lessonProgress?.last_visited_at && <p className="mt-2 text-[11px] text-slate-600">Last visited {new Date(lessonProgress.last_visited_at).toLocaleDateString()}</p>}
+        {lessonProgress?.last_visited_at && <p className="mt-2 text-[11px] text-slate-600">{t("lastVisited")} {new Date(lessonProgress.last_visited_at).toLocaleDateString()}</p>}
       </div>
 
       {message && <p className="mb-5 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-slate-300" role="status">{message}</p>}
 
       <LessonNotes courseId={courseId} lessonId={lesson.id} courseSlug={courseSlug} lessonSlug={lesson.slug} />
 
-      <article aria-label="Lesson content">
+      <article aria-label={t("lessonContent")}>
         {locale === "my" && !lesson.content_mm?.trim() && <p className="mb-5 rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-amber-200" role="status">{t("myanmarMissing")}</p>}
         <LessonContent content={lessonContent} />
       </article>
 
       {lesson.code_examples.length > 0 && (
-        <section className="mt-10" aria-label="Explained code examples">
+        <section className="mt-10" aria-label={t("codeExamples")}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-bold">{t("explainedExamples")}</h2>
               <p className="mt-1 text-sm text-slate-500">{t("readCode")}</p>
             </div>
-            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Code examples">
+            <div className="flex flex-wrap gap-2" role="tablist" aria-label={t("codeExamples")}>
               {lesson.code_examples.map((item, index) => (
                 <button
                   key={item.id}

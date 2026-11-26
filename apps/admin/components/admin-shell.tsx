@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { Bell, BookOpen, BriefcaseBusiness, ChartNoAxesCombined, ChevronRight, CircleUserRound, ClipboardCheck, Code2, FileText, FolderCode, GraduationCap, Images, LayoutDashboard, LogOut, Mail, Menu, NotebookText, Palette, PanelBottom, PanelLeftClose, PanelLeftOpen, Search, ScrollText, Search as SearchIcon, Settings, ShieldCheck, Wrench, X, Users } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ThemeSwitcher } from "@/components/theme-provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useI18n } from "@/lib/i18n";
 
 type NavItem = { label: string; href: string; icon: typeof LayoutDashboard; roles?: string[] };
 type NavGroup = { label: string; items: NavItem[] };
@@ -22,6 +24,7 @@ const groups: NavGroup[] = [
 function activeItem(path: string) { return groups.flatMap(group => group.items.map(item => ({ ...item, group: group.label }))).find(item => path === item.href || path.startsWith(`${item.href}/`)); }
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n();
   const path = usePathname(); const login = path === "/login"; const [user, setUser] = useState<any>(); const [loading, setLoading] = useState(!login); const [error, setError] = useState(""); const [retry, setRetry] = useState(0); const [collapsed, setCollapsed] = useState(false); const [mobileOpen, setMobileOpen] = useState(false); const [profileOpen, setProfileOpen] = useState(false); const [notificationOpen, setNotificationOpen] = useState(false); const [search, setSearch] = useState(""); const [activity, setActivity] = useState<any[]>([]); const [pendingReviews, setPendingReviews] = useState(0);
   useEffect(() => {
     if (login) { setLoading(false); return; }

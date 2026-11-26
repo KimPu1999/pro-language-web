@@ -1,0 +1,319 @@
+{
+  "source": {
+    "routes": {
+      "frontend": 537,
+      "apps/platform": 23,
+      "apps/admin": 31
+    },
+    "source_files_scanned": 756,
+    "hardcoded_ui_candidates": 4513,
+    "hardcoded_ui_sample": [
+      {
+        "file": "frontend/app/error.tsx",
+        "text": "Something went wrong"
+      },
+      {
+        "file": "frontend/app/error.tsx",
+        "text": "We could not load this page. Please try again."
+      },
+      {
+        "file": "frontend/app/error.tsx",
+        "text": "Try again"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Free learning · Built for builders"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Master Coding."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Build Your Future."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Learn programming from beginner to professional with interactive courses, coding challenges, and real-world projects."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Explore Courses"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Start Coding"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "No paywall"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Learn at your pace"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "English + Myanmar support"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Your next project starts here."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Explore path"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Free"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "No published courses are available yet."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Practice in the browser"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Learn by making things work."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Use focused challenges and practical project briefs to turn concepts into repeatable skills."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Open practice arena"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Static preview · run code in the secure practice areas"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Start challenge"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "No published challenges are available yet."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "View project"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "No published project briefs are available yet."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "AI Tutor"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "A patient learning partner when you get stuck."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Ask for programming explanations, debugging guidance, and step-by-step learning support in the existing AI Tutor."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Meet the AI Tutor"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Learn together"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Community and career support."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Ask questions, share code, follow career paths, build a portfolio, and prepare for interviews at your own pace."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Community"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Career tools"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Questions, answered"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Start with confidence."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Start Building Your Future Today"
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Choose a course, solve your first challenge, and keep moving with a free learning workspace."
+      },
+      {
+        "file": "frontend/app/page.tsx",
+        "text": "Start Learning Free"
+      },
+      {
+        "file": "frontend/app/global-error.tsx",
+        "text": "Something went wrong"
+      },
+      {
+        "file": "frontend/app/global-error.tsx",
+        "text": "The application could not render this page."
+      },
+      {
+        "file": "frontend/app/global-error.tsx",
+        "text": "Reload"
+      },
+      {
+        "file": "frontend/app/not-found.tsx",
+        "text": "Page not found"
+      },
+      {
+        "file": "frontend/app/not-found.tsx",
+        "text": "The page you requested does not exist or is no longer available."
+      },
+      {
+        "file": "frontend/app/not-found.tsx",
+        "text": "Return home"
+      },
+      {
+        "file": "frontend/app/not-found.tsx",
+        "text": "Explore courses"
+      },
+      {
+        "file": "frontend/app/not-found.tsx",
+        "text": "Explore projects"
+      },
+      {
+        "file": "frontend/app/labs/projects/page.tsx",
+        "text": "Project labs"
+      },
+      {
+        "file": "frontend/app/labs/projects/page.tsx",
+        "text": "Multi-file project workspaces are available through published lab versions."
+      },
+      {
+        "file": "frontend/app/labs/debugging/page.tsx",
+        "text": "Debugging lab"
+      }
+    ],
+    "dictionary": {
+      "en_keys": 77,
+      "my_keys": 77,
+      "missing_my_keys": [],
+      "duplicate_keys": []
+    }
+  },
+  "database": {
+    "courses": {
+      "total": 56,
+      "published": 52,
+      "slugs": [
+        "advanced-java",
+        "algorithms",
+        "aws",
+        "bootstrap",
+        "c-programming",
+        "ci-cd",
+        "cpp-programming",
+        "cpp-programming-legacy-092680f9",
+        "csharp",
+        "csharp-legacy-dec2a9f5",
+        "css",
+        "cybersecurity-fundamentals",
+        "dart",
+        "data-analysis",
+        "data-structures",
+        "demo-one",
+        "demo-one-copy",
+        "django",
+        "docker",
+        "express-js",
+        "fastapi",
+        "flutter",
+        "git",
+        "github",
+        "go",
+        "html",
+        "java",
+        "javascript",
+        "jquery",
+        "kotlin",
+        "laravel",
+        "linux",
+        "machine-learning",
+        "microsoft-azure",
+        "mongodb",
+        "mysql",
+        "networking-fundamentals",
+        "next-js",
+        "node-js",
+        "operating-systems",
+        "owasp-top-10",
+        "php",
+        "postgresql",
+        "python",
+        "python-for-ai",
+        "react",
+        "react-native",
+        "redis",
+        "rust",
+        "secure-coding",
+        "spring-boot",
+        "sql",
+        "sqlite",
+        "tailwind-css",
+        "typescript",
+        "web-security"
+      ]
+    },
+    "modules": {
+      "total": 710
+    },
+    "lessons": {
+      "total": 1442,
+      "published": 1249,
+      "burmese": 1441,
+      "published_burmese": 1249
+    },
+    "challenges": {
+      "total": 12,
+      "published": 12,
+      "burmese_description": 0,
+      "published_burmese_description": 0
+    },
+    "projects": {
+      "total": 27,
+      "published": 13,
+      "burmese_description": 10,
+      "published_burmese_description": 0
+    },
+    "syntax_references": {
+      "total": 5,
+      "published": 0,
+      "bilingual_fields": false
+    },
+    "exercises": {
+      "total": 200,
+      "burmese_description": 200
+    },
+    "quizzes": {
+      "total": 1441,
+      "questions": 4756,
+      "bilingual_fields": false
+    },
+    "policy": "Only persisted Burmese fields count. English fallback and unpublished drafts are excluded from completion."
+  }
+}
