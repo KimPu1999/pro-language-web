@@ -1,0 +1,58 @@
+/* Shared premium scrollbar system for every Learn-Coding surface. */
+:root {
+  --scrollbar-thumb: rgba(148, 163, 184, .58);
+  --scrollbar-thumb-hover: rgba(100, 116, 139, .76);
+}
+
+html.dark {
+  --scrollbar-thumb: rgba(71, 85, 105, .82);
+  --scrollbar-thumb-hover: rgba(100, 116, 139, .92);
+}
+
+.theme-light {
+  --scrollbar-thumb: rgba(148, 163, 184, .62);
+  --scrollbar-thumb-hover: rgba(100, 116, 139, .78);
+}
+
+html,
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  *::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); }
+}
+
+/* Embedded editors retain their own keyboard and touch affordances. */
+:where(.monaco-editor, .cm-editor, .CodeMirror) *::-webkit-scrollbar {
+  width: auto;
+  height: auto;
+}
+
+html:has(.monaco-editor),
+html:has(.cm-editor),
+html:has(.CodeMirror) {
+  scrollbar-width: auto;
+}

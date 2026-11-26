@@ -1,3 +1,4 @@
+@import "../../shared/scrollbars.css";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Myanmar:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
 @tailwind base;
 @tailwind components;
@@ -23,7 +24,6 @@ body:has(.site-nav) main.min-h-screen { padding-top: 4rem; }
     overflow-y: auto;
     padding-right: 1rem;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
   }
 }
 body:has(nav[aria-label="Management navigation"]) aside:has(nav[aria-label="Management navigation"]) {
@@ -32,7 +32,6 @@ body:has(nav[aria-label="Management navigation"]) aside:has(nav[aria-label="Mana
   max-height: calc(100vh - 68px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
 }
 @media (min-width: 1024px) {
   body:has(nav[aria-label="Management navigation"]) aside:has(nav[aria-label="Management navigation"]) {

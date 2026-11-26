@@ -1,3 +1,4 @@
+@import "../../../shared/scrollbars.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -95,5 +96,4 @@ html:not(.dark) .border-white\/10, html:not(.dark) .border-white\/20 { border-co
 html:not(.dark) .bg-\[\#0a0f1c\], html:not(.dark) .bg-\[\#0a0f1d\] { background-color: var(--code-background); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
-@layer utilities { .scrollbar-thin { scrollbar-width: thin; scrollbar-color: var(--border) transparent; } }
 @layer components { .input { width: 100%; border: 1px solid var(--border); border-radius: .75rem; background: var(--input-background); padding: .65rem .75rem; color: var(--foreground); outline: none; } .input:focus { border-color: var(--focus-ring); } }

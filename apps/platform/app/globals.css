@@ -1,3 +1,4 @@
+@import "../../../shared/scrollbars.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -54,8 +55,6 @@ button, input, select, textarea { font: inherit; }
 input::placeholder, textarea::placeholder { color: var(--text-muted); }
 :focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 ::selection { background: color-mix(in srgb, var(--primary) 35%, transparent); }
-.scrollbar-hidden { scrollbar-width: none; -ms-overflow-style: none; }
-.scrollbar-hidden::-webkit-scrollbar { display: none; }
 .bg-primary { color: #FFFFFF; }
 
 .course-hero { position: relative; }
