@@ -8,6 +8,42 @@
 html { max-width: 100%; overflow-x: hidden; scroll-behavior: smooth; }
 body { min-width: 320px; max-width: 100%; margin: 0; overflow-x: hidden; background: #0B1020; color: #F8FAFC; font-family: Inter, 'Noto Sans Myanmar', sans-serif; }
 body:has(.site-nav) main.min-h-screen { padding-top: 4rem; }
+body:has(nav[aria-label="Management navigation"]) aside:has(nav[aria-label="Management navigation"]) {
+  align-self: flex-start;
+  height: calc(100vh - 68px);
+  max-height: calc(100vh - 68px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+@media (min-width: 1024px) {
+  body:has(nav[aria-label="Management navigation"]) aside:has(nav[aria-label="Management navigation"]) {
+    position: fixed;
+    top: 68px;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    width: 264px;
+  }
+  body:has(nav[aria-label="Management navigation"]) main {
+    margin-left: 264px;
+  }
+  body:has(nav[aria-label="Management navigation"]) aside.lg\:w-\[76px\] {
+    width: 76px;
+  }
+  body:has(nav[aria-label="Management navigation"]):has(aside.lg\:w-\[76px\]) main {
+    margin-left: 76px;
+  }
+  body:has(nav[aria-label="Management navigation"]) aside:has(nav[aria-label="Management navigation"])[class*="lg:w-[76px]"] {
+    width: 76px;
+  }
+  body:has(nav[aria-label="Management navigation"]):has(aside[class*="lg:w-[76px]"]) main {
+    margin-left: 76px;
+  }
+}
+@media (max-width: 1023px) {
+  body:has(nav[aria-label="Management navigation"]) main { margin-left: 0; }
+}
 .theme-light body { background: #f8fafc; color: #0f172a; }
 .theme-light .bg-ink { background-color: #f8fafc; }
 .theme-light .bg-surface { background-color: #ffffff; }

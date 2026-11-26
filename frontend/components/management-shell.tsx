@@ -129,10 +129,6 @@ export function ManagementShell({ children }: { children: React.ReactNode }) {
   }, [isLogin]);
 
   useEffect(() => {
-    setCollapsed(window.localStorage.getItem("cm-management-sidebar-collapsed") === "1");
-  }, []);
-
-  useEffect(() => {
     loadSession();
   }, [loadSession, retry]);
 
@@ -164,11 +160,7 @@ export function ManagementShell({ children }: { children: React.ReactNode }) {
   );
 
   const toggleCollapse = () => {
-    setCollapsed((value) => {
-      const next = !value;
-      window.localStorage.setItem("cm-management-sidebar-collapsed", next ? "1" : "0");
-      return next;
-    });
+    setCollapsed((value) => !value);
   };
 
   const logout = async () => {
