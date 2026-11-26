@@ -51,7 +51,7 @@ from .mysql_course_content import seed_mysql_course
 from .networking_course_content import seed_networking_course
 from .nextjs_course_content import seed_nextjs_course
 from .nodejs_course_content import seed_nodejs_course
-from .operating_systems_course_content import seed_operating_systems_course
+from .operating_systems_curriculum import seed_operating_systems_curriculum
 from .owasp_top_10_course_content import seed_owasp_top_10_course
 from .postgresql_course_content import seed_postgresql_course
 from .python_ai_course_content import seed_python_ai_course
@@ -462,7 +462,7 @@ def main():
         operating_systems_course = db.scalar(select(Course).where(Course.slug == "operating-systems"))
         if operating_systems_course:
             operating_systems_course.category_id = categories["computer-science"].id
-            seed_operating_systems_course(db, operating_systems_course)
+            seed_operating_systems_curriculum(db, operating_systems_course)
         owasp_course = db.scalar(select(Course).where(Course.slug == "owasp-top-10"))
         if owasp_course:
             owasp_course.category_id = categories["cybersecurity"].id
