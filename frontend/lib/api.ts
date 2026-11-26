@@ -1,4 +1,4 @@
-import type { AdminCodeExample, AdminCourse, AdminCurriculumModule, AdminDashboard, AdminPage, AdminQuiz, Challenge, ChallengeCategory, ChallengePage, ChallengeProgress, Course, CourseDetail, CourseLearning, CourseProgress, Dashboard, DashboardActivity, DashboardOverview, DashboardAnalytics, Enrollment, Language, Lesson, LessonQuiz, Module, Paginated, RunnerJob, RunnerLanguage, SkillDashboard, User, LearningIntelligence, LearningPlan, RevisionItem, SyntaxReference, WeeklyActivity, ContentReviewDashboard, ContentReviewDetail, ContentReviewItem, ContentReviewQueue, ContentReviewPerson } from "./types";
+import type { AdminCodeExample, AdminCourse, AdminCurriculumModule, AdminDashboard, AdminPage, AdminQuiz, Challenge, ChallengeCategory, ChallengePage, ChallengeProgress, Course, CourseDetail, CourseLearning, CourseProgress, Dashboard, DashboardActivity, DashboardOverview, DashboardAnalytics, Enrollment, Language, Lesson, LessonQuiz, Module, Paginated, RunnerJob, RunnerLanguage, SkillDashboard, User, LearningIntelligence, LearningPlan, RevisionItem, SyntaxReference, WeeklyActivity, ContentReviewDashboard, ContentReviewDetail, ContentReviewItem, ContentReviewQueue, ContentReviewPerson, NotebookFolder, NotebookPage, NotebookTag, PersonalNote } from "./types";
 
 // Browser requests use the same-origin Next rewrite. Server rendering may use the private internal URL.
 const base = process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === "undefined" ? process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000" : "");
@@ -64,6 +64,22 @@ export const dashboardApi = {
 export const courseLearningApi = {
   course: (slug: string) => request<CourseLearning>(`/api/v1/courses/${slug}/learning`),
   lesson: (courseSlug: string, lessonSlug: string) => request<Lesson>(`/api/v1/courses/${courseSlug}/lessons/${lessonSlug}`),
+};
+
+export const notesApi = {
+  list: (query = "") => request<NotebookPage>(`/api/v1/notebook/notes${query}`),
+  detail: (id: string) => request<PersonalNote>(`/api/v1/notebook/notes/${id}`),
+  create: (body: unknown, csrf: string) => request<PersonalNote>("/api/v1/notebook/notes", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  update: (id: string, body: unknown, csrf: string) => request<PersonalNote>(`/api/v1/notebook/notes/${id}`, { method: "PATCH", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
+  remove: (id: string, csrf: string) => request<{ status:string }>(`/api/v1/notebook/notes/${id}`, { method: "DELETE", headers: { "X-CSRF-Token": csrf } }),
+  export: (id: string) => request<{ filename:string; content:string }>(`/api/v1/notebook/notes/${id}/export`),
+  folders: () => request<NotebookFolder[]>("/api/v1/notebook/folders"),
+  createFolder: (body: unknown, csrf: string) => request<NotebookFolder>("/api/v1/notebook/folders", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  updateFolder: (id: string, body: unknown, csrf: string) => request<NotebookFolder>(`/api/v1/notebook/folders/${id}`, { method: "PATCH", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
+  removeFolder: (id: string, csrf: string) => request<{ status:string }>(`/api/v1/notebook/folders/${id}`, { method: "DELETE", headers: { "X-CSRF-Token": csrf } }),
+  tags: () => request<NotebookTag[]>("/api/v1/notebook/tags"),
+  createTag: (body: unknown, csrf: string) => request<NotebookTag>("/api/v1/notebook/tags", { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  removeTag: (id: string, csrf: string) => request<{ status:string }>(`/api/v1/notebook/tags/${id}`, { method: "DELETE", headers: { "X-CSRF-Token": csrf } }),
 };
 
 export const lessonQuizApi = {

@@ -23,6 +23,7 @@ import { AlgorithmsVisualizer } from "@/components/algorithms-visualizer";
 import { AWSArchitectureExplorer } from "@/components/aws-architecture-explorer";
 import { CICDPipelineVisualizer } from "@/components/ci-cd-pipeline-visualizer";
 import { CybersecurityVisualizer } from "@/components/cybersecurity-visualizer";
+import { LessonNotes } from "@/components/notebook-page";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -32,7 +33,7 @@ function ProgressBar({ value }: { value: number }) {
   );
 }
 
-export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, modulePosition }: { lesson: Lesson; courseSlug: string; courseTitle: string; moduleTitle?: string; modulePosition?: number }) {
+export function LessonReader({ lesson, courseId, courseSlug, courseTitle, moduleTitle, modulePosition }: { lesson: Lesson; courseId: string; courseSlug: string; courseTitle: string; moduleTitle?: string; modulePosition?: number }) {
   const [exampleIndex, setExampleIndex] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -127,6 +128,8 @@ export function LessonReader({ lesson, courseSlug, courseTitle, moduleTitle, mod
       </div>
 
       {message && <p className="mb-5 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-slate-300" role="status">{message}</p>}
+
+      <LessonNotes courseId={courseId} lessonId={lesson.id} courseSlug={courseSlug} lessonSlug={lesson.slug} />
 
       <article aria-label="Lesson content">
         <LessonContent content={lesson.content_en} />

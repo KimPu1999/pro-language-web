@@ -58,6 +58,7 @@ export default async function LessonPage({ params }: { params: Promise<{ courseS
           <LessonReader
             key={lesson.id}
             lesson={lesson}
+            courseId={course.id}
             courseSlug={courseSlug}
             courseTitle={course.title}
             moduleTitle={currentModule?.title}

@@ -123,6 +123,42 @@ class ContentReviewEvent(TimestampMixin, Base):
     from_status: Mapped[str|None] = mapped_column(String(30), nullable=True)
     to_status: Mapped[str] = mapped_column(String(30))
     comment: Mapped[str] = mapped_column(Text, default="")
+class NotebookFolder(TimestampMixin, Base):
+    __tablename__ = "notebook_folders"
+    __table_args__ = (UniqueConstraint("owner_id", "name"), Index("ix_notebook_folders_owner_updated", "owner_id", "updated_at"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str] = mapped_column(Text, default="")
+class NoteTag(TimestampMixin, Base):
+    __tablename__ = "note_tags"
+    __table_args__ = (UniqueConstraint("owner_id", "name"), Index("ix_note_tags_owner_name", "owner_id", "name"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(60))
+    color: Mapped[str] = mapped_column(String(20), default="#818CF8")
+class PersonalNote(TimestampMixin, Base):
+    __tablename__ = "personal_notes"
+    __table_args__ = (
+        Index("ix_personal_notes_owner_updated", "owner_id", "updated_at"),
+        Index("ix_personal_notes_owner_course", "owner_id", "course_id"),
+        Index("ix_personal_notes_owner_lesson", "owner_id", "lesson_id"),
+        Index("ix_personal_notes_owner_folder", "owner_id", "folder_id"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    title: Mapped[str] = mapped_column(String(240), default="Untitled note")
+    content: Mapped[str] = mapped_column(Text, default="")
+    course_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("courses.id", ondelete="SET NULL"), nullable=True, index=True)
+    lesson_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("lessons.id", ondelete="SET NULL"), nullable=True, index=True)
+    folder_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("notebook_folders.id", ondelete="SET NULL"), nullable=True, index=True)
+    is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    is_pinned: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+class PersonalNoteTag(Base):
+    __tablename__ = "personal_note_tags"
+    note_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("personal_notes.id", ondelete="CASCADE"), primary_key=True)
+    tag_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("note_tags.id", ondelete="CASCADE"), primary_key=True)
 class AdminAuditLog(TimestampMixin, Base):
     __tablename__="admin_audit_logs"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); actor_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id")); action: Mapped[str]=mapped_column(String(80)); entity_type: Mapped[str]=mapped_column(String(50)); entity_id: Mapped[uuid.UUID|None]=mapped_column(UUIDType,nullable=True); metadata_json: Mapped[str]=mapped_column(Text,default="{}")
 class PlatformSetting(TimestampMixin, Base):
