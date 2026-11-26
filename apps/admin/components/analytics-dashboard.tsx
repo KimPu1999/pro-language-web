@@ -23,10 +23,9 @@ function TrendChart({ trends }: { trends: any[] }) {
 }
 
 export default function AnalyticsDashboard() {
-  const today = new Date();
-  const [start, setStart] = useState(isoDate(new Date(today.getTime() - 29 * 86400000)));
-  const [end, setEnd] = useState(isoDate(today));
-  const [applied, setApplied] = useState({ start: isoDate(new Date(today.getTime() - 29 * 86400000)), end: isoDate(today) });
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [applied, setApplied] = useState({ start: "", end: "" });
   const [data, setData] = useState<AnalyticsData>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,7 +43,8 @@ export default function AnalyticsDashboard() {
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to load analytics."); }
     finally { setLoading(false); }
   }
-  useEffect(() => { void load(); }, [applied.start, applied.end]);
+  useEffect(() => { const endDate = new Date(); const startDate = new Date(endDate.getTime() - 29 * 86400000); const next = { start: isoDate(startDate), end: isoDate(endDate) }; setStart(next.start); setEnd(next.end); setApplied(next); }, []);
+  useEffect(() => { if (!applied.start || !applied.end) return; void load(); }, [applied.start, applied.end]);
 
   const kpis = data?.overview?.kpis || {};
   const courseRows = data?.courses?.items || [];

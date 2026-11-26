@@ -5,15 +5,14 @@ import { BarChart3, Download, RefreshCw } from "lucide-react";
 import { analyticsApi, AnalyticsOverview } from "@/lib/analytics-api";
 import { Badge, Button, Card, Skeleton } from "./ui";
 
-const today = new Date().toISOString().slice(0, 10);
-const initialStart = new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10);
 const labels: Record<string, string> = { total_students: "Total Students", active_students: "Active Students", total_instructors: "Total Instructors", published_courses: "Published Courses", total_enrollments: "Enrollments", completed_courses: "Completed Courses", coding_submissions: "Coding Submissions", certificates_issued: "Certificates Issued" };
 const endpoints = { students: analyticsApi.students, courses: analyticsApi.courses, instructors: analyticsApi.instructors, challenges: analyticsApi.challenges, learning: analyticsApi.learning, certificates: analyticsApi.certificates, community: analyticsApi.community } as const;
 
 export function AnalyticsDashboard({ section = "overview" }: { section?: keyof typeof endpoints | "overview" }) {
-  const [start, setStart] = useState(initialStart); const [end, setEnd] = useState(today); const [data, setData] = useState<AnalyticsOverview | Record<string, unknown> | null>(null); const [error, setError] = useState(""); const [loading, setLoading] = useState(true); const [exporting, setExporting] = useState(false);
+  const [start, setStart] = useState(""); const [end, setEnd] = useState(""); const [data, setData] = useState<AnalyticsOverview | Record<string, unknown> | null>(null); const [error, setError] = useState(""); const [loading, setLoading] = useState(true); const [exporting, setExporting] = useState(false);
   const load = () => { setLoading(true); setError(""); const call = section === "overview" ? analyticsApi.overview(start, end) : endpoints[section](start, end); call.then(setData).catch((e) => setError(e instanceof Error ? e.message : "Unable to load analytics")).finally(() => setLoading(false)); };
-  useEffect(() => { setLoading(true); setError(""); const call = section === "overview" ? analyticsApi.overview(start, end) : endpoints[section](start, end); call.then(setData).catch((e) => setError(e instanceof Error ? e.message : "Unable to load analytics")).finally(() => setLoading(false)); }, [section, start, end]);
+  useEffect(() => { const endDate = new Date(); const startDate = new Date(endDate.getTime() - 29 * 86400000); setStart(startDate.toISOString().slice(0, 10)); setEnd(endDate.toISOString().slice(0, 10)); }, []);
+  useEffect(() => { if (!start || !end) return; setLoading(true); setError(""); const call = section === "overview" ? analyticsApi.overview(start, end) : endpoints[section](start, end); call.then(setData).catch((e) => setError(e instanceof Error ? e.message : "Unable to load analytics")).finally(() => setLoading(false)); }, [section, start, end]);
   const onExport = async () => { setExporting(true); try { const blob = await analyticsApi.export(start, end); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = `codemaster-analytics-${start}.csv`; link.click(); URL.revokeObjectURL(url); } catch (e) { setError(e instanceof Error ? e.message : "Export failed"); } finally { setExporting(false); } };
   const overview = section === "overview" ? data as AnalyticsOverview | null : null;
   return <section className="space-y-7">

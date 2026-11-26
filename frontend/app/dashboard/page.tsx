@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<DashboardActivity[]>([]);
   const [weekly, setWeekly] = useState<WeeklyActivity | null>(null);
   const [error, setError] = useState("");
+  const [hour, setHour] = useState<number | null>(null);
   const { language } = useDashboardPreferences();
   const load = () => {
     setError("");
@@ -40,6 +41,7 @@ export default function DashboardPage() {
       });
   };
   useEffect(load, []);
+  useEffect(() => { setHour(new Date().getHours()); }, []);
 
   if (error) return <div className="mx-auto max-w-3xl" role="alert"><Card className="border-red-400/20 bg-red-500/[.06] p-6"><div className="flex gap-3"><X className="shrink-0 text-red-300" /><div><h1 className="font-semibold text-red-100">{language === "my" ? "လေ့လာမှုဒေတာကို မဖတ်နိုင်ပါ" : "We couldn’t load your learning data"}</h1><p className="mt-2 text-sm leading-6 text-red-200/70">{error}</p><button type="button" onClick={load} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-400/15 px-4 py-2 text-sm font-semibold text-red-100"><RefreshCw size={16} /> Retry</button></div></div></Card></div>;
   if (!data || !user) return <DashboardSkeleton />;
@@ -49,8 +51,7 @@ export default function DashboardPage() {
   const completed = data.enrollments.filter(item => item.progress_percent >= 100).length;
   const inProgress = data.enrollments.filter(item => item.progress_percent > 0 && item.progress_percent < 100).length;
   const notStarted = data.enrollments.filter(item => item.progress_percent === 0).length;
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const greeting = hour == null ? "Good day" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const currentTarget = current ? (current.next_lesson_slug ?? current.last_lesson_slug ? `/courses/${current.course.slug}/learn/${current.next_lesson_slug ?? current.last_lesson_slug}` : `/courses/${current.course.slug}`) : "/courses";
   const metrics = [
     { label: "Enrolled courses", value: number(data.total_enrolled), icon: BookOpen, tone: "text-indigo-300", note: `${inProgress} in progress` },
