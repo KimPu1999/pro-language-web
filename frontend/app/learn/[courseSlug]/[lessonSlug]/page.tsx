@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { api, courseLearningApi } from "@/lib/api";
+import { api, courseLearningApi, syntaxApi } from "@/lib/api";
 import type { CourseLearning, Lesson } from "@/lib/types";
 import { LessonReader } from "@/components/lesson-reader";
 import { LearningSidebar } from "@/components/learning-sidebar";
@@ -37,6 +37,7 @@ export default async function LessonPage({ params }: { params: Promise<{ courseS
   const lessons = course.modules.flatMap(module => module.lessons);
   const index = lessons.findIndex(item => item.id === lesson.id);
   const currentModule = course.modules.find(module => module.lessons.some(item => item.id === lesson.id));
+  const relatedSyntax = await syntaxApi.lesson(courseSlug, lessonSlug).catch(() => []);
 
   return (
     <section className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
@@ -63,6 +64,8 @@ export default async function LessonPage({ params }: { params: Promise<{ courseS
             modulePosition={currentModule?.order_index}
           />
         </div>
+
+        {relatedSyntax.length > 0 && <aside className="mt-8 rounded-2xl border border-indigo-400/20 bg-indigo-500/[0.06] p-5" aria-label="Related syntax references"><p className="text-xs font-semibold uppercase tracking-[.16em] text-indigo-300">Related syntax</p><p className="mt-2 text-sm text-slate-400">Review the course references connected to this lesson.</p><div className="mt-4 grid gap-2 sm:grid-cols-2">{relatedSyntax.map(reference => <Link key={reference.id} href={`/courses/${courseSlug}/syntax-references/${reference.slug}`} className="rounded-xl border border-line bg-ink/50 px-4 py-3 transition hover:border-indigo-400/50 hover:bg-indigo-500/10"><span className="block text-sm font-semibold text-slate-100">{reference.title}</span><span className="mt-1 block text-xs text-slate-500">{reference.category} · 5 examples</span></Link>)}</div></aside>}
 
         <nav className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-sm" aria-label="Lesson navigation">
           {lessons[index - 1] ? (

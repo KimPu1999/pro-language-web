@@ -1,4 +1,4 @@
-import type { AdminCodeExample, AdminCourse, AdminCurriculumModule, AdminDashboard, AdminPage, AdminQuiz, Challenge, ChallengeCategory, ChallengePage, ChallengeProgress, Course, CourseDetail, CourseLearning, CourseProgress, Dashboard, DashboardActivity, DashboardOverview, DashboardAnalytics, Enrollment, Language, Lesson, LessonQuiz, Module, Paginated, RunnerJob, RunnerLanguage, SkillDashboard, User, LearningIntelligence, LearningPlan, RevisionItem, WeeklyActivity } from "./types";
+import type { AdminCodeExample, AdminCourse, AdminCurriculumModule, AdminDashboard, AdminPage, AdminQuiz, Challenge, ChallengeCategory, ChallengePage, ChallengeProgress, Course, CourseDetail, CourseLearning, CourseProgress, Dashboard, DashboardActivity, DashboardOverview, DashboardAnalytics, Enrollment, Language, Lesson, LessonQuiz, Module, Paginated, RunnerJob, RunnerLanguage, SkillDashboard, User, LearningIntelligence, LearningPlan, RevisionItem, SyntaxReference, WeeklyActivity } from "./types";
 
 // Browser requests use the same-origin Next rewrite. Server rendering may use the private internal URL.
 const base = process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === "undefined" ? process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000" : "");
@@ -69,6 +69,17 @@ export const courseLearningApi = {
 export const lessonQuizApi = {
   get: (lessonId: string) => request<LessonQuiz>(`/api/v1/me/lessons/${lessonId}/quiz`),
   submit: (lessonId: string, answers: Record<string, string>, csrf: string) => request<{ attempt_id: string; score: number; total: number; passed: boolean; feedback: { question_id: string; correct: boolean; explanation: string }[] }>(`/api/v1/me/lessons/${lessonId}/quiz`, { ...json({ answers }), headers: { "X-CSRF-Token": csrf } }),
+};
+export const syntaxApi = {
+  list: (courseSlug: string, query = "") => request<SyntaxReference[]>(`/api/v1/courses/${courseSlug}/syntax-references${query}`),
+  reference: (courseSlug: string, referenceSlug: string) => request<SyntaxReference>(`/api/v1/courses/${courseSlug}/syntax-references/${referenceSlug}`),
+  lesson: (courseSlug: string, lessonSlug: string) => request<SyntaxReference[]>(`/api/v1/courses/${courseSlug}/lessons/${lessonSlug}/syntax-references`),
+  adminList: (courseId: string) => request<SyntaxReference[]>(`/api/v1/admin/courses/${courseId}/syntax-references`),
+  adminCreate: (courseId: string, body: unknown, csrf: string) => request<SyntaxReference>(`/api/v1/admin/courses/${courseId}/syntax-references`, { ...json(body), headers: { "X-CSRF-Token": csrf } }),
+  adminUpdate: (id: string, body: unknown, csrf: string) => request<SyntaxReference>(`/api/v1/admin/syntax-references/${id}`, { method: "PATCH", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrf } }),
+  publish: (id: string, csrf: string) => request<SyntaxReference>(`/api/v1/admin/syntax-references/${id}/publish`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  unpublish: (id: string, csrf: string) => request<SyntaxReference>(`/api/v1/admin/syntax-references/${id}/unpublish`, { ...json({}), headers: { "X-CSRF-Token": csrf } }),
+  archive: (id: string, csrf: string) => request<SyntaxReference>(`/api/v1/admin/syntax-references/${id}`, { method: "DELETE", headers: { "X-CSRF-Token": csrf } }),
 };
 export const learningApi = {
   intelligence: () => request<LearningIntelligence>("/api/v1/learning/intelligence"),

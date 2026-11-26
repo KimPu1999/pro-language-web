@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { api, adminQuizApi } from "@/lib/api";
 import { csrf } from "@/components/auth-form";
 import { Badge, Button, Card } from "@/components/ui";
@@ -315,6 +316,7 @@ export default function Builder({ params }: { params: Promise<{ id: string }> })
           <p className="mt-2 text-sm text-slate-500">Changes are saved to the server. <Badge>{course.status}</Badge></p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link href={`/admin/courses/${course.id}/syntax-references`} className="inline-flex items-center rounded-xl border border-indigo-400/30 px-4 py-2.5 text-sm font-semibold text-indigo-200 hover:bg-indigo-500/10">Syntax references</Link>
           <Button onClick={() => decide("in_review")} disabled={busy} className="bg-elevated text-slate-200 hover:bg-line">Submit review</Button>
           <Button onClick={() => decide("publish")} disabled={busy} className="bg-success text-white hover:bg-emerald-500">Publish</Button>
           <Button onClick={() => decide("draft")} disabled={busy} className="bg-elevated text-slate-200 hover:bg-line">Unpublish</Button>

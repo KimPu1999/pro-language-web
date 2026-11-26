@@ -9,6 +9,38 @@ class CategoryOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; name: str; slug: str
 class ExampleOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; language: str; code: str
+class SyntaxReferenceExampleOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID; example_number: int; title: str; code: str; language: str; expected_output: str; explanation: str
+class SyntaxReferenceOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID; course_id: UUID; title: str; slug: str; category: str; description: str; basic_syntax: str; when_to_use: str; important_notes: str; status: str; display_order: int; examples: list[SyntaxReferenceExampleOut] = Field(default_factory=list)
+class SyntaxReferenceExampleIn(BaseModel):
+    example_number: int = Field(ge=1, le=5)
+    title: str = Field(min_length=2, max_length=180)
+    code: str = Field(min_length=1, max_length=30000)
+    language: str = Field(min_length=1, max_length=50)
+    expected_output: str = Field(default="", max_length=10000)
+    explanation: str = Field(min_length=10, max_length=5000)
+class SyntaxReferenceIn(BaseModel):
+    title: str = Field(min_length=2, max_length=180)
+    slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=180)
+    category: str = Field(min_length=1, max_length=100)
+    description: str = Field(min_length=10, max_length=2000)
+    basic_syntax: str = Field(min_length=1, max_length=10000)
+    when_to_use: str = Field(min_length=10, max_length=2000)
+    important_notes: str = Field(min_length=10, max_length=3000)
+    display_order: int = Field(default=0, ge=0, le=10000)
+    examples: list[SyntaxReferenceExampleIn] = Field(default_factory=list, max_length=5)
+
+    @model_validator(mode="after")
+    def validate_example_numbers(self):
+        numbers = [item.example_number for item in self.examples]
+        if len(numbers) != len(set(numbers)):
+            raise ValueError("Example numbers must be unique")
+        return self
+class LessonSyntaxReferencesIn(BaseModel):
+    reference_ids: list[UUID] = Field(default_factory=list, max_length=20)
 class LessonOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; content_en: str; content_mm: str|None; order_index: int; code_examples: list[ExampleOut]=Field(default_factory=list)
 class ModuleOut(BaseModel):

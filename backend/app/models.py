@@ -33,7 +33,7 @@ class ProgrammingLanguage(TimestampMixin, Base):
 class CourseCategory(TimestampMixin, Base):
     __tablename__="course_categories"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); name: Mapped[str]=mapped_column(String(100),unique=True); slug: Mapped[str]=mapped_column(String(100),unique=True); description: Mapped[str]=mapped_column(Text,default=""); status: Mapped[str]=mapped_column(String(20),default="active"); display_order: Mapped[int]=mapped_column(Integer,default=0); courses=relationship("Course",back_populates="category")
 class Course(TimestampMixin, Base):
-    __tablename__="courses"; __table_args__=(Index("ix_courses_published_level","published","level"),); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); language_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("programming_languages.id")); category_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("course_categories.id")); title: Mapped[str]=mapped_column(String(180)); slug: Mapped[str]=mapped_column(String(180),unique=True); description: Mapped[str]=mapped_column(Text); short_description: Mapped[str]=mapped_column(Text,default=""); target_audience: Mapped[str]=mapped_column(Text,default=""); technologies: Mapped[str]=mapped_column(Text,default=""); seo_title: Mapped[str]=mapped_column(String(180),default=""); seo_description: Mapped[str]=mapped_column(Text,default=""); level: Mapped[str]=mapped_column(String(30)); duration_minutes: Mapped[int]=mapped_column(Integer); thumbnail: Mapped[str|None]=mapped_column(String(500),nullable=True); outcomes: Mapped[str]=mapped_column(Text,default=""); requirements: Mapped[str]=mapped_column(Text,default=""); status: Mapped[str]=mapped_column(String(20),default="draft"); published: Mapped[bool]=mapped_column(Boolean,default=False,index=True); created_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id"),nullable=True,index=True); updated_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id"),nullable=True,index=True); language=relationship("ProgrammingLanguage",back_populates="courses"); category=relationship("CourseCategory",back_populates="courses"); modules=relationship("CourseModule",back_populates="course",order_by="CourseModule.order_index"); faqs=relationship("CourseFAQ",back_populates="course",cascade="all, delete-orphan",order_by="CourseFAQ.position")
+    __tablename__="courses"; __table_args__=(Index("ix_courses_published_level","published","level"),); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); language_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("programming_languages.id")); category_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("course_categories.id")); title: Mapped[str]=mapped_column(String(180)); slug: Mapped[str]=mapped_column(String(180),unique=True); description: Mapped[str]=mapped_column(Text); short_description: Mapped[str]=mapped_column(Text,default=""); target_audience: Mapped[str]=mapped_column(Text,default=""); technologies: Mapped[str]=mapped_column(Text,default=""); seo_title: Mapped[str]=mapped_column(String(180),default=""); seo_description: Mapped[str]=mapped_column(Text,default=""); level: Mapped[str]=mapped_column(String(30)); duration_minutes: Mapped[int]=mapped_column(Integer); thumbnail: Mapped[str|None]=mapped_column(String(500),nullable=True); outcomes: Mapped[str]=mapped_column(Text,default=""); requirements: Mapped[str]=mapped_column(Text,default=""); status: Mapped[str]=mapped_column(String(20),default="draft"); published: Mapped[bool]=mapped_column(Boolean,default=False,index=True); created_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id"),nullable=True,index=True); updated_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id"),nullable=True,index=True); language=relationship("ProgrammingLanguage",back_populates="courses"); category=relationship("CourseCategory",back_populates="courses"); modules=relationship("CourseModule",back_populates="course",order_by="CourseModule.order_index"); faqs=relationship("CourseFAQ",back_populates="course",cascade="all, delete-orphan",order_by="CourseFAQ.position"); syntax_references=relationship("SyntaxReference",back_populates="course",cascade="all, delete-orphan",order_by="SyntaxReference.display_order")
 class CourseModule(TimestampMixin, Base):
     __tablename__="course_modules"; __table_args__=(UniqueConstraint("course_id","order_index"),); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); course_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("courses.id",ondelete="CASCADE")); title: Mapped[str]=mapped_column(String(180)); order_index: Mapped[int]=mapped_column(Integer); course=relationship("Course",back_populates="modules"); lessons=relationship("Lesson",back_populates="module",order_by="Lesson.order_index")
 class Lesson(TimestampMixin, Base):
@@ -46,6 +46,42 @@ class QuizAttempt(TimestampMixin, Base):
     __tablename__="quiz_attempts"; __table_args__=(Index("ix_quiz_attempts_user_quiz","user_id","quiz_id"),); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); quiz_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("lesson_quizzes.id",ondelete="CASCADE")); user_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id",ondelete="CASCADE")); answers_json: Mapped[str]=mapped_column(Text,default="{}"); score: Mapped[int]=mapped_column(Integer); total: Mapped[int]=mapped_column(Integer)
 class CodeExample(TimestampMixin, Base):
     __tablename__="code_examples"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); lesson_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("lessons.id",ondelete="CASCADE")); title: Mapped[str]=mapped_column(String(180)); language: Mapped[str]=mapped_column(String(50)); code: Mapped[str]=mapped_column(Text); filename: Mapped[str|None]=mapped_column(String(180),nullable=True); description: Mapped[str]=mapped_column(Text,default=""); position: Mapped[int]=mapped_column(Integer,default=0); lesson=relationship("Lesson",back_populates="code_examples")
+class SyntaxReference(TimestampMixin, Base):
+    __tablename__ = "syntax_references"
+    __table_args__ = (UniqueConstraint("course_id", "slug"), Index("ix_syntax_references_course_status_order", "course_id", "status", "display_order"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    course_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), index=True)
+    title: Mapped[str] = mapped_column(String(180))
+    slug: Mapped[str] = mapped_column(String(180))
+    category: Mapped[str] = mapped_column(String(100), default="Basics")
+    description: Mapped[str] = mapped_column(Text, default="")
+    basic_syntax: Mapped[str] = mapped_column(Text, default="")
+    when_to_use: Mapped[str] = mapped_column(Text, default="")
+    important_notes: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(20), default="draft", index=True)
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
+    course = relationship("Course", back_populates="syntax_references")
+    examples = relationship("SyntaxReferenceExample", back_populates="reference", cascade="all, delete-orphan", order_by="SyntaxReferenceExample.example_number")
+
+class SyntaxReferenceExample(TimestampMixin, Base):
+    __tablename__ = "syntax_reference_examples"
+    __table_args__ = (UniqueConstraint("reference_id", "example_number"), Index("ix_syntax_examples_reference_order", "reference_id", "example_number"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    reference_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("syntax_references.id", ondelete="CASCADE"), index=True)
+    example_number: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(String(180))
+    code: Mapped[str] = mapped_column(Text)
+    language: Mapped[str] = mapped_column(String(50))
+    expected_output: Mapped[str] = mapped_column(Text, default="")
+    explanation: Mapped[str] = mapped_column(Text, default="")
+    reference = relationship("SyntaxReference", back_populates="examples")
+
+class LessonSyntaxReference(Base):
+    __tablename__ = "lesson_syntax_references"
+    __table_args__ = (UniqueConstraint("lesson_id", "reference_id"),)
+    lesson_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("lessons.id", ondelete="CASCADE"), primary_key=True)
+    reference_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("syntax_references.id", ondelete="CASCADE"), primary_key=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
 class CourseInstructor(Base):
     __tablename__="course_instructors"; __table_args__=(UniqueConstraint("course_id","user_id"),); course_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("courses.id",ondelete="CASCADE"),primary_key=True); user_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id",ondelete="CASCADE"),primary_key=True); assigned_at: Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now())
 class CourseFAQ(TimestampMixin, Base):
