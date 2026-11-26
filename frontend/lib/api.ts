@@ -21,13 +21,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await fetch(`${base}${path}`, { ...init, credentials: "include", signal: controller.signal, headers: { Accept: "application/json", "Content-Type": "application/json", ...init?.headers } });
     if (!response.ok) {
       let message = `API request failed (${response.status})`;
+      const requestId = response.headers.get("X-Request-ID") ?? undefined;
       try {
-        const payload = await response.json() as { detail?: string; message?: string };
+        const payload = await response.json() as { detail?: string; message?: string; request_id?: string };
         message = payload.detail ?? payload.message ?? message;
+        if (payload.request_id && !requestId) {
+          message = `${message} (request ${payload.request_id})`;
+        }
       } catch {
         // Keep the status-based message when the server does not return JSON.
       }
-      throw new ApiError(message, "http", response.status, response.headers.get("X-Request-ID") ?? undefined);
+      throw new ApiError(
+        requestId && response.status >= 500 ? `${message} (request ${requestId})` : message,
+        "http",
+        response.status,
+        requestId,
+      );
     }
     return response.json() as Promise<T>;
   })().catch((error) => {

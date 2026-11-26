@@ -36,6 +36,20 @@ from .schemas import (
 router = APIRouter(prefix="/api/v1/dashboard", tags=["student-dashboard"])
 
 
+def _datetime_sort_key(value: datetime | None) -> datetime:
+    """Normalize legacy naive timestamps before comparing them with UTC values.
+
+    Older records can contain naive timestamps while newer PostgreSQL rows are
+    timezone-aware. Treat legacy values as UTC for ordering so one student's
+    dashboard cannot fail when both shapes are present.
+    """
+    if value is None:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 def _published_courses(db: Session, user_id: UUID):
     return db.scalars(
         select(Course)
@@ -82,7 +96,7 @@ def _course_rows(db: Session, user_id: UUID):
             for lesson in course_lessons
             if lesson.id in progress and progress[lesson.id].last_visited_at
         ]
-        last_lesson, last_progress = max(visited, key=lambda item: item[1].last_visited_at, default=(None, None))
+        last_lesson, last_progress = max(visited, key=lambda item: _datetime_sort_key(item[1].last_visited_at), default=(None, None))
         next_lesson = next(
             (lesson for lesson in course_lessons if not (progress.get(lesson.id) and progress[lesson.id].completed)),
             None,
@@ -111,9 +125,7 @@ def _course_rows(db: Session, user_id: UUID):
                 "last_activity_at": last_progress.last_visited_at if last_progress else None,
             }
         )
-    # SQLite test databases may return naive datetimes while PostgreSQL returns
-    # timezone-aware values; using a naive sentinel avoids mixed-type sorting.
-    return sorted(rows, key=lambda row: row["last_activity_at"] or datetime.min, reverse=True)
+    return sorted(rows, key=lambda row: _datetime_sort_key(row["last_activity_at"]), reverse=True)
 
 
 def _course_out(row: dict) -> dict:
@@ -201,7 +213,7 @@ def recent_activity(
         .limit(limit)
     ).all()
     events.extend({"event_type": "quiz_submitted", "title": "Quiz submitted", "course_title": course.title, "course_slug": course.slug, "lesson_title": lesson.title, "timestamp": attempt.created_at} for attempt, lesson, course in quiz_rows)
-    return sorted(events, key=lambda event: event["timestamp"] or datetime.min, reverse=True)[:limit]
+    return sorted(events, key=lambda event: _datetime_sort_key(event["timestamp"]), reverse=True)[:limit]
 
 
 @router.get("/weekly-activity", response_model=WeeklyActivityOut)

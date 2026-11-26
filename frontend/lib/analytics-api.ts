@@ -14,7 +14,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await fetch(path, { ...init, credentials: "include", headers: { Accept: "application/json", "Content-Type": "application/json", ...init?.headers } });
     if (!response.ok) {
       let message = `Analytics request failed (${response.status})`;
-      try { const body = await response.json() as { detail?: string }; message = body.detail ?? message; } catch { /* preserve status */ }
+      const requestId = response.headers.get("X-Request-ID");
+      try { const body = await response.json() as { detail?: string; request_id?: string }; message = body.detail ?? message; } catch { /* preserve status */ }
+      if (requestId && response.status >= 500) message = `${message} (request ${requestId})`;
       throw new Error(message);
     }
     return response.json() as Promise<T>;
