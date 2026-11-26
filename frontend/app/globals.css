@@ -7,6 +7,7 @@
 * { box-sizing: border-box; }
 html { max-width: 100%; overflow-x: hidden; scroll-behavior: smooth; }
 body { min-width: 320px; max-width: 100%; margin: 0; overflow-x: hidden; background: #0B1020; color: #F8FAFC; font-family: Inter, 'Noto Sans Myanmar', sans-serif; }
+body:has(.site-nav) main.min-h-screen { padding-top: 4rem; }
 .theme-light body { background: #f8fafc; color: #0f172a; }
 .theme-light .bg-ink { background-color: #f8fafc; }
 .theme-light .bg-surface { background-color: #ffffff; }

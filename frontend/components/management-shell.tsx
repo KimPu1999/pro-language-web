@@ -211,7 +211,7 @@ export function ManagementShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#080d1b] text-slate-100">
-      <header className="sticky top-0 z-40 border-b border-white/[.07] bg-[#0b1120]/95 shadow-[0_10px_35px_rgba(2,6,23,.22)] backdrop-blur-xl">
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-white/[.07] bg-[#0b1120]/95 shadow-[0_10px_35px_rgba(2,6,23,.22)] backdrop-blur-xl">
         <div className="mx-auto flex h-[68px] max-w-[1600px] items-center gap-3 px-4 sm:px-6 lg:px-0">
           <div className={`flex shrink-0 items-center gap-3 transition-[width] duration-200 ${collapsed ? "lg:w-[76px] lg:justify-center" : "lg:w-[264px]"}`}>
             <button type="button" aria-label="Open management navigation" onClick={() => setOpen(true)} className="rounded-xl p-2 text-slate-400 hover:bg-white/[.06] hover:text-white lg:hidden"><Menu size={19} /></button>
@@ -235,7 +235,7 @@ export function ManagementShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <div className="mx-auto flex min-h-[calc(100vh-68px)] max-w-[1600px]">
+      <div className="mx-auto flex min-h-[calc(100vh-68px)] max-w-[1600px] pt-[68px]">
         <aside className={`fixed inset-y-0 left-0 z-50 w-[264px] transform border-r border-white/[.07] bg-[#0e1729] px-3.5 pb-6 pt-5 transition-[transform,width] duration-200 lg:sticky lg:top-[68px] lg:z-0 lg:h-[calc(100vh-68px)] lg:min-h-[calc(100vh-68px)] lg:translate-x-0 lg:overflow-y-auto ${collapsed ? "lg:w-[76px]" : "lg:w-[264px]"} ${open ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="mb-5 flex items-center justify-between px-2 lg:hidden"><span className="font-semibold">Navigation</span><button type="button" aria-label="Close management navigation" onClick={() => setOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-white/[.06] hover:text-white"><X size={20} /></button></div>
           <div className={`mb-5 hidden items-center ${collapsed ? "lg:justify-center" : "lg:justify-between"} lg:flex`}><span className={`text-[10px] font-bold uppercase tracking-[.18em] text-slate-600 ${collapsed ? "lg:hidden" : ""}`}>Management workspace</span><button type="button" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={toggleCollapse} className="rounded-lg p-2 text-slate-500 hover:bg-white/[.06] hover:text-slate-100"><PanelLeftClose size={17} /></button></div>
