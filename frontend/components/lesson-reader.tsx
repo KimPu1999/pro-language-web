@@ -100,7 +100,7 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
 
   return (
     <div>
-      <div className="sticky top-[73px] z-30 -mx-2 mb-6 border-b border-line bg-ink/95 px-2 py-3 backdrop-blur-xl">
+      <div className="sticky top-0 z-20 -mx-2 mb-6 border-b border-line bg-ink/95 px-2 py-3 backdrop-blur-xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs text-slate-500">
