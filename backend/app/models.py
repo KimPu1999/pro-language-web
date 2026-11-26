@@ -92,6 +92,37 @@ class LessonRevision(TimestampMixin, Base):
     __tablename__="lesson_revisions"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); lesson_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("lessons.id",ondelete="CASCADE"),index=True); changed_by: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id")); revision_number: Mapped[int]=mapped_column(Integer); content_snapshot: Mapped[str]=mapped_column(Text); change_summary: Mapped[str]=mapped_column(String(240),default=""); created_at: Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now()); updated_at: Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now())
 class PublishingReview(TimestampMixin, Base):
     __tablename__="publishing_reviews"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); course_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("courses.id",ondelete="CASCADE"),index=True); reviewer_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id")); decision: Mapped[str]=mapped_column(String(30)); note: Mapped[str]=mapped_column(Text,default="")
+class ContentReviewItem(TimestampMixin, Base):
+    __tablename__ = "content_review_items"
+    __table_args__ = (UniqueConstraint("content_type", "content_key", "version"), Index("ix_content_review_items_status_submitted", "status", "submitted_at"), Index("ix_content_review_items_reviewer_status", "reviewer_id", "status"), Index("ix_content_review_items_org_status", "organization_id", "status"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    content_type: Mapped[str] = mapped_column(String(40))
+    content_key: Mapped[str] = mapped_column(String(180))
+    organization_id: Mapped[uuid.UUID|None] = mapped_column(ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True)
+    title: Mapped[str] = mapped_column(String(240))
+    submitted_by: Mapped[uuid.UUID|None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    reviewer_id: Mapped[uuid.UUID|None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    status: Mapped[str] = mapped_column(String(30), default="submitted", index=True)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    reviewed_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True), nullable=True)
+    published_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True), nullable=True)
+class ContentReviewComment(TimestampMixin, Base):
+    __tablename__ = "content_review_comments"
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    review_item_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("content_review_items.id", ondelete="CASCADE"), index=True)
+    author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    review_version: Mapped[int] = mapped_column(Integer)
+    comment_type: Mapped[str] = mapped_column(String(40), default="general")
+    body: Mapped[str] = mapped_column(Text)
+class ContentReviewEvent(TimestampMixin, Base):
+    __tablename__ = "content_review_events"
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    review_item_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("content_review_items.id", ondelete="CASCADE"), index=True)
+    actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    from_status: Mapped[str|None] = mapped_column(String(30), nullable=True)
+    to_status: Mapped[str] = mapped_column(String(30))
+    comment: Mapped[str] = mapped_column(Text, default="")
 class AdminAuditLog(TimestampMixin, Base):
     __tablename__="admin_audit_logs"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); actor_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id")); action: Mapped[str]=mapped_column(String(80)); entity_type: Mapped[str]=mapped_column(String(50)); entity_id: Mapped[uuid.UUID|None]=mapped_column(UUIDType,nullable=True); metadata_json: Mapped[str]=mapped_column(Text,default="{}")
 class PlatformSetting(TimestampMixin, Base):

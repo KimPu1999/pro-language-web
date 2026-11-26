@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, normalize_email, now, require_csrf, verify_password
 from .db import get_db
-from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeExample, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, LessonRevision, MediaAsset, PlatformSetting, ProgrammingLanguage, ProjectTemplate, PublishingReview, QuizAttempt, QuizQuestion, User
+from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeExample, ContentReviewEvent, ContentReviewItem, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, LessonRevision, MediaAsset, PlatformSetting, ProgrammingLanguage, ProjectTemplate, PublishingReview, QuizAttempt, QuizQuestion, User
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
 from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, MediaMetadataIn, NavigationSettings, PlatformFeatureSettings, PlatformGeneralSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
@@ -835,4 +835,11 @@ def update_quiz_question(question_id:UUID,payload:AdminQuizQuestionIn,user:User=
 def publish(course_id:UUID,payload:PublishDecisionIn,user:User=Depends(full_admin),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=require_edit(course_id,user,db); published_lessons=db.scalar(select(func.count(Lesson.id)).join(CourseModule).where(CourseModule.course_id==row.id,Lesson.published.is_(True),func.length(func.trim(Lesson.content_en))>0)) or 0; modules=db.scalar(select(func.count(CourseModule.id)).where(CourseModule.course_id==row.id)) or 0
     if payload.decision=="publish" and (not row.title.strip() or not row.slug.strip() or not row.language_id or modules<1 or published_lessons<1): raise HTTPException(422,"Course needs a title, language, module, and published English lesson")
-    row.status="published" if payload.decision=="publish" else ("draft" if payload.decision=="return" else "in_review"); row.published=row.status=="published"; row.updated_by=user.id; db.add(PublishingReview(course_id=row.id,reviewer_id=user.id,decision=payload.decision,note=payload.note)); audit(db,user,f"course_{row.status}","course",row.id); db.commit(); return course_out(row)
+    row.status="published" if payload.decision=="publish" else ("draft" if payload.decision=="return" else "in_review"); row.published=row.status=="published"; row.updated_by=user.id; db.add(PublishingReview(course_id=row.id,reviewer_id=user.id,decision=payload.decision,note=payload.note))
+    if payload.decision == "in_review":
+        active = db.scalar(select(ContentReviewItem).where(ContentReviewItem.content_type == "course", ContentReviewItem.content_key == str(row.id), ContentReviewItem.status.in_(["submitted", "in_review"])))
+        if not active:
+            latest = db.scalar(select(func.max(ContentReviewItem.version)).where(ContentReviewItem.content_type == "course", ContentReviewItem.content_key == str(row.id))) or 0
+            review = ContentReviewItem(content_type="course", content_key=str(row.id), title=row.title, submitted_by=row.created_by or user.id, version=latest + 1, status="submitted")
+            db.add(review); db.flush(); db.add(ContentReviewEvent(review_item_id=review.id, actor_id=user.id, from_status=None, to_status="submitted", comment=payload.note.strip()))
+    audit(db,user,f"course_{row.status}","course",row.id); db.commit(); return course_out(row)

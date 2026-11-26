@@ -35,6 +35,7 @@ from .organization_routes import router as organization_router
 from .security_routes import router as security_router
 from .automation_routes import router as automation_router
 from .content_studio_routes import router as content_studio_router
+from .content_review_routes import router as content_review_router
 from .lab_routes import router as lab_router
 from .realtime_collaboration_routes import router as realtime_collaboration_router
 from .cloud_lab_routes import router as cloud_lab_router
@@ -90,6 +91,7 @@ app.include_router(organization_router)
 app.include_router(security_router)
 app.include_router(automation_router)
 app.include_router(content_studio_router)
+app.include_router(content_review_router)
 app.include_router(lab_router)
 app.include_router(realtime_collaboration_router)
 app.include_router(cloud_lab_router)

@@ -1,4 +1,4 @@
-import type { AdminCodeExample, AdminCourse, AdminCurriculumModule, AdminDashboard, AdminPage, AdminQuiz, Challenge, ChallengeCategory, ChallengePage, ChallengeProgress, Course, CourseDetail, CourseLearning, CourseProgress, Dashboard, DashboardActivity, DashboardOverview, DashboardAnalytics, Enrollment, Language, Lesson, LessonQuiz, Module, Paginated, RunnerJob, RunnerLanguage, SkillDashboard, User, LearningIntelligence, LearningPlan, RevisionItem, SyntaxReference, WeeklyActivity } from "./types";
+import type { AdminCodeExample, AdminCourse, AdminCurriculumModule, AdminDashboard, AdminPage, AdminQuiz, Challenge, ChallengeCategory, ChallengePage, ChallengeProgress, Course, CourseDetail, CourseLearning, CourseProgress, Dashboard, DashboardActivity, DashboardOverview, DashboardAnalytics, Enrollment, Language, Lesson, LessonQuiz, Module, Paginated, RunnerJob, RunnerLanguage, SkillDashboard, User, LearningIntelligence, LearningPlan, RevisionItem, SyntaxReference, WeeklyActivity, ContentReviewDashboard, ContentReviewDetail, ContentReviewItem, ContentReviewQueue, ContentReviewPerson } from "./types";
 
 // Browser requests use the same-origin Next rewrite. Server rendering may use the private internal URL.
 const base = process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === "undefined" ? process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000" : "");
@@ -123,6 +123,18 @@ export const contentStudioApi = {
   quality:(slug:string)=>request<unknown[]>(`/api/v1/organizations/${slug}/content-studio/quality`),
   usage:(slug:string)=>request<{provider_status:string;items:unknown[]}>(`/api/v1/organizations/${slug}/content-studio/usage`),
   platform:()=>request<unknown>("/api/v1/platform/content-studio"),
+};
+export const contentReviewApi = {
+  dashboard: () => request<ContentReviewDashboard>("/api/v1/platform/content-review/dashboard"),
+  reviewers: () => request<ContentReviewPerson[]>("/api/v1/platform/content-review/reviewers"),
+  authors: () => request<ContentReviewPerson[]>("/api/v1/platform/content-review/authors"),
+  queue: (query = "") => request<ContentReviewQueue>(`/api/v1/platform/content-review/queue${query}`),
+  submit: (body: { content_type:string; content_key:string }, csrf:string) => request<ContentReviewItem>("/api/v1/platform/content-review/submit", { ...json(body), headers:{ "X-CSRF-Token":csrf } }),
+  detail: (id:string) => request<ContentReviewDetail>(`/api/v1/platform/content-review/${id}`),
+  assign: (id:string, reviewer_id:string, csrf:string) => request<ContentReviewItem>(`/api/v1/platform/content-review/${id}/assignment`, { method:"PATCH", body:JSON.stringify({ reviewer_id }), headers:{ "X-CSRF-Token":csrf } }),
+  transition: (id:string, body:{ status:string; comment?:string }, csrf:string) => request<ContentReviewItem>(`/api/v1/platform/content-review/${id}/transition`, { ...json(body), headers:{ "X-CSRF-Token":csrf } }),
+  publish: (id:string, csrf:string) => request<ContentReviewItem>(`/api/v1/platform/content-review/${id}/publish`, { ...json({}), headers:{ "X-CSRF-Token":csrf } }),
+  comment: (id:string, body:{ comment_type:string; body:string }, csrf:string) => request<ContentReviewDetail["comments"][number]>(`/api/v1/platform/content-review/${id}/comments`, { ...json(body), headers:{ "X-CSRF-Token":csrf } }),
 };
 export const labsApi = {
   catalog:(query="")=>request<{items:unknown[];page:number;page_size:number;total:number}>(`/api/v1/labs${query}`),
