@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from .auth import require_csrf, now, require_role
 from .config import settings
 from .db import get_db
+from .rbac import require_platform_admin
 from .models import (
     AIContentAuditLog, AIContentProject, AIContentQualityCheck, AIContentPublication,
     AIContentReviewDecision, AIContentReviewRequest, AIContentRevision,
@@ -19,7 +20,6 @@ from .organization_routes import org_context
 
 router = APIRouter(prefix="/api/v1", tags=["content-studio"])
 CONTENT_MANAGERS = {"owner", "admin", "instructor"}
-PLATFORM_ROLES = ("admin", "super_admin")
 
 
 class ProjectIn(BaseModel):
@@ -205,5 +205,5 @@ def usage(ctx=Depends(org_context)):
 
 
 @router.get("/platform/content-studio")
-def platform_content(user: User = Depends(require_role(*PLATFORM_ROLES)), db: Session = Depends(get_db)):
+def platform_content(user: User = Depends(require_platform_admin), db: Session = Depends(get_db)):
     return {"metrics": {"projects": db.scalar(select(func.count()).select_from(AIContentProject)) or 0, "jobs": db.scalar(select(func.count()).select_from(AIGenerationJob)) or 0, "pending_reviews": db.scalar(select(func.count()).select_from(AIContentReviewRequest).where(AIContentReviewRequest.status == "pending")) or 0, "quality_issues": db.scalar(select(func.count()).select_from(AIContentQualityCheck).where(AIContentQualityCheck.status == "FAIL")) or 0}, "ai_status": "configured" if settings.ai_enabled and settings.ai_provider != "disabled" else "Not Configured", "data_source": "postgresql"}
