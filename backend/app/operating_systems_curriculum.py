@@ -1,4 +1,4 @@
-"""Additive 24-module Operating Systems curriculum.
+"""Additive 40-module Operating Systems curriculum.
 
 This module is intentionally separate from the original vertical slice. It
 reuses matching lesson rows by slug, never deletes lessons or progress, and
@@ -63,6 +63,28 @@ PROJECTS = [
     ("Container Isolation Lab", "container-isolation-lab", "Study namespaces, cgroups, capabilities, and teardown in a VM."),
     ("xv6 Kernel Engineering Capstone", "xv6-kernel-engineering-capstone", "Implement and defend an isolated xv6 kernel change with tests."),
 ]
+
+# The original 24-module course remains intact. These sixteen modules extend it
+# into the requested systems-engineering track without renumbering or deleting
+# any existing lesson row, which keeps lesson-progress foreign keys valid.
+MODULES.extend([
+    ("Advanced File Systems", ["VFS and Mount Namespaces", "Copy-on-Write File Systems", "Log-Structured Storage", "Recovery and fsck", "Advanced File-System Lab"]),
+    ("Device Drivers", ["Driver Model and Probes", "Character Devices", "Block Devices and Queues", "DMA and Memory Barriers", "Driver Safety Lab"]),
+    ("Virtualization Engineering", ["Type-1 and Type-2 Hypervisors", "Hardware-Assisted Virtualization", "Virtual CPU Scheduling", "Virtual Device Models", "Virtualization Lab"]),
+    ("Containers and Isolation Engineering", ["Rootless Containers", "User and Mount Namespaces", "Seccomp and Capability Sets", "Cgroup v2 Resource Policy", "Isolation Verification Lab"]),
+    ("Operating System Security Engineering", ["Security Boundary Modeling", "MAC Policies and Labels", "Kernel Attack Surface", "Secure Update Pipelines", "Security Engineering Lab"]),
+    ("Performance and Tracing", ["Sampling and Instrumentation", "perf and Flame Graphs", "eBPF Safety Model", "Latency Histograms", "Tracing Lab"]),
+    ("OS Kernel Development", ["xv6 Source Tour", "System Call Extension", "Page Allocator Extension", "Scheduler Extension", "Kernel Patch Review"]),
+    ("Advanced Scheduling", ["Fair Scheduling", "Real-Time Scheduling", "Work Conservation", "Admission Control", "Scheduling Research Lab"]),
+    ("Memory Engineering", ["Allocator Design", "NUMA Locality", "Huge Pages", "Memory Pressure and Reclaim", "Memory Engineering Lab"]),
+    ("Advanced Storage Engineering", ["Write Paths and FUA", "SSD Garbage Collection", "RAID Reconstruction", "End-to-End Integrity", "Storage Failure Lab"]),
+    ("Systems Security Engineering", ["Threat Modeling a Host", "Privilege Separation", "Secrets and Key Rotation", "Incident Evidence Collection", "Host Security Review"]),
+    ("Distributed Systems Foundations", ["Clocks and Ordering", "Consensus Concepts", "Replication and Quorums", "Failure Detectors", "Distributed Systems Lab"]),
+    ("Real-Time and Embedded OS", ["Deadlines and Jitter", "Interrupt Latency", "RTOS Scheduling", "Embedded Memory Budgets", "Real-Time Lab"]),
+    ("Production Linux Engineering", ["Boot Reliability", "Service Supervision", "Kernel and Package Lifecycle", "Capacity and On-Call Signals", "Production Readiness Lab"]),
+    ("Reliability and Systems Testing", ["Invariants and Model Tests", "Fault Injection", "Load and Soak Testing", "Recovery Objectives", "Reliability Test Lab"]),
+    ("Final Systems Engineering Capstone", ["Capstone Requirements", "Capstone Architecture", "Capstone Implementation", "Capstone Verification", "Capstone Defense"]),
+])
 
 
 def _slug(value: str) -> str:
@@ -154,12 +176,12 @@ def _projects(db):
 def seed_operating_systems_curriculum(db, course):
     """Complete the requested structure without deleting existing records."""
     course.title = "Operating Systems — From Zero to Advanced Systems Engineering"
-    course.short_description = "A four-level path from OS foundations to kernel, virtualization, security, performance, and systems engineering."
+    course.short_description = "A four-level, 40-module path from OS foundations to kernel, virtualization, security, performance, reliability, and systems engineering."
     course.description = "Learn processes, scheduling, concurrency, memory, filesystems, I/O, Linux administration, kernel architecture, containers, security, virtualization, performance, reliability, and an xv6 capstone. Advanced experiments use isolated VMs or emulators and never modify the student's host OS."
     course.target_audience = "Learners progressing from programming and Linux fundamentals to advanced systems engineering."
     course.technologies = "C|POSIX|Bash|Linux|pthreads|QEMU|xv6|system calls|sockets|filesystems"
     course.level = "beginner"
-    course.duration_minutes = 24 * 5 * 50
+    course.duration_minutes = 40 * 5 * 50
     course.outcomes = "Explain OS abstractions, privilege boundaries, boot, system calls, processes, and threads|Simulate scheduling, synchronization, memory, paging, filesystems, and process states|Use safe Linux diagnostics and reason about security, isolation, virtualization, performance, and reliability|Design, test, document, and defend systems projects in isolated environments"
     course.requirements = "Basic programming, C foundations, and command-line familiarity. Advanced kernel, driver, storage, and container labs require a disposable Linux VM or QEMU/xv6 environment; no experiment should modify the host OS."
     existing = {lesson.slug: lesson for module in course.modules for lesson in module.lessons}
@@ -190,7 +212,7 @@ def seed_operating_systems_curriculum(db, course):
             lesson.order_index = lesson_position
             language, example, expected, exercise, answer = _profile(module_title, title, lesson_position)
             if not lesson.content_en or not lesson.content_en.strip():
-                next_title = lesson_titles[lesson_position] if lesson_position < 5 else ("Capstone complete" if module_position == 24 else MODULES[module_position][0])
+                next_title = lesson_titles[lesson_position] if lesson_position < 5 else ("Capstone complete" if module_position == 40 else MODULES[module_position][0])
                 lesson.content_en = _content(module_title, title, title.lower(), language, example, expected, exercise, next_title)
                 lesson.content_mm = f"{title}\n\nရည်ရွယ်ချက်\n{title} ကို systems engineering အမြင်ဖြင့် လေ့လာပါမည်။\n\nလေ့ကျင့်ခန်း\n{exercise}\n\nQuiz\nမှန်ကန်သောနည်းလမ်းမှာ validated၊ observable၊ isolated experiment ဖြစ်သည်။\n\nHost OS ကို မပြုပြင်ဘဲ VM/QEMU/xv6 ထဲတွင်သာ အဆင့်မြင့် lab များ ပြုလုပ်ပါ။"
                 lesson.description = f"{title} — {module_title}"
@@ -201,11 +223,22 @@ def seed_operating_systems_curriculum(db, course):
                 suffix = "c" if language == "c" else "sh" if language == "bash" else "txt"
                 db.add(CodeExample(lesson_id=lesson.id, title=f"{title} example", language=language, filename=f"{_slug(title)}.{suffix}", code=example, description=f"Safe example for {title}; capture actual output in an isolated environment.", position=1))
             additions = {
+                "Terminology": f"Key terms: {title} names the resource, boundary, invariant, failure state, and cleanup action used in this lesson.",
+                "Practical demonstration": f"Use the smallest safe {language} demonstration for {title}:\n```{language}\n{example}\n```\nCapture the actual output and tool versions; the seed does not claim this snippet was executed.",
+                "Step-by-step explanation": "1. Define the resource and trust boundary. 2. Validate inputs. 3. Trace state and ownership. 4. Observe output and failure behavior. 5. Clean up temporary state.",
+                "Debugging guidance": "Check the exact command, platform version, permissions, resource limits, logs, and the smallest reproducer. Use sanitizers for C, deterministic traces for simulations, and a disposable VM or emulator for privileged experiments.",
+                "Security considerations": "Use least privilege, bounded inputs, redacted logs, snapshots, and explicit teardown. Never execute arbitrary student code in the API process or modify the host operating system.",
                 "Syntax and command notes": f"Use the smallest valid syntax for {title}; validate arguments, handle errors, and preserve cleanup boundaries.",
+                "Relevant algorithms": f"Trace {title} as a state machine. Compare FIFO with a fair or priority policy where applicable, and record queue length, service time, failures, invariants, and cleanup state.",
                 "Expected output": f"Expected output: {expected}. Capture the actual platform output and environment.",
+                "Practical lab": f"Objective: verify {title} in a repeatable lab. Record tool versions, run the smallest example, capture stdout/stderr, vary one input, verify the invariant, then remove temporary state or destroy the VM snapshot. Troubleshoot permissions, limits, logs, and the exact command before changing multiple variables.",
                 "Common mistakes": "Avoid unvalidated input, partial-operation assumptions, unsafe privileges, missing cleanup, and conclusions based on a single run.",
+                "Exercise": exercise,
                 "Homework": "Write a short evidence report with the command or code, observed output, one failure case, and a safe rollback or cleanup plan.",
                 "Best practices": "Prefer least privilege, deterministic inputs, bounded resources, explicit ownership, reproducible tests, and disposable environments for risky experiments.",
+                "Quiz": "Question: which approach is trustworthy? Answer: a validated, observable, isolated experiment. Explanation: it defines a boundary, records evidence, and supports recovery.",
+                "Answer explanation": "The safe answer defines the boundary, records evidence, preserves invariants, and leaves a recovery path; unsafe alternatives hide failures or create unnecessary risk.",
+                "Key takeaways": f"{title} has a measurable contract, ownership rules, failure behavior, and a safe verification path.",
             }
             content = lesson.content_en or ""
             for marker, addition in additions.items():

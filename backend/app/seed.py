@@ -312,8 +312,15 @@ def main():
             course.duration_minutes = course.duration_minutes or 0
             course.outcomes = course.outcomes or "Understand the core concepts|Read and explain examples|Build a foundation for further study"
             course.requirements = course.requirements or ""
-            course.status = "curriculum_pending"
-            course.published = True
+            # Operating Systems already exists as a published catalog entry;
+            # preserve that publication state while its newly added lessons
+            # remain drafts until review. Other catalog rows keep the legacy
+            # seed behavior.
+            if slug == "operating-systems":
+                course.status = "published" if course.published else course.status
+            else:
+                course.status = "curriculum_pending"
+                course.published = True
         db.flush()
         c_course = db.scalar(select(Course).where(Course.slug == "c-programming"))
         if c_course:
