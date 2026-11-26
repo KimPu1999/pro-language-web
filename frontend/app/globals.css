@@ -8,6 +8,16 @@
 html { max-width: 100%; overflow-x: hidden; scroll-behavior: smooth; }
 body { min-width: 320px; max-width: 100%; margin: 0; overflow-x: hidden; background: #0B1020; color: #F8FAFC; font-family: Inter, 'Noto Sans Myanmar', sans-serif; }
 body:has(.site-nav) main.min-h-screen { padding-top: 4rem; }
+@media (min-width: 1024px) {
+  .learning-course-sidebar {
+    position: fixed;
+    top: 84px;
+    left: max(20px, calc((100vw - 1600px) / 2 + 32px));
+    z-index: 30;
+    width: 280px;
+    height: calc(100vh - 100px);
+  }
+}
 body:has(nav[aria-label="Management navigation"]) aside:has(nav[aria-label="Management navigation"]) {
   align-self: flex-start;
   height: calc(100vh - 68px);

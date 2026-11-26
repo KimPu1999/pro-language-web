@@ -40,9 +40,9 @@ export default async function LessonPage({ params }: { params: Promise<{ courseS
   const relatedSyntax = await syntaxApi.lesson(courseSlug, lessonSlug).catch(() => []);
 
   return (
-    <section className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
+    <section className="mx-auto grid w-full max-w-[1600px] gap-8 px-5 py-8 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
       <LearningSidebar courseSlug={courseSlug} courseTitle={course.title} modules={course.modules} currentLessonId={lesson.id} />
-      <article className="min-w-0">
+      <article className="min-w-0 lg:col-start-2">
         <Link className="text-sm text-indigo-300 hover:text-white" href={`/courses/${courseSlug}`}>← Course overview</Link>
         <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
           <div>

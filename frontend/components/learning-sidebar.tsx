@@ -47,8 +47,8 @@ export function LearningSidebar({ courseSlug, courseTitle, modules, currentLesso
   const totalLessons = modules.reduce((total, module) => total + module.lessons.length, 0);
 
   return (
-    <aside className="lg:sticky lg:top-[89px] lg:self-start" aria-label="Course contents">
-      <div className="rounded-2xl border border-line bg-surface p-4">
+    <aside className="learning-course-sidebar lg:sticky lg:top-[84px] lg:h-[calc(100vh-100px)] lg:self-start" aria-label="Course contents">
+      <div className="flex h-full flex-col rounded-2xl border border-line bg-surface p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-xs font-semibold uppercase tracking-widest text-slate-500">{courseTitle}</p>
@@ -66,7 +66,7 @@ export function LearningSidebar({ courseSlug, courseTitle, modules, currentLesso
         </div>
         {progress && <div className="mt-3"><ProgressBar value={progress.progress_percent} label="Course progress" /></div>}
         {sidebarOpen && (
-          <div id="course-contents-list" className="mt-4 max-h-[calc(100vh-220px)] space-y-2 overflow-y-auto pr-1">
+          <div id="course-contents-list" className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
             {modules.map(module => {
               const isOpen = openModules[module.id] ?? false;
               const stats = moduleProgress.get(module.id);
