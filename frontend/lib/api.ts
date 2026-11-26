@@ -152,6 +152,11 @@ export const contentReviewApi = {
   publish: (id:string, csrf:string) => request<ContentReviewItem>(`/api/v1/platform/content-review/${id}/publish`, { ...json({}), headers:{ "X-CSRF-Token":csrf } }),
   comment: (id:string, body:{ comment_type:string; body:string }, csrf:string) => request<ContentReviewDetail["comments"][number]>(`/api/v1/platform/content-review/${id}/comments`, { ...json(body), headers:{ "X-CSRF-Token":csrf } }),
 };
+export const curriculumQualityApi = {
+  list: (query = "") => request<{items: import("./types").CurriculumQualityItem[]; total:number; counts:Record<string,number>; data_source:string}>(`/api/v1/admin/curriculum-quality/courses${query}`),
+  detail: (id:string) => request<import("./types").CurriculumQualityDetail>(`/api/v1/admin/curriculum-quality/courses/${id}`),
+  submitReview: (id:string, csrf:string) => request<{id:string;status:string;created:boolean}>(`/api/v1/admin/curriculum-quality/courses/${id}/submit-review`, { method:"POST", headers:{"X-CSRF-Token":csrf} }),
+};
 export const labsApi = {
   catalog:(query="")=>request<{items:unknown[];page:number;page_size:number;total:number}>(`/api/v1/labs${query}`),
   detail:(id:string)=>request<any>(`/api/v1/labs/${id}`),

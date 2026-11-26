@@ -9,7 +9,7 @@ import { csrf } from "@/components/auth-form";
 import { Card, Skeleton } from "@/components/ui";
 
 const groups = [
-  { title: "Workspace", items: [["Dashboard", "/admin/dashboard", LayoutDashboard], ["Course Management", "/admin/courses", BookOpen], ["Module Management", "/platform/content-studio", Code2], ["Lesson Management", "/platform/content-studio", Code2], ["Quiz Management", "/platform/assessment-integrity", Terminal], ["Project Management", "/admin/projects", Code2]] as const },
+  { title: "Workspace", items: [["Dashboard", "/admin/dashboard", LayoutDashboard], ["Course Management", "/admin/courses", BookOpen], ["Curriculum Quality", "/admin/curriculum-quality", BarChart3], ["Module Management", "/platform/content-studio", Code2], ["Lesson Management", "/platform/content-studio", Code2], ["Quiz Management", "/platform/assessment-integrity", Terminal], ["Project Management", "/admin/projects", Code2]] as const },
   { title: "Platform", items: [["Students", "/platform/students", Code2], ["Instructors", "/platform/instructors", Code2], ["Categories", "/admin/categories", Tags], ["Media Library", "/platform/media", Code2], ["Analytics & Reports", "/platform/reports", BarChart3], ["Announcements", "/platform/notifications", Languages]] as const },
   { title: "Governance", items: [["Admin Users", "/platform/settings", Code2], ["Audit Logs", "/platform/security", Terminal], ["Settings", "/admin/settings", Tags]] as const },
 ];
