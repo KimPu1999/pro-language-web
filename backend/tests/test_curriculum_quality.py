@@ -21,6 +21,8 @@ def test_quality_center_reports_live_evidence_and_supports_filters(client):
     body = response.json()
     assert body["data_source"] == "live database records"
     assert body["total"] == 1
+    assert body["summary"]["courses"] == 1
+    assert body["summary"]["lessons"] == 1
     item = body["items"][0]
     assert item["slug"] == "python-foundations"
     assert "missing_modules" in item

@@ -161,7 +161,7 @@ export const contentReviewApi = {
   comment: (id:string, body:{ comment_type:string; body:string }, csrf:string) => request<ContentReviewDetail["comments"][number]>(`/api/v1/platform/content-review/${id}/comments`, { ...json(body), headers:{ "X-CSRF-Token":csrf } }),
 };
 export const curriculumQualityApi = {
-  list: (query = "") => request<{items: import("./types").CurriculumQualityItem[]; total:number; counts:Record<string,number>; data_source:string}>(`/api/v1/admin/curriculum-quality/courses${query}`),
+  list: (query = "") => request<{items: import("./types").CurriculumQualityItem[]; total:number; counts:Record<string,number>; summary: { courses:number; published_courses:number; courses_with_gaps:number; review_pending:number; modules:number; lessons:number; published_lessons:number; syntax_references:number }; data_source:string}>(`/api/v1/admin/curriculum-quality/courses${query}`),
   detail: (id:string) => request<import("./types").CurriculumQualityDetail>(`/api/v1/admin/curriculum-quality/courses/${id}`),
   submitReview: (id:string, csrf:string) => request<{id:string;status:string;created:boolean}>(`/api/v1/admin/curriculum-quality/courses/${id}/submit-review`, { method:"POST", headers:{"X-CSRF-Token":csrf} }),
 };

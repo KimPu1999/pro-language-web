@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ChevronRight, Eye, RefreshCw, Search, X } from "lucide-react";
+import { BookOpen, Check, ChevronRight, DatabaseBackup, Eye, ListChecks, RefreshCw, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { curriculumQualityApi } from "@/lib/api";
 import type { CurriculumQualityDetail, CurriculumQualityItem } from "@/lib/types";
@@ -10,6 +10,7 @@ import { Badge, Button, Card, EmptyState, Skeleton } from "@/components/ui";
 
 const levels = ["beginner", "intermediate", "advanced", "professional"];
 const auditStatuses = ["published_with_gaps", "draft_with_gaps", "review_pending", "ready_for_review", "published_ready_for_review"];
+type AuditSummary = { courses: number; published_courses: number; courses_with_gaps: number; review_pending: number; modules: number; lessons: number; published_lessons: number; syntax_references: number };
 
 function label(value: string) {
   return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -33,6 +34,7 @@ function GapList({ title, items }: { title: string; items: string[] }) {
 
 export default function CurriculumQualityPage() {
   const [items, setItems] = useState<CurriculumQualityItem[]>([]);
+  const [summary, setSummary] = useState<AuditSummary>({ courses: 0, published_courses: 0, courses_with_gaps: 0, review_pending: 0, modules: 0, lessons: 0, published_lessons: 0, syntax_references: 0 });
   const [selected, setSelected] = useState<CurriculumQualityDetail | null>(null);
   const [technology, setTechnology] = useState("");
   const [level, setLevel] = useState("");
@@ -57,7 +59,11 @@ export default function CurriculumQualityPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
-    try { setItems((await curriculumQualityApi.list(query)).items); }
+    try {
+      const result = await curriculumQualityApi.list(query);
+      setItems(result.items);
+      setSummary(result.summary);
+    }
     catch (err) { setError(err instanceof Error ? err.message : "Unable to load the curriculum audit."); }
     finally { setLoading(false); }
   }, [query]);
@@ -85,18 +91,29 @@ export default function CurriculumQualityPage() {
     } catch (err) { setError(err instanceof Error ? err.message : "Unable to submit the course for review."); }
   }
 
-  return <section className="mx-auto max-w-[1500px] space-y-6">
+  const metrics = [
+    { label: "Courses in audit", value: summary.courses, detail: `${summary.published_courses} published`, icon: DatabaseBackup, tone: "text-indigo-300" },
+    { label: "Curriculum gaps", value: summary.courses_with_gaps, detail: "needs review or content", icon: ListChecks, tone: "text-amber-300" },
+    { label: "Learning structure", value: summary.modules, detail: `${summary.lessons} lessons · ${summary.published_lessons} published`, icon: BookOpen, tone: "text-cyan-300" },
+    { label: "Review queue", value: summary.review_pending, detail: `${summary.syntax_references} syntax references`, icon: RefreshCw, tone: "text-emerald-300" },
+  ];
+
+  return <section className="mx-auto max-w-[1500px] space-y-5">
     <div className="flex flex-wrap items-end justify-between gap-5">
       <div>
-        <p className="text-sm font-semibold text-indigo-300">Evidence based curriculum audit</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Curriculum Quality Center</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">Inspect actual course, module, lesson, quiz, exercise, syntax, project, and review records. Gaps are reported from stored data; no completion percentage is inferred.</p>
+        <div className="flex items-center gap-2 text-sm font-semibold text-indigo-300"><span className="grid h-7 w-7 place-items-center rounded-lg bg-indigo-400/10"><DatabaseBackup size={15}/></span>Evidence based curriculum audit</div>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-[40px]">Curriculum Quality Center</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">Inspect actual course, module, lesson, quiz, exercise, syntax, project, and review records. Every count below comes from live database records.</p>
       </div>
-      <Button className="inline-flex items-center gap-2 bg-surface text-slate-200 hover:bg-elevated" onClick={() => void load()}><RefreshCw size={16}/>Refresh audit</Button>
+      <Button className="inline-flex items-center gap-2 border border-line bg-surface text-slate-200 hover:bg-elevated" onClick={() => void load()}><RefreshCw size={16}/>Refresh audit</Button>
     </div>
 
     {error && <Card className="border-red-400/20 bg-red-500/5 p-4 text-sm text-red-300">{error}</Card>}
     {message && <Card className="border-emerald-400/20 bg-emerald-500/5 p-4 text-sm text-emerald-300">{message}</Card>}
+
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {metrics.map(({ label: metricLabel, value, detail, icon: Icon, tone }) => <Card key={metricLabel} className="relative overflow-hidden p-4 sm:p-5"><div className="absolute right-4 top-4 rounded-xl bg-white/[0.03] p-2"><Icon size={17} className={tone}/></div><p className="text-xs font-medium text-slate-500">{metricLabel}</p><p className="mt-2 text-2xl font-bold tracking-tight text-slate-100">{value.toLocaleString()}</p><p className="mt-1 text-xs text-slate-500">{detail}</p></Card>)}
+    </div>
 
     <Card className="p-4 sm:p-5">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
@@ -106,7 +123,7 @@ export default function CurriculumQualityPage() {
         <select aria-label="Filter curriculum status" value={completeness} onChange={(event) => setCompleteness(event.target.value)} className="rounded-xl border border-line bg-ink/40 px-3 py-3 text-sm text-slate-300"><option value="">All audit states</option>{auditStatuses.map((value) => <option key={value} value={value}>{label(value)}</option>)}</select>
         <select aria-label="Filter review status" value={reviewStatus} onChange={(event) => setReviewStatus(event.target.value)} className="rounded-xl border border-line bg-ink/40 px-3 py-3 text-sm text-slate-300"><option value="">All review states</option><option value="none">No review item</option><option value="submitted">Submitted</option><option value="in_review">In review</option><option value="approved">Approved</option><option value="changes_requested">Changes requested</option><option value="rejected">Rejected</option></select>
       </div>
-      <p className="mt-3 text-xs text-slate-500">Filters query the audit API against live database records. Review status is separate from curriculum evidence.</p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line/70 pt-3 text-xs text-slate-500"><span>Filters query live database records.</span><span>{items.length.toLocaleString()} course records shown</span></div>
     </Card>
 
     {loading ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"><Skeleton className="h-56"/><Skeleton className="h-56"/><Skeleton className="h-56"/></div> : items.length ? <div className="grid gap-4 xl:grid-cols-2">{items.map((item) => <Card key={item.id} className="overflow-hidden">

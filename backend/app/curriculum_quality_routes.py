@@ -125,22 +125,24 @@ def _lesson_sections(lesson: Lesson) -> dict[str, bool]:
     return {key: bool(lesson.code_examples) if key == "code_examples" else _contains(text, options) for key, options in LESSON_REQUIREMENTS}
 
 
-def _latest_review(db: Session, course: Course) -> dict | None:
+def _latest_review(db: Session, course: Course, review_cache: dict[str, dict] | None = None) -> dict | None:
+    if review_cache is not None:
+        return review_cache.get(str(course.id)) or review_cache.get(course.slug)
     row = db.scalar(select(ContentReviewItem).where(ContentReviewItem.content_type == "course", ContentReviewItem.content_key.in_((str(course.id), course.slug))).order_by(ContentReviewItem.version.desc(), ContentReviewItem.updated_at.desc()))
     if not row:
         return None
     return {"id": row.id, "status": row.status, "version": row.version, "updated_at": row.updated_at}
 
 
-def _course_audit(db: Session, course: Course, detail: bool = False) -> dict:
+def _course_audit(db: Session, course: Course, detail: bool = False, context: dict | None = None) -> dict:
     modules = list(course.modules)
     lessons = [lesson for module in modules for lesson in module.lessons]
     lesson_ids = [lesson.id for lesson in lessons]
-    quiz_counts = {}
-    if lesson_ids:
+    quiz_counts = context["quiz_counts"] if context is not None else {}
+    if lesson_ids and context is None:
         quiz_counts = {lesson_id: count for lesson_id, count in db.execute(select(LessonQuiz.lesson_id, func.count(QuizQuestion.id)).join(QuizQuestion, QuizQuestion.quiz_id == LessonQuiz.id).where(LessonQuiz.lesson_id.in_(lesson_ids)).group_by(LessonQuiz.lesson_id)).all()}
-    exercise_counts = {}
-    if lesson_ids:
+    exercise_counts = context["exercise_counts"] if context is not None else {}
+    if lesson_ids and context is None:
         exercise_counts = {lesson_id: count for lesson_id, count in db.execute(select(CodingExercise.lesson_id, func.count(CodingExercise.id)).where(CodingExercise.lesson_id.in_(lesson_ids), CodingExercise.status != "archived").group_by(CodingExercise.lesson_id)).all()}
     missing_modules = [] if modules and [module.order_index for module in modules] == list(range(1, len(modules) + 1)) else ["Module ordering is missing or non-contiguous"]
     missing_lessons = []
@@ -177,7 +179,7 @@ def _course_audit(db: Session, course: Course, detail: bool = False) -> dict:
     syntax = list(course.syntax_references)
     syntax_gaps = [{"id": item.id, "title": item.title, "status": item.status, "example_count": len(item.examples), "missing_examples": max(0, 5 - len(item.examples))} for item in syntax if item.status == "published" and len(item.examples) != 5]
     published_syntax = [item for item in syntax if item.status == "published"]
-    published_projects = db.scalars(select(ProjectTemplate).where(ProjectTemplate.published.is_(True))).all()
+    published_projects = context["published_projects"] if context is not None else db.scalars(select(ProjectTemplate).where(ProjectTemplate.published.is_(True))).all()
     course_tokens = {course.slug.casefold(), course.title.casefold()}
     if getattr(course, "language", None):
         course_tokens.add(course.language.slug.casefold())
@@ -201,7 +203,7 @@ def _course_audit(db: Session, course: Course, detail: bool = False) -> dict:
     if no_exercises: gaps.append("missing_exercises")
     if syntax_gaps: gaps.append("incomplete_published_syntax")
     if missing_topics: gaps.append("missing_expected_topics")
-    review = _latest_review(db, course)
+    review = _latest_review(db, course, context["reviews"] if context is not None else None)
     if gaps:
         audit_status = "published_with_gaps" if course.published else "draft_with_gaps"
     elif review and review["status"] in {"submitted", "in_review", "changes_requested"}:
@@ -235,9 +237,23 @@ def quality_courses(
     if level: query = query.where(Course.level.ilike(level.strip()))
     if search: query = query.where(Course.title.ilike(f"%{search.strip()}%") | Course.slug.ilike(f"%{search.strip()}%"))
     courses = db.scalars(query).unique().all()
+    lesson_ids = [lesson.id for course in courses for module in course.modules for lesson in module.lessons]
+    quiz_counts = {}
+    exercise_counts = {}
+    if lesson_ids:
+        quiz_counts = {lesson_id: count for lesson_id, count in db.execute(select(LessonQuiz.lesson_id, func.count(QuizQuestion.id)).join(QuizQuestion, QuizQuestion.quiz_id == LessonQuiz.id).where(LessonQuiz.lesson_id.in_(lesson_ids)).group_by(LessonQuiz.lesson_id)).all()}
+        exercise_counts = {lesson_id: count for lesson_id, count in db.execute(select(CodingExercise.lesson_id, func.count(CodingExercise.id)).where(CodingExercise.lesson_id.in_(lesson_ids), CodingExercise.status != "archived").group_by(CodingExercise.lesson_id)).all()}
+    published_projects = db.scalars(select(ProjectTemplate).where(ProjectTemplate.published.is_(True))).all()
+    review_keys = [key for course in courses for key in (str(course.id), course.slug)]
+    review_cache = {}
+    if review_keys:
+        review_rows = db.scalars(select(ContentReviewItem).where(ContentReviewItem.content_type == "course", ContentReviewItem.content_key.in_(review_keys)).order_by(ContentReviewItem.version.desc(), ContentReviewItem.updated_at.desc())).all()
+        for row in review_rows:
+            review_cache.setdefault(row.content_key, {"id": row.id, "status": row.status, "version": row.version, "updated_at": row.updated_at})
+    audit_context = {"quiz_counts": quiz_counts, "exercise_counts": exercise_counts, "published_projects": published_projects, "reviews": review_cache}
     items = []
     for course in courses:
-        item = _course_audit(db, course)
+        item = _course_audit(db, course, context=audit_context)
         if technology and (item["technology_slug"] or "").casefold() != technology.casefold():
             continue
         if completeness and item["audit_status"] != completeness:
@@ -248,7 +264,23 @@ def quality_courses(
         items.append(item)
     counts = {}
     for item in items: counts[item["audit_status"]] = counts.get(item["audit_status"], 0) + 1
-    return {"items": items, "total": len(items), "counts": counts, "data_source": "live database records"}
+    published_items = [item for item in items if item["published"]]
+    return {
+        "items": items,
+        "total": len(items),
+        "counts": counts,
+        "summary": {
+            "courses": len(items),
+            "published_courses": len(published_items),
+            "courses_with_gaps": sum(1 for item in items if item["gaps"]),
+            "review_pending": counts.get("review_pending", 0),
+            "modules": sum(item["module_count"] for item in items),
+            "lessons": sum(item["lesson_count"] for item in items),
+            "published_lessons": sum(item["published_lesson_count"] for item in items),
+            "syntax_references": sum(item["syntax_reference_count"] for item in items),
+        },
+        "data_source": "live database records",
+    }
 
 
 @router.get("/courses/{course_id}")
