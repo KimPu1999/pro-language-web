@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ArrowRight, BookOpen, Clock, Eye, EyeOff, FileText, LayoutDashboard, ListChecks, Menu, Search, Sparkles, Tags, X } from "lucide-react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { api } from "@/lib/api";
+import { api, coursesApi } from "@/lib/api";
 import type { Course } from "@/lib/types";
 import { LogoutButton } from "@/components/auth-form";
 import { useI18n } from "@/lib/i18n";
@@ -38,7 +38,18 @@ export function StudentDashboardShell({ children }: { children: React.ReactNode 
   useEffect(() => setCollapsed(window.localStorage.getItem("cm_dashboard_sidebar") === "collapsed"), []);
   useEffect(() => { const savedTheme = window.localStorage.getItem("cm_theme"); if (savedTheme === "light") { setTheme("light"); document.documentElement.classList.add("theme-light"); } }, []);
   useEffect(() => { if (!drawer) return; const previous = document.activeElement as HTMLElement | null; document.body.style.overflow = "hidden"; drawerRef.current?.querySelector<HTMLElement>("a,button")?.focus(); const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") { setDrawer(false); menuButtonRef.current?.focus(); return; } if (event.key !== "Tab" || !drawerRef.current) return; const focusable = Array.from(drawerRef.current.querySelectorAll<HTMLElement>("a,button")); const first = focusable[0]; const last = focusable[focusable.length - 1]; if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); } }; document.addEventListener("keydown", onKeyDown); return () => { document.body.style.overflow = ""; document.removeEventListener("keydown", onKeyDown); previous?.focus(); }; }, [drawer]);
-  useEffect(() => { if (query.trim().length < 2) { setResults([]); setSearching(false); return; } const timer = window.setTimeout(() => { setSearching(true); api.courses(`?search=${encodeURIComponent(query.trim())}&page_size=5`).then(data => setResults(data.items)).catch(() => setResults([])).finally(() => setSearching(false)); }, 250); return () => window.clearTimeout(timer); }, [query]);
+  useEffect(() => {
+    if (query.trim().length < 2) { setResults([]); setSearching(false); return; }
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setSearching(true);
+      coursesApi(`?search=${encodeURIComponent(query.trim())}&page_size=5`, controller.signal)
+        .then(data => setResults(data.items))
+        .catch(reason => { if (reason instanceof Error && reason.name === "AbortError") return; setResults([]); })
+        .finally(() => { if (!controller.signal.aborted) setSearching(false); });
+    }, 250);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [query]);
   const toggle = () => setCollapsed(value => { const next = !value; window.localStorage.setItem("cm_dashboard_sidebar", next ? "collapsed" : "expanded"); return next; });
   const text = copy[language];
   const changeLanguage = (value: DashboardLanguage) => { setLocale(value); window.dispatchEvent(new CustomEvent("cm-language-change", { detail: value })); };

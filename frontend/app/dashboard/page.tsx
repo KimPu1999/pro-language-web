@@ -21,14 +21,15 @@ export default function DashboardPage() {
   const { language } = useDashboardPreferences();
   const load = () => {
     setError("");
-    Promise.all([api.me(), api.dashboard()])
-      .then(([nextUser, nextData]) => {
+    // Start optional dashboard panels at the same time as the required data.
+    // They should not form a second network waterfall after the core cards.
+    Promise.all([
+      Promise.all([api.me(), api.dashboard()]),
+      Promise.allSettled([dashboardApi.recentActivity(), dashboardApi.weeklyActivity()]),
+    ])
+      .then(([[nextUser, nextData], results]) => {
         setUser(nextUser);
         setData(nextData);
-        return Promise.allSettled([dashboardApi.recentActivity(), dashboardApi.weeklyActivity()]);
-      })
-      .then(results => {
-        if (!results) return;
         const [activityResult, weeklyResult] = results;
         if (activityResult.status === "fulfilled") setActivity(activityResult.value);
         else setActivity([]);

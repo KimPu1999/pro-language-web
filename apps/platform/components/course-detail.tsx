@@ -11,7 +11,7 @@ type Instructor = { id: string; name: string; avatar_url?: string | null; bio?: 
 type FAQ = { id: string; question: string; answer: string; position: number };
 type RelatedCourse = { id: string; title: string; slug: string; thumbnail?: string | null; level: string; short_description: string };
 type Course = { title: string; slug: string; description: string; short_description?: string; target_audience?: string; technologies?: string[]; seo_description?: string; thumbnail?: string | null; level: string; duration_minutes: number; outcomes?: string[]; requirements?: string[]; modules: Module[]; category: { name: string }; language: { name: string }; instructors?: Instructor[]; faqs?: FAQ[]; related_courses?: RelatedCourse[] };
-type Progress = { lessons: { lesson_id: string; completed: boolean; last_visited_at?: string }[]; progress_percent: number; last_visited_lesson_id?: string | null };
+type Progress = { enrolled?: boolean; lessons: { lesson_id: string; completed: boolean; last_visited_at?: string }[]; progress_percent: number; last_visited_lesson_id?: string | null };
 const csrf = () => document.cookie.match(/(?:^|; )cm_csrf=([^;]+)/)?.[1] ?? "";
 
 function Meta({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
@@ -20,15 +20,30 @@ function Meta({ icon, label, value }: { icon: React.ReactNode; label: string; va
 
 export default function CourseDetail({ slug }: { slug: string }) {
   const [course, setCourse] = useState<Course | null>(null); const [enrolled, setEnrolled] = useState(false); const [progress, setProgress] = useState<Progress | null>(null); const [loading, setLoading] = useState(true); const [message, setMessage] = useState(""); const [busy, setBusy] = useState(false);
-  useEffect(() => { let active = true; setLoading(true); setMessage(""); Promise.all([fetch(`/api/v1/courses/${encodeURIComponent(slug)}`).then(response => response.ok ? response.json() : Promise.reject(new Error(response.status === 404 ? "This course is not available." : "Unable to load this course."))), fetch("/api/v1/me/enrollments", { credentials: "include" }).then(response => response.ok ? response.json() : [])]).then(([courseValue, enrollmentValue]) => { if (!active) return; setCourse(courseValue); const rows = Array.isArray(enrollmentValue) ? enrollmentValue : enrollmentValue?.items ?? []; setEnrolled(rows.some((row: { course?: { slug?: string } }) => row.course?.slug === slug)); }).catch(reason => { if (active) setMessage(reason instanceof Error ? reason.message : "Unable to load this course."); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [slug]);
-  useEffect(() => { if (!enrolled) { setProgress(null); return; } fetch(`/api/v1/me/courses/${encodeURIComponent(slug)}/progress`, { credentials: "include" }).then(response => response.ok ? response.json() : null).then(setProgress).catch(() => setProgress(null)); }, [enrolled, slug]);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setMessage(""); setProgress(null); setEnrolled(false);
+    Promise.all([
+      fetch(`/api/v1/courses/${encodeURIComponent(slug)}`, { signal: controller.signal }).then(response => response.ok ? response.json() : Promise.reject(new Error(response.status === 404 ? "This course is not available." : "Unable to load this course."))),
+      fetch(`/api/v1/me/courses/${encodeURIComponent(slug)}/progress`, { credentials: "include", signal: controller.signal }).then(response => response.ok ? response.json() : null),
+    ]).then(([courseValue, progressValue]) => {
+      setCourse(courseValue);
+      setProgress(progressValue);
+      setEnrolled(Boolean(progressValue?.enrolled));
+    }).catch(reason => {
+      if (reason instanceof Error && reason.name === "AbortError") return;
+      setMessage(reason instanceof Error ? reason.message : "Unable to load this course.");
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [slug]);
+  useEffect(() => { if (!enrolled || progress) return; fetch(`/api/v1/me/courses/${encodeURIComponent(slug)}/progress`, { credentials: "include" }).then(response => response.ok ? response.json() : null).then(setProgress).catch(() => setProgress(null)); }, [enrolled, progress, slug]);
   useEffect(() => { if (loading || !course || window.location.hash !== "#curriculum") return; const frame = window.requestAnimationFrame(() => { const target = document.getElementById("curriculum-title"); target?.setAttribute("id", "curriculum"); if (target) { target.style.scrollMarginTop = "5rem"; target.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); } }); return () => window.cancelAnimationFrame(frame); }, [loading, course]);
   const modules = useMemo(() => [...(course?.modules ?? [])].sort((a, b) => a.order_index - b.order_index).map(module => ({ ...module, lessons: [...module.lessons].sort((a, b) => a.order_index - b.order_index) })), [course]);
   const allLessons = useMemo(() => modules.flatMap(module => module.lessons), [modules]);
   const completed = useMemo(() => new Set((progress?.lessons ?? []).filter(item => item.completed).map(item => item.lesson_id)), [progress]);
   const currentLesson = useMemo(() => { if (!allLessons.length) return null; const last = allLessons.find(lesson => lesson.id === progress?.last_visited_lesson_id); return last ?? allLessons.find(lesson => !completed.has(lesson.id)) ?? allLessons[0]; }, [allLessons, completed, progress]);
   const percent = Math.round(progress?.progress_percent ?? 0); const courseComplete = enrolled && percent >= 100;
-  async function enroll() { setBusy(true); setMessage(""); const response = await fetch(`/api/v1/me/enrollments/${encodeURIComponent(slug)}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() }, body: "{}" }); if (response.ok) { setEnrolled(true); setMessage("You are enrolled. Your progress will be saved as you learn."); } else if (response.status === 401) window.location.href = `/login?next=${encodeURIComponent(`/courses/${slug}`)}`; else setMessage((await response.json().catch(() => ({}))).detail ?? "Enrollment could not be completed. Verify your email and try again."); setBusy(false); }
+  async function enroll() { setBusy(true); setMessage(""); const response = await fetch(`/api/v1/me/enrollments/${encodeURIComponent(slug)}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() }, body: "{}" }); if (response.ok) { setEnrolled(true); setProgress(null); setMessage("You are enrolled. Your progress will be saved as you learn."); } else if (response.status === 401) window.location.href = `/login?next=${encodeURIComponent(`/courses/${slug}`)}`; else setMessage((await response.json().catch(() => ({}))).detail ?? "Enrollment could not be completed. Verify your email and try again."); setBusy(false); }
   if (loading) return <section className="mx-auto max-w-6xl px-6 py-20"><div className="h-8 w-48 animate-pulse rounded bg-surface" /><div className="mt-5 h-14 max-w-3xl animate-pulse rounded bg-surface" /><div className="mt-4 h-6 max-w-2xl animate-pulse rounded bg-surface" /></section>;
   if (!course) return <section className="mx-auto max-w-3xl px-6 py-20 text-center"><p className="text-sm font-semibold uppercase tracking-[.18em] text-primary">Course unavailable</p><h1 className="mt-4 text-3xl font-bold">We could not find that course</h1><p className="mt-3 text-muted">{message || "It may be unpublished or the link may be incorrect."}</p><Link href="/courses" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white"><BookOpen size={17} /> Browse courses</Link></section>;
   const jsonLd = { "@context": "https://schema.org", "@type": "Course", name: course.title, description: course.short_description || course.description, provider: { "@type": "Organization", name: "Learn-Coding" }, url: `/courses/${course.slug}` };

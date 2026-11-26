@@ -3,20 +3,33 @@ import type { AdminCodeExample, AdminCourse, AdminCurriculumModule, AdminDashboa
 // Browser requests use the same-origin Next rewrite. Server rendering may use the private internal URL.
 const base = process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === "undefined" ? process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000" : "");
 const inflightGets = new Map<string, Promise<unknown>>();
+const shortLivedPublicCache = new Map<string, { expiresAt: number; value: unknown }>();
+const PUBLIC_CACHE_TTL_MS = 15_000;
 export type ApiErrorKind = "timeout" | "unavailable" | "http" | "unknown";
 export class ApiError extends Error { constructor(message: string, readonly kind: ApiErrorKind, readonly status?: number, readonly requestId?: string) { super(message); this.name = "ApiError"; } }
+function isCacheablePublicGet(path: string) {
+  return typeof window !== "undefined" && /^\/api\/v1\/(languages|categories|course-categories|paths)(?:\?|$)/.test(path);
+}
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const method = (init?.method ?? "GET").toUpperCase();
-  const key = typeof window !== "undefined" && method === "GET" ? path : "";
+  // A caller-provided signal owns its request. Sharing an abortable request
+  // between components would let one unmount cancel another component's load.
+  const key = typeof window !== "undefined" && method === "GET" && !init?.signal ? path : "";
+  if (key && isCacheablePublicGet(path)) {
+    const cached = shortLivedPublicCache.get(key);
+    if (cached && cached.expiresAt > Date.now()) return cached.value as T;
+    if (cached) shortLivedPublicCache.delete(key);
+  }
   const pending = key ? inflightGets.get(key) : undefined;
   if (pending) return pending as Promise<T>;
   const controller = new AbortController();
+  let timedOut = false;
   const abortFromCaller = () => controller.abort();
   if (init?.signal) {
     if (init.signal.aborted) controller.abort();
     else init.signal.addEventListener("abort", abortFromCaller, { once: true });
   }
-  const timer = setTimeout(() => controller.abort(), 8000);
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, 8000);
   const run = (async () => {
     const response = await fetch(`${base}${path}`, { ...init, credentials: "include", signal: controller.signal, headers: { Accept: "application/json", "Content-Type": "application/json", ...init?.headers } });
     if (!response.ok) {
@@ -38,8 +51,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         requestId,
       );
     }
-    return response.json() as Promise<T>;
+    const value = await response.json() as T;
+    if (key && isCacheablePublicGet(path)) shortLivedPublicCache.set(key, { expiresAt: Date.now() + PUBLIC_CACHE_TTL_MS, value });
+    return value;
   })().catch((error) => {
+    if (error instanceof Error && error.name === "AbortError" && !timedOut) {
+      throw error;
+    }
     if (error instanceof Error && error.name === "AbortError") {
       throw new ApiError("The API did not respond within 8 seconds. Check that FastAPI is healthy and that port 8000 is reachable.", "timeout");
     }
@@ -79,8 +97,8 @@ export const dashboardApi = {
 };
 
 export const courseLearningApi = {
-  course: (slug: string) => request<CourseLearning>(`/api/v1/courses/${slug}/learning`),
-  lesson: (courseSlug: string, lessonSlug: string) => request<Lesson>(`/api/v1/courses/${courseSlug}/lessons/${lessonSlug}`),
+  course: (slug: string, signal?: AbortSignal) => request<CourseLearning>(`/api/v1/courses/${slug}/learning`, signal ? { signal } : undefined),
+  lesson: (courseSlug: string, lessonSlug: string, signal?: AbortSignal) => request<Lesson>(`/api/v1/courses/${courseSlug}/lessons/${lessonSlug}`, signal ? { signal } : undefined),
 };
 
 export const notesApi = {

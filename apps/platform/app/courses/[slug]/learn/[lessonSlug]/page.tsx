@@ -117,20 +117,19 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
   useEffect(() => { window.localStorage.setItem("learn-coding-reading-focus", String(focusMode)); }, [focusMode]);
   useEffect(() => { window.localStorage.setItem("learn-coding-reading-sidebar", String(sidebarCollapsed)); }, [sidebarCollapsed]);
   useEffect(() => {
-    let active = true;
+    const controller = new AbortController();
     Promise.all([
-      fetch(`/api/v1/courses/${encodeURIComponent(slug)}/lessons/${encodeURIComponent(lessonSlug)}`).then(response => response.ok ? response.json() : Promise.reject(new Error("Lesson not found."))),
-      fetch(`/api/v1/courses/${encodeURIComponent(slug)}/learning`).then(response => response.ok ? response.json() : Promise.reject(new Error("Course not found."))),
-      fetch(`/api/v1/me/courses/${encodeURIComponent(slug)}/progress`, { credentials: "include" }).then(response => response.ok ? response.json() : null),
+      fetch(`/api/v1/courses/${encodeURIComponent(slug)}/lessons/${encodeURIComponent(lessonSlug)}`, { signal: controller.signal }).then(response => response.ok ? response.json() : Promise.reject(new Error("Lesson not found."))),
+      fetch(`/api/v1/courses/${encodeURIComponent(slug)}/learning`, { signal: controller.signal }).then(response => response.ok ? response.json() : Promise.reject(new Error("Course not found."))),
+      fetch(`/api/v1/me/courses/${encodeURIComponent(slug)}/progress`, { credentials: "include", signal: controller.signal }).then(response => response.ok ? response.json() : null),
     ]).then(([lessonValue, learningValue, progress]) => {
-      if (!active) return;
       setLesson(lessonValue);
       setLearning(learningValue);
       setProgressPercent(progress?.progress_percent ?? 0);
       setCompleted(Boolean(progress?.lessons?.find((item: { lesson_id: string; completed: boolean }) => item.lesson_id === lessonValue.id)?.completed));
       if (progress?.lessons?.some((item: { lesson_id: string }) => item.lesson_id === lessonValue.id)) fetch(`/api/v1/me/lessons/${lessonValue.id}/visit`, { method: "POST", credentials: "include", headers: { "X-CSRF-Token": csrf() } }).catch(() => undefined);
-    }).catch(reason => { if (active) setMessage(reason instanceof Error ? reason.message : "Unable to load this lesson."); });
-    return () => { active = false; };
+    }).catch(reason => { if (reason instanceof Error && reason.name === "AbortError") return; setMessage(reason instanceof Error ? reason.message : "Unable to load this lesson."); });
+    return () => controller.abort();
   }, [slug, lessonSlug]);
 
   const orderedModules = useMemo(() => (learning?.modules ?? []).map(module => ({ ...module, lessons: [...module.lessons] })), [learning]);

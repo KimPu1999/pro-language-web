@@ -11,6 +11,50 @@ def course_base(): return select(Course).options(selectinload(Course.language),s
 def profile_payload(user, profile): return {"id":user.id,"email":user.email,"full_name":user.display_name,"role":user.role,"email_verified":bool(user.email_verified_at),"email_verified_at":user.email_verified_at,"profile":{"bio":profile.bio if profile else None,"learning_interests":profile.learning_interests.split("|") if profile and profile.learning_interests else [],"preferred_language":profile.preferred_language if profile else None,"learning_level":profile.learning_level if profile else None,"show_myanmar":profile.show_myanmar if profile else False,"avatar_url":profile.avatar_url if profile else None}}
 def enrollment_payload(db, enrollment):
     course=db.scalar(course_base().where(Course.id==enrollment.course_id)); lesson_ids=db.scalars(select(Lesson.id).join(CourseModule).where(CourseModule.course_id==course.id,Lesson.published.is_(True))).all(); completed=db.scalar(select(func.count(LessonProgress.id)).where(LessonProgress.user_id==enrollment.user_id,LessonProgress.lesson_id.in_(lesson_ids),LessonProgress.completed.is_(True))) if lesson_ids else 0; last=db.scalar(select(Lesson.slug).join(LessonProgress,LessonProgress.lesson_id==Lesson.id).join(CourseModule).where(LessonProgress.user_id==enrollment.user_id,CourseModule.course_id==course.id).order_by(LessonProgress.last_visited_at.desc()).limit(1)); next_lesson=db.scalar(select(Lesson.slug).join(CourseModule).where(CourseModule.course_id==course.id,Lesson.published.is_(True),~exists(select(LessonProgress.id).where(LessonProgress.user_id==enrollment.user_id,LessonProgress.lesson_id==Lesson.id,LessonProgress.completed.is_(True)))).order_by(CourseModule.order_index,Lesson.order_index).limit(1)); total=len(lesson_ids); return {"id":enrollment.id,"course":course,"completed_lessons":completed or 0,"total_lessons":total,"progress_percent":round(((completed or 0)/total)*100,1) if total else 0,"last_lesson_slug":last,"next_lesson_slug":next_lesson}
+
+def enrollment_payloads(db, user_id):
+    """Build all enrollment cards with bounded batch queries instead of N+1 reads."""
+    enrollments = db.scalars(select(Enrollment).where(Enrollment.user_id == user_id).order_by(Enrollment.created_at.desc())).all()
+    if not enrollments:
+        return []
+    course_ids = [enrollment.course_id for enrollment in enrollments]
+    courses = db.scalars(course_base().where(Course.id.in_(course_ids))).all()
+    course_by_id = {course.id: course for course in courses}
+    lessons = db.execute(
+        select(Lesson, CourseModule.course_id)
+        .join(CourseModule, Lesson.module_id == CourseModule.id)
+        .where(CourseModule.course_id.in_(course_by_id), Lesson.published.is_(True))
+        .order_by(CourseModule.order_index, Lesson.order_index)
+    ).all() if course_by_id else []
+    lesson_ids = [lesson.id for lesson, _ in lessons]
+    progress_rows = db.scalars(
+        select(LessonProgress).where(LessonProgress.user_id == user_id, LessonProgress.lesson_id.in_(lesson_ids))
+    ).all() if lesson_ids else []
+    progress_by_lesson = {row.lesson_id: row for row in progress_rows}
+    lessons_by_course: dict[object, list[Lesson]] = {course_id: [] for course_id in course_by_id}
+    for lesson, course_id in lessons:
+        lessons_by_course[course_id].append(lesson)
+    result = []
+    for enrollment in enrollments:
+        course = course_by_id.get(enrollment.course_id)
+        if not course:
+            continue
+        course_lessons = lessons_by_course[course.id]
+        completed = sum(1 for lesson in course_lessons if progress_by_lesson.get(lesson.id) and progress_by_lesson[lesson.id].completed)
+        visited = [(lesson, progress_by_lesson[lesson.id]) for lesson in course_lessons if lesson.id in progress_by_lesson and progress_by_lesson[lesson.id].last_visited_at]
+        last_lesson, last_progress = max(visited, key=lambda item: item[1].last_visited_at, default=(None, None))
+        next_lesson = next((lesson for lesson in course_lessons if not (progress_by_lesson.get(lesson.id) and progress_by_lesson[lesson.id].completed)), None)
+        total = len(course_lessons)
+        result.append({
+            "id": enrollment.id,
+            "course": course,
+            "completed_lessons": completed,
+            "total_lessons": total,
+            "progress_percent": round(completed / total * 100, 1) if total else 0,
+            "last_lesson_slug": last_lesson.slug if last_lesson else None,
+            "next_lesson_slug": next_lesson.slug if next_lesson else None,
+        })
+    return result
 @router.get("/profile", response_model=UserOut)
 def get_profile(user: User=Depends(current_user), db: Session=Depends(get_db)): return profile_payload(user,db.scalar(select(UserProfile).where(UserProfile.user_id==user.id)))
 @router.patch("/profile", response_model=UserOut)
@@ -33,10 +77,10 @@ def enroll(course_slug: str, user: User=Depends(verified_user), __: None=Depends
     enrollment=Enrollment(user_id=user.id,course_id=course.id); db.add(enrollment); db.commit(); return enrollment_payload(db,enrollment)
 @router.get("/enrollments",response_model=list[EnrollmentOut])
 def enrollments(user: User=Depends(current_user), db: Session=Depends(get_db)):
-    return [enrollment_payload(db,e) for e in db.scalars(select(Enrollment).where(Enrollment.user_id==user.id).order_by(Enrollment.created_at.desc())).all()]
+    return enrollment_payloads(db, user.id)
 @router.get("/dashboard",response_model=DashboardOut)
 def dashboard(user: User=Depends(current_user), db: Session=Depends(get_db)):
-    rows=[enrollment_payload(db,e) for e in db.scalars(select(Enrollment).where(Enrollment.user_id==user.id).order_by(Enrollment.created_at.desc())).all()]
+    rows=enrollment_payloads(db, user.id)
     total=sum(x["total_lessons"] for x in rows); complete=sum(x["completed_lessons"] for x in rows)
     activity=[{"course_slug":x["course"].slug,"lesson_slug":x["last_lesson_slug"],"progress_percent":x["progress_percent"]} for x in rows if x["last_lesson_slug"]]
     attempts=db.scalar(select(func.count(QuizAttempt.id)).where(QuizAttempt.user_id==user.id)) or 0
@@ -67,6 +111,7 @@ def visit_lesson(lesson_id, user: User=Depends(verified_user), __: None=Depends(
 def course_progress(course_slug: str, user: User=Depends(current_user), db: Session=Depends(get_db)):
     course=db.scalar(course_base().where(Course.slug==course_slug))
     if not course: raise HTTPException(404,"Published course not found")
+    enrolled = db.scalar(select(Enrollment.id).where(Enrollment.user_id == user.id, Enrollment.course_id == course.id)) is not None
     rows=db.execute(select(Lesson.id,Lesson.title,Lesson.order_index,CourseModule.id,CourseModule.title,CourseModule.order_index).join(CourseModule,Lesson.module_id==CourseModule.id).where(CourseModule.course_id==course.id,Lesson.published.is_(True)).order_by(CourseModule.order_index,Lesson.order_index)).all()
     progress_rows=db.scalars(select(LessonProgress).where(LessonProgress.user_id==user.id,LessonProgress.lesson_id.in_([row[0] for row in rows]) if rows else False)).all() if rows else []
     progress_by_lesson={row.lesson_id: row for row in progress_rows}
@@ -78,7 +123,7 @@ def course_progress(course_slug: str, user: User=Depends(current_user), db: Sess
         module["total_lessons"]+=1; module["completed_lessons"]+=1 if item["completed"] else 0
     modules=[{**module,"progress_percent":round(module["completed_lessons"]/module["total_lessons"]*100,1) if module["total_lessons"] else 0} for module in sorted(module_rows.values(),key=lambda row:row["position"])]
     last_visited=max((item for item in lessons if item["last_visited_at"]),key=lambda item:item["last_visited_at"],default=None)
-    return {"course_slug":course.slug,"course_title":course.title,"total_lessons":total,"completed_lessons":completed,"progress_percent":round(completed/total*100,1) if total else 0,"last_visited_lesson_id":last_visited["lesson_id"] if last_visited else None,"modules":modules,"lessons":lessons}
+    return {"course_slug":course.slug,"course_title":course.title,"enrolled":enrolled,"total_lessons":total,"completed_lessons":completed,"progress_percent":round(completed/total*100,1) if total else 0,"last_visited_lesson_id":last_visited["lesson_id"] if last_visited else None,"modules":modules,"lessons":lessons}
 def quiz_for_lesson(lesson_id, db):
     lesson=db.scalar(select(Lesson).join(CourseModule).join(Course).where(Lesson.id==lesson_id,Lesson.published.is_(True),Course.published.is_(True)))
     if not lesson: raise HTTPException(404,"Published lesson not found")
