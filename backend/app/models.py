@@ -165,8 +165,23 @@ class PlatformSetting(TimestampMixin, Base):
     __tablename__="platform_settings"; __table_args__=(UniqueConstraint("key"),)
     id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4)
     key: Mapped[str]=mapped_column(String(120),nullable=False,index=True)
+    scope: Mapped[str]=mapped_column(String(40),default="platform",nullable=False)
+    category: Mapped[str]=mapped_column(String(60),default="general",nullable=False,index=True)
+    version: Mapped[int]=mapped_column(Integer,default=1,nullable=False)
     value_json: Mapped[str]=mapped_column(Text,default="{}",nullable=False)
     updated_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True)
+class PlatformSettingHistory(TimestampMixin, Base):
+    __tablename__="platform_setting_history"
+    id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4)
+    setting_key: Mapped[str]=mapped_column(String(120),nullable=False,index=True)
+    category: Mapped[str]=mapped_column(String(60),nullable=False,index=True)
+    version: Mapped[int]=mapped_column(Integer,nullable=False)
+    previous_value_json: Mapped[str]=mapped_column(Text,default="{}",nullable=False)
+    new_value_json: Mapped[str]=mapped_column(Text,default="{}",nullable=False)
+    actor_id: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True,index=True)
+    change_reason: Mapped[str]=mapped_column(String(240),default="",nullable=False)
+    correlation_id: Mapped[str|None]=mapped_column(String(120),nullable=True,index=True)
+    outcome: Mapped[str]=mapped_column(String(20),default="success",nullable=False)
 class ContactMessage(TimestampMixin, Base):
     __tablename__ = "contact_messages"
     __table_args__ = (Index("ix_contact_messages_status_created", "status", "created_at"),)

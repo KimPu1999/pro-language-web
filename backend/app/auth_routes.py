@@ -22,17 +22,32 @@ def log_event(db, event, user_id=None, request=None, metadata=None):
 def send_verification(db, user, request):
     raw=new_token(); db.add(EmailVerificationToken(user_id=user.id,token_hash=hash_token(raw),expires_at=now()+timedelta(hours=settings.verification_ttl_hours))); mailer.send(user.email,"Verify your CodeMaster Academy email",f"Open {settings.app_base_url}/verify-email?token={raw}"); log_event(db,"verification_requested",user.id,request)
 def public_registration_enabled(db):
-    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="platform:general"))
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="platform:registration")) or db.scalar(select(PlatformSetting).where(PlatformSetting.key=="platform:general"))
     if not row: return True
-    try: return bool(json.loads(row.value_json or "{}").get("registration_enabled", True))
+    try:
+        value=json.loads(row.value_json or "{}")
+        return bool(value.get("public_registration_enabled", value.get("registration_enabled", True)))
     except (TypeError, ValueError, json.JSONDecodeError): return True
+def registration_setting(db, key, default):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="platform:registration"))
+    if not row: return default
+    try: return json.loads(row.value_json or "{}").get(key, default)
+    except (TypeError, ValueError, json.JSONDecodeError): return default
+def language_setting(db, key, default):
+    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="platform:languages"))
+    if not row: return default
+    try: return json.loads(row.value_json or "{}").get(key, default)
+    except (TypeError, ValueError, json.JSONDecodeError): return default
 @router.post("/register", response_model=UserOut, status_code=201)
 def register(payload: RegisterIn, request: Request, response: Response, db: Session=Depends(get_db)):
     if not public_registration_enabled(db): raise HTTPException(403,"Public registration is currently closed")
+    if registration_setting(db, "terms_acceptance_required", True) and not payload.accept_terms: raise HTTPException(422,"Terms must be accepted")
     check_rate_limit(f"register:{request.client.host if request.client else 'unknown'}", 5)
     validate_password(payload.password); email=normalize_email(payload.email)
     if db.scalar(select(User).where(User.email_normalized==email)): raise HTTPException(400,"Unable to create account with those details")
-    user=User(email=email,email_normalized=email,password_hash=password_hasher.hash(payload.password),display_name=payload.full_name.strip(),role="student",account_status="active",password_changed_at=now()); db.add(user); db.flush(); db.add(UserProfile(user_id=user.id)); send_verification(db,user,request); raw,csrf=create_session(db,user); user.last_login_at=now(); db.commit(); set_auth_cookies(response,raw,csrf); return profile_payload(user,db)
+    user=User(email=email,email_normalized=email,password_hash=password_hasher.hash(payload.password),display_name=payload.full_name.strip(),role="student",account_status="active",password_changed_at=now()); db.add(user); db.flush(); db.add(UserProfile(user_id=user.id,preferred_language=language_setting(db, "default_locale", "en")))
+    if registration_setting(db, "email_verification_required", True): send_verification(db,user,request)
+    raw,csrf=create_session(db,user); user.last_login_at=now(); db.commit(); set_auth_cookies(response,raw,csrf); return profile_payload(user,db)
 @router.post("/login", response_model=UserOut)
 def login(payload: LoginIn, response: Response, request: Request, db: Session=Depends(get_db)):
     started = time.perf_counter()

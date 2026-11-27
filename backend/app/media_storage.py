@@ -127,10 +127,11 @@ async def save_roadmap_image(upload: UploadFile) -> tuple[str, Path, tuple[int, 
     return f"{settings.media_url_prefix.rstrip('/')}/{key.as_posix()}", path, (width, height)
 
 
-async def save_media_upload(upload: UploadFile) -> tuple[str, Path, str, int, int | None, int | None]:
+async def save_media_upload(upload: UploadFile, *, max_bytes: int | None = None, allowed_types: set[str] | None = None) -> tuple[str, Path, str, int, int | None, int | None]:
     """Validate and persist a library asset in the durable shared media root."""
-    data = await upload.read(settings.media_max_bytes + 1)
-    if len(data) > settings.media_max_bytes:
+    effective_max_bytes = min(max_bytes or settings.media_max_bytes, settings.media_max_bytes)
+    data = await upload.read(effective_max_bytes + 1)
+    if len(data) > effective_max_bytes:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Media file is too large")
     declared = upload.content_type or ""
     if data.startswith(b"%PDF-"):
@@ -138,6 +139,8 @@ async def save_media_upload(upload: UploadFile) -> tuple[str, Path, str, int, in
     else:
         detected, width, height = inspect_image(data, declared, upload.filename)
         extension, dimensions = ALLOWED_MIME_TYPES[detected], (width, height)
+    if allowed_types is not None and detected not in allowed_types:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "This file type is disabled by platform media settings")
     if declared and declared not in {"application/octet-stream", "application/binary"} and declared != detected:
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "The file type does not match its content")
     key = Path("library") / f"{uuid4().hex}.{extension}"

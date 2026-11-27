@@ -34,6 +34,7 @@ from .ecosystem_routes import router as ecosystem_router
 from .organization_routes import router as organization_router
 from .security_routes import router as security_router
 from .platform_security_routes import router as platform_security_router
+from .platform_settings_routes import public_router as platform_settings_public_router, router as platform_settings_router
 from .automation_routes import router as automation_router
 from .content_studio_routes import router as content_studio_router
 from .content_review_routes import router as content_review_router
@@ -103,6 +104,8 @@ app.include_router(ecosystem_router)
 app.include_router(organization_router)
 app.include_router(security_router)
 app.include_router(platform_security_router)
+app.include_router(platform_settings_router)
+app.include_router(platform_settings_public_router)
 app.include_router(automation_router)
 app.include_router(content_studio_router)
 app.include_router(content_review_router)
@@ -140,15 +143,18 @@ def readiness(db: Session=Depends(get_db)):
 @app.get("/api/v1/site/branding", response_model=BrandingSettings)
 def site_branding(db: Session=Depends(get_db)):
     row=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="branding"))
+    general=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="platform:general"))
+    general_values={}
+    if general:
+        try: general_values=json.loads(general.value_json or "{}")
+        except (TypeError, ValueError, json.JSONDecodeError): general_values={}
     if not row:
-        general=db.scalar(select(PlatformSetting).where(PlatformSetting.key=="platform:general"))
-        if general:
-            try:
-                values=json.loads(general.value_json or "{}")
-                return BrandingSettings(website_name=values.get("website_name", "Learn-Coding"))
-            except (TypeError, ValueError, json.JSONDecodeError): pass
-        return BrandingSettings()
-    try: return BrandingSettings(**json.loads(row.value_json or "{}"))
+        return BrandingSettings(website_name=general_values.get("website_name", "Learn-Coding"), tagline=general_values.get("website_tagline", BrandingSettings().tagline))
+    try:
+        values=json.loads(row.value_json or "{}")
+        if "website_name" in general_values: values["website_name"] = general_values["website_name"]
+        if "website_tagline" in general_values: values["tagline"] = general_values["website_tagline"]
+        return BrandingSettings(**values)
     except (TypeError, ValueError, json.JSONDecodeError): return BrandingSettings()
 @app.get("/api/v1/site/navigation", response_model=NavigationSettings)
 def site_navigation(db: Session=Depends(get_db)):

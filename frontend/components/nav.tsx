@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Menu, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { api } from "@/lib/api";
+import { api, siteApi } from "@/lib/api";
 import { routes } from "@/lib/routes";
 import { LogoutButton } from "./auth-form";
 import { LanguageSwitcher } from "./language-switcher";
@@ -24,13 +24,14 @@ function navClass(active: boolean) {
 export function Nav() {
   const [open, setOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const [brand, setBrand] = useState<{ website_name: string; logo_url: string; header_background: string } | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileMenuRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
   const { t } = useI18n();
   const dashboardPage = pathname.startsWith("/dashboard") || pathname.startsWith("/my-learning");
 
-  useEffect(() => { api.me().then(() => setSignedIn(true)).catch(() => setSignedIn(false)); }, []);
+  useEffect(() => { api.me().then(() => setSignedIn(true)).catch(() => setSignedIn(false)); siteApi.branding().then(value => setBrand(value)).catch(() => undefined); }, []);
   useEffect(() => {
     if (!open) return;
     const close = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
@@ -44,11 +45,11 @@ export function Nav() {
 
   if (dashboardPage) return null;
   return <>
-    <header className="site-nav fixed inset-x-0 top-0 z-50 w-full isolate border-b border-line/70 bg-ink/95 shadow-lg shadow-black/10 backdrop-blur-xl">
+    <header className="site-nav fixed inset-x-0 top-0 z-50 w-full isolate border-b border-line/70 bg-ink/95 shadow-lg shadow-black/10 backdrop-blur-xl" style={brand?.header_background ? { backgroundColor: `${brand.header_background}f2` } : undefined}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 lg:px-8">
         <Link href="/" aria-label="Languages-Platform home" className="flex shrink-0 items-center gap-2 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
-          <Image src="/branding/tkp.png" alt="Languages-Platform logo" width={40} height={40} className="h-10 w-10 object-contain" priority />
-          <span className="hidden sm:inline">Languages-Platform</span>
+          <Image src={brand?.logo_url || "/branding/tkp.png"} alt={`${brand?.website_name || "Languages-Platform"} logo`} width={40} height={40} className="h-10 w-10 object-contain" priority />
+          <span className="hidden sm:inline">{brand?.website_name || "Languages-Platform"}</span>
         </Link>
         <nav aria-label="Primary navigation" className="hidden items-center gap-1 xl:flex">
           {links.map(([key, href]) => { const active = isActive(pathname, href); return <Link key={href} href={href} aria-current={active ? "page" : undefined} className={navClass(active)}>{t(key)}</Link>; })}

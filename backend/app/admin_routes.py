@@ -12,6 +12,7 @@ from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, Admi
 from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
 from .media_storage import ALLOWED_MIME_TYPES, ensure_media_root, remove_file_if_safe, safe_media_path, save_course_image, save_media_upload
 from .navigation_config import NAVIGATION_DRAFT_KEY, NAVIGATION_KEY, NAVIGATION_PUBLISHED_KEY, read_admin_navigation, read_navigation, save_navigation, validate_navigation
+from .platform_settings_service import get_settings_group, save_settings_group as save_platform_settings_group
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
 ADMIN=PLATFORM_ADMIN_ROLES
 BRANDING_KEY="branding"
@@ -290,7 +291,8 @@ def list_public_media(search: str|None=None, media_type: str|None=None, collecti
 @router.post("/media", status_code=201)
 async def upload_media(file: UploadFile=File(...), title: str=Form(""), alt_text: str=Form(""), caption: str=Form(""), collection: str=Form("general"), user: User=Depends(admin_user), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
     if not collection or len(collection) > 80 or not all(char.isalnum() or char in "_-" for char in collection): raise HTTPException(422, "Collection must contain only letters, numbers, hyphens, or underscores")
-    url, _, mime_type, size_bytes, width, height = await save_media_upload(file)
+    media_policy = get_settings_group(db, "media")["values"]
+    url, _, mime_type, size_bytes, width, height = await save_media_upload(file, max_bytes=int(media_policy["maximum_upload_size_mb"]) * 1024 * 1024, allowed_types=set(media_policy["allowed_file_types"]))
     key = url.removeprefix("/media/")
     row = MediaAsset(original_filename=(file.filename or "upload")[:255], storage_key=key, mime_type=mime_type, size_bytes=size_bytes, width=width, height=height, title=title[:180] or (file.filename or "upload")[:180], alt_text=alt_text[:240], caption=caption[:2000], collection=collection, uploaded_by=user.id)
     db.add(row); audit(db, user, "media_uploaded", "media", row.id); db.commit(); db.refresh(row)
@@ -341,10 +343,8 @@ def get_platform_general(user: User=Depends(admin_user), db: Session=Depends(get
     return platform_setting_value(db, PLATFORM_GENERAL_KEY, PlatformGeneralSettings, DEFAULT_PLATFORM_GENERAL)
 
 @router.patch("/platform/general", response_model=PlatformGeneralSettings)
-def update_platform_general(payload: PlatformGeneralSettings, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
-    save_platform_setting(db, user, PLATFORM_GENERAL_KEY, payload, "platform_general_updated")
-    db.commit()
-    return payload
+def update_platform_general(payload: PlatformGeneralSettings, request: Request, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    saved=save_platform_settings_group(db, user, "general", payload.model_dump(mode="json"), get_settings_group(db, "general")["version"], "General platform settings updated", getattr(request.state, "request_id", None)); db.commit(); return saved["values"]
 
 @router.get("/platform/features", response_model=PlatformFeatureSettings)
 def get_platform_features(user: User=Depends(admin_user), db: Session=Depends(get_db)):
@@ -387,17 +387,12 @@ def admin_security_overview(user: User=Depends(full_admin), db: Session=Depends(
 def get_branding_settings(user: User=Depends(full_admin), db: Session=Depends(get_db)):
     return branding_value(db)
 @router.patch("/settings/branding", response_model=BrandingSettings)
-def update_branding_settings(payload: BrandingSettings, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+def update_branding_settings(payload: BrandingSettings, request: Request, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
     values=payload.model_dump()
     for key in ("logo_url", "mobile_logo_url", "favicon_url"):
         if not (values[key].startswith("/") and not values[key].startswith("//")):
             raise HTTPException(422, "Branding assets must use an internal path")
-    row=db.scalar(select(PlatformSetting).where(PlatformSetting.key==BRANDING_KEY))
-    if row: row.value_json=json.dumps(values); row.updated_by=user.id
-    else: db.add(PlatformSetting(key=BRANDING_KEY,value_json=json.dumps(values),updated_by=user.id))
-    audit(db,user,"branding_updated","platform_setting")
-    db.commit()
-    return values
+    saved=save_platform_settings_group(db, user, "branding", values, get_settings_group(db, "branding")["version"], "Branding settings updated", getattr(request.state, "request_id", None)); db.commit(); return saved["values"]
 @router.get("/settings/navigation", response_model=NavigationSettings)
 def get_navigation_settings(user: User=Depends(admin_user), db: Session=Depends(get_db)):
     return read_admin_navigation(db)

@@ -126,7 +126,6 @@ class RegisterIn(BaseModel):
     def valid(self):
         if "@" not in self.email: raise ValueError("Valid email required")
         if self.password != self.confirm_password: raise ValueError("Passwords do not match")
-        if not self.accept_terms: raise ValueError("Terms must be accepted")
         return self
 class LoginIn(BaseModel): email: str; password: str
 class ForgotPasswordIn(BaseModel): email: str
@@ -422,11 +421,14 @@ class PlatformPageIn(BaseModel):
 
 class PlatformGeneralSettings(BaseModel):
     website_name: str = Field(default="Learn-Coding", min_length=2, max_length=120)
+    website_tagline: str = Field(default="Learn to code. Build your future.", max_length=240)
     website_description: str = Field(default="Practical coding education, projects, and tools.", max_length=600)
     contact_email: str = Field(default="", max_length=254)
     contact_phone: str = Field(default="", max_length=40)
     timezone: str = Field(default="Asia/Yangon", pattern=r"^[A-Za-z_]+/[A-Za-z_]+(?:/[A-Za-z_]+)?$")
-    supported_languages: list[str] = Field(default_factory=lambda: ["en"], min_length=1, max_length=10)
+    site_url: str = Field(default="http://localhost:3000", max_length=500)
+    supported_languages: list[str] = Field(default_factory=lambda: ["en", "my"], min_length=1, max_length=10)
+    default_language: Literal["en", "my"] = "en"
     registration_enabled: bool = True
     announcement_enabled: bool = False
     announcement_text: str = Field(default="", max_length=500)
@@ -439,10 +441,92 @@ class PlatformGeneralSettings(BaseModel):
 
     @field_validator("supported_languages")
     @classmethod
-    def english_only(cls, value: list[str]):
+    def supported_locale_values(cls, value: list[str]):
         normalized = [item.strip().lower() for item in value if item.strip()]
-        if normalized != ["en"]: raise ValueError("Only English is currently supported")
+        if not normalized or any(item not in {"en", "my"} for item in normalized): raise ValueError("Supported languages must be en or my")
+        if len(normalized) != len(set(normalized)): raise ValueError("Supported languages must be unique")
+        if "en" not in normalized: raise ValueError("English must remain enabled")
         return normalized
+
+    @field_validator("site_url")
+    @classmethod
+    def valid_site_url(cls, value: str):
+        from urllib.parse import urlparse
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc: raise ValueError("Site URL must be an absolute HTTP(S) URL")
+        return value.rstrip("/")
+
+class PlatformLanguageSettings(BaseModel):
+    default_locale: Literal["en", "my"] = "en"
+    enabled_locales: list[str] = Field(default_factory=lambda: ["en", "my"], min_length=1, max_length=2)
+    switcher_visible: bool = True
+    translation_coverage_path: str = Field(default="/platform/curriculum-quality", pattern=r"^/", max_length=240)
+
+    @field_validator("enabled_locales")
+    @classmethod
+    def valid_locales(cls, value: list[str]):
+        normalized = [item.strip().lower() for item in value if item.strip()]
+        if set(normalized) != {"en", "my"}: raise ValueError("Enabled locales must include en and my")
+        return ["en", "my"]
+
+class PlatformSeoSettings(BaseModel):
+    default_title: str = Field(default="Learn-Coding", min_length=2, max_length=180)
+    meta_description: str = Field(default="Practical coding education and projects.", max_length=320)
+    open_graph_title: str = Field(default="Learn-Coding", max_length=180)
+    open_graph_description: str = Field(default="Practical coding education and projects.", max_length=320)
+    open_graph_image: str | None = Field(default=None, max_length=500)
+    canonical_url: str = Field(default="/", pattern=r"^/", max_length=240)
+    robots_indexing: bool = True
+    sitemap_enabled: bool = True
+    locale_metadata: dict[str, dict[str, str]] = Field(default_factory=dict)
+
+    @field_validator("open_graph_image")
+    @classmethod
+    def internal_social_image(cls, value: str | None):
+        if value and (not value.startswith("/") or value.startswith("//")): raise ValueError("Open Graph image must use an internal media path")
+        return value
+
+class PlatformRegistrationSettings(BaseModel):
+    public_registration_enabled: bool = True
+    email_verification_required: bool = True
+    default_student_role: Literal["student"] = "student"
+    invitation_only: bool = False
+    terms_acceptance_required: bool = True
+    registration_notice: str = Field(default="", max_length=500)
+
+class PlatformEmailSettings(BaseModel):
+    sender_display_name: str = Field(default="Learn-Coding", max_length=120)
+    sender_email: str = Field(default="no-reply@codemaster.local", max_length=254)
+    email_verification_template: str = Field(default="default", pattern=r"^[a-z0-9_-]{1,60}$")
+    password_reset_template: str = Field(default="default", pattern=r"^[a-z0-9_-]{1,60}$")
+    contact_form_notifications: bool = True
+    notification_defaults: dict[str, bool] = Field(default_factory=dict)
+
+    @field_validator("sender_email")
+    @classmethod
+    def valid_sender_email(cls, value: str):
+        if "@" not in value or " " in value: raise ValueError("Sender email must be valid")
+        return value
+
+class PlatformMediaSettings(BaseModel):
+    allowed_file_types: list[str] = Field(default_factory=lambda: ["image/jpeg", "image/png", "image/webp", "application/pdf"], min_length=1, max_length=12)
+    maximum_upload_size_mb: int = Field(default=20, ge=1, le=100)
+    image_optimization: bool = True
+    default_visibility: Literal["public", "private"] = "public"
+    library_behavior: Literal["retain", "archive_unused"] = "retain"
+
+class PlatformLearningSettings(BaseModel):
+    course_catalog_page_size: int = Field(default=12, ge=1, le=100)
+    lesson_navigation: Literal["sequential", "free"] = "free"
+    progress_tracking_enabled: bool = True
+    quiz_attempt_policy: Literal["unlimited", "best_score", "single_attempt"] = "unlimited"
+    completion_criteria: Literal["manual", "lesson_view", "quiz_pass"] = "manual"
+    certificates_enabled: bool = False
+
+class PlatformSettingsPatch(BaseModel):
+    values: dict[str, Any] = Field(default_factory=dict)
+    expected_version: int = Field(ge=0)
+    change_reason: str = Field(default="", max_length=240)
 
 class PlatformFeatureSettings(BaseModel):
     courses_enabled: bool = True
