@@ -17,6 +17,6 @@ export function AdminPlaceholder({ title, eyebrow, description, detail }: { titl
 }
 export function PlatformSecurityPage(){const { t } = useI18n(); return <AdminPlaceholder eyebrow={t("security")} title={t("securityCenter")} description={t("securityDescription")} detail={t("platformSecurityUnavailable")}/>;}
 export function PlatformNotificationsPage(){return <AdminPlaceholder eyebrow="Communications" title="Notifications" description="Review announcements, templates, delivery evidence, and failed delivery retries." detail="No platform notification-delivery tables or provider endpoint are currently connected, so delivery is not claimed."/>;}
-export function PlatformMediaPage(){return <AdminPlaceholder eyebrow="Assets" title="Media library" description="Manage validated platform assets and resource links." detail="No safe upload storage provider is configured in this repository. Upload controls remain unavailable."/>;}
+export function PlatformMediaPage(){const { t } = useI18n(); return <AdminPlaceholder eyebrow={t("mediaAssets")} title={t("mediaLibrary")} description={t("mediaLibraryDescription")} detail={t("uploadStorageUnavailable")}/>;}
 export function PlatformSettingsPage(){return <AdminPlaceholder eyebrow="Configuration" title="Platform settings" description="Manage branding, languages, SEO defaults, registration, and security preferences." detail="Settings persistence is not implemented in the current schema. Secret values are not exposed."/>;}
 
