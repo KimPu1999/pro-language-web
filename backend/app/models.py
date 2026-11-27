@@ -1229,3 +1229,129 @@ class AICompanionSecurityEvent(TimestampMixin, Base):
     __tablename__="ai_companion_security_events"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); user_id: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True); event_type: Mapped[str]=mapped_column(String(80)); severity: Mapped[str]=mapped_column(String(20),default="info"); metadata_json: Mapped[str]=mapped_column(Text,default="{}")
 class AICompanionAuditLog(TimestampMixin, Base):
     __tablename__="ai_companion_audit_logs"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); actor_id: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True); action: Mapped[str]=mapped_column(String(100)); resource_type: Mapped[str]=mapped_column(String(60)); resource_id: Mapped[uuid.UUID|None]=mapped_column(UUIDType,nullable=True); metadata_json: Mapped[str]=mapped_column(Text,default="{}")
+
+# Platform communications are kept separate from community and mobile notifications.
+# These records are durable even when an external provider is not configured.
+class NotificationTemplate(TimestampMixin, Base):
+    __tablename__ = "notification_templates"
+    __table_args__ = (UniqueConstraint("template_key", "channel", "locale"), Index("ix_notification_templates_status", "status"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    template_key: Mapped[str] = mapped_column(String(120))
+    name: Mapped[str] = mapped_column(String(180))
+    category: Mapped[str] = mapped_column(String(60), default="general")
+    channel: Mapped[str] = mapped_column(String(20), default="in_app")
+    locale: Mapped[str] = mapped_column(String(10), default="en")
+    status: Mapped[str] = mapped_column(String(20), default="draft")
+    current_version: Mapped[int] = mapped_column(Integer, default=1)
+
+class NotificationTemplateVersion(TimestampMixin, Base):
+    __tablename__ = "notification_template_versions"
+    __table_args__ = (UniqueConstraint("template_id", "version"), Index("ix_notification_template_versions_template_status", "template_id", "status"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    template_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("notification_templates.id", ondelete="CASCADE"), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    subject: Mapped[str] = mapped_column(String(240), default="")
+    body: Mapped[str] = mapped_column(Text)
+    variables_json: Mapped[str] = mapped_column(Text, default="[]")
+    status: Mapped[str] = mapped_column(String(20), default="draft")
+    created_by: Mapped[uuid.UUID|None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    reviewed_by: Mapped[uuid.UUID|None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    published_by: Mapped[uuid.UUID|None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+class NotificationAnnouncement(TimestampMixin, Base):
+    __tablename__ = "notification_announcements"
+    __table_args__ = (Index("ix_notification_announcements_status_schedule", "status", "scheduled_at"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    title_en: Mapped[str] = mapped_column(String(240))
+    title_mm: Mapped[str] = mapped_column(String(240), default="")
+    body_en: Mapped[str] = mapped_column(Text)
+    body_mm: Mapped[str] = mapped_column(Text, default="")
+    audience_type: Mapped[str] = mapped_column(String(40), default="all_students")
+    audience_json: Mapped[str] = mapped_column(Text, default="{}")
+    channels_json: Mapped[str] = mapped_column(Text, default='["in_app"]')
+    status: Mapped[str] = mapped_column(String(20), default="draft", index=True)
+    scheduled_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    approved_by: Mapped[uuid.UUID|None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    published_by: Mapped[uuid.UUID|None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    published_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True), nullable=True)
+    correlation_id: Mapped[str|None] = mapped_column(String(120), nullable=True, index=True)
+
+class NotificationMessage(TimestampMixin, Base):
+    __tablename__ = "notification_messages"
+    __table_args__ = (UniqueConstraint("idempotency_key"), Index("ix_notification_messages_recipient_status", "recipient_id", "status"), Index("ix_notification_messages_channel_status", "channel", "status"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    announcement_id: Mapped[uuid.UUID|None] = mapped_column(ForeignKey("notification_announcements.id", ondelete="SET NULL"), nullable=True, index=True)
+    template_version_id: Mapped[uuid.UUID|None] = mapped_column(ForeignKey("notification_template_versions.id", ondelete="SET NULL"), nullable=True)
+    recipient_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    channel: Mapped[str] = mapped_column(String(20))
+    locale: Mapped[str] = mapped_column(String(10), default="en")
+    subject: Mapped[str] = mapped_column(String(240), default="")
+    body: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(30), default="queued")
+    provider: Mapped[str] = mapped_column(String(60), default="in_app")
+    provider_message_id: Mapped[str|None] = mapped_column(String(240), nullable=True, index=True)
+    error_code: Mapped[str|None] = mapped_column(String(80), nullable=True)
+    next_retry_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    idempotency_key: Mapped[str] = mapped_column(String(240))
+    correlation_id: Mapped[str|None] = mapped_column(String(120), nullable=True, index=True)
+    read_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+class NotificationDeliveryAttempt(TimestampMixin, Base):
+    __tablename__ = "notification_delivery_attempts"
+    __table_args__ = (UniqueConstraint("message_id", "attempt_number"), Index("ix_notification_delivery_attempts_message_created", "message_id", "created_at"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    message_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("notification_messages.id", ondelete="CASCADE"), index=True)
+    attempt_number: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(30))
+    provider_message_id: Mapped[str|None] = mapped_column(String(240), nullable=True)
+    error_code: Mapped[str|None] = mapped_column(String(80), nullable=True)
+    correlation_id: Mapped[str|None] = mapped_column(String(120), nullable=True, index=True)
+
+class NotificationProviderEvent(TimestampMixin, Base):
+    __tablename__ = "notification_provider_events"
+    __table_args__ = (UniqueConstraint("provider", "provider_event_id"), Index("ix_notification_provider_events_message", "provider_message_id"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    provider: Mapped[str] = mapped_column(String(60))
+    provider_event_id: Mapped[str] = mapped_column(String(240))
+    provider_message_id: Mapped[str|None] = mapped_column(String(240), nullable=True)
+    event_type: Mapped[str] = mapped_column(String(60))
+    status: Mapped[str] = mapped_column(String(30))
+    payload_hash: Mapped[str] = mapped_column(String(128))
+    occurred_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+class NotificationPreference(TimestampMixin, Base):
+    __tablename__ = "notification_preferences"
+    __table_args__ = (UniqueConstraint("user_id"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    preferred_locale: Mapped[str] = mapped_column(String(10), default="en")
+    in_app_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    email_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    course_announcements: Mapped[bool] = mapped_column(Boolean, default=True)
+    digest_frequency: Mapped[str] = mapped_column(String(20), default="instant")
+    quiet_hours_start: Mapped[str|None] = mapped_column(String(5), nullable=True)
+    quiet_hours_end: Mapped[str|None] = mapped_column(String(5), nullable=True)
+
+class NotificationOutbox(TimestampMixin, Base):
+    __tablename__ = "notification_outbox"
+    __table_args__ = (UniqueConstraint("message_id"), Index("ix_notification_outbox_status_available", "status", "available_at"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    message_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("notification_messages.id", ondelete="CASCADE"), index=True)
+    status: Mapped[str] = mapped_column(String(20), default="queued")
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0)
+    available_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    locked_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_error_code: Mapped[str|None] = mapped_column(String(80), nullable=True)
+
+class NotificationAuditEvent(TimestampMixin, Base):
+    __tablename__ = "notification_audit_events"
+    __table_args__ = (Index("ix_notification_audit_events_created", "created_at"), Index("ix_notification_audit_events_resource", "resource_type", "resource_id"))
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    actor_id: Mapped[uuid.UUID|None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    action: Mapped[str] = mapped_column(String(100))
+    resource_type: Mapped[str] = mapped_column(String(60))
+    resource_id: Mapped[uuid.UUID|None] = mapped_column(UUIDType, nullable=True)
+    outcome: Mapped[str] = mapped_column(String(20), default="success")
+    correlation_id: Mapped[str|None] = mapped_column(String(120), nullable=True, index=True)
+    metadata_json: Mapped[str] = mapped_column(Text, default="{}")

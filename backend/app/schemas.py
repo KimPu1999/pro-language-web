@@ -538,3 +538,49 @@ class PlatformFeatureSettings(BaseModel):
 class PlatformPageOut(PlatformPageIn):
     updated_at: datetime | None = None
     published_at: datetime | None = None
+
+class NotificationTemplateIn(BaseModel):
+    template_key: str = Field(pattern=r"^[a-z0-9._-]{2,120}$")
+    name: str = Field(min_length=2, max_length=180)
+    category: str = Field(default="general", min_length=2, max_length=60)
+    channel: Literal["in_app", "email"] = "in_app"
+    locale: Literal["en", "my"] = "en"
+    subject: str = Field(default="", max_length=240)
+    body: str = Field(min_length=1, max_length=100000)
+    variables: list[str] = Field(default_factory=list, max_length=30)
+
+class NotificationTemplatePatch(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=180)
+    category: str | None = Field(default=None, min_length=2, max_length=60)
+    subject: str | None = Field(default=None, max_length=240)
+    body: str | None = Field(default=None, min_length=1, max_length=100000)
+    variables: list[str] | None = Field(default=None, max_length=30)
+
+class NotificationAnnouncementIn(BaseModel):
+    title_en: str = Field(min_length=2, max_length=240)
+    title_mm: str = Field(default="", max_length=240)
+    body_en: str = Field(min_length=1, max_length=100000)
+    body_mm: str = Field(default="", max_length=100000)
+    audience_type: Literal["all_students", "all_users", "administrators", "course_enrolled", "user_ids"] = "all_students"
+    audience: dict[str, Any] = Field(default_factory=dict)
+    channels: list[Literal["in_app", "email"]] = Field(default_factory=lambda: ["in_app"], min_length=1, max_length=2)
+    scheduled_at: datetime | None = None
+
+class NotificationAnnouncementPatch(BaseModel):
+    title_en: str | None = Field(default=None, min_length=2, max_length=240)
+    title_mm: str | None = Field(default=None, max_length=240)
+    body_en: str | None = Field(default=None, min_length=1, max_length=100000)
+    body_mm: str | None = Field(default=None, max_length=100000)
+    audience_type: Literal["all_students", "all_users", "administrators", "course_enrolled", "user_ids"] | None = None
+    audience: dict[str, Any] | None = None
+    channels: list[Literal["in_app", "email"]] | None = Field(default=None, min_length=1, max_length=2)
+    scheduled_at: datetime | None = None
+
+class NotificationPreferencePatch(BaseModel):
+    preferred_locale: Literal["en", "my"] | None = None
+    in_app_enabled: bool | None = None
+    email_enabled: bool | None = None
+    course_announcements: bool | None = None
+    digest_frequency: Literal["instant", "daily", "weekly"] | None = None
+    quiet_hours_start: str | None = Field(default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
+    quiet_hours_end: str | None = Field(default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$")

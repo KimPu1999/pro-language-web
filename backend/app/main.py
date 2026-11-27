@@ -60,6 +60,7 @@ from .legal_routes import router as legal_router
 from .syntax_routes import router as syntax_router
 from .notebook_routes import router as notebook_router
 from .curriculum_quality_routes import router as curriculum_quality_router
+from .notification_routes import admin_router as notification_admin_router, me_router as notification_me_router, preference_router as notification_preference_router
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger=logging.getLogger("codemaster.api")
 app=FastAPI(title="CodeMaster Academy API", version="1.0.0")
@@ -128,6 +129,9 @@ app.include_router(developer_tools_router)
 app.include_router(syntax_router)
 app.include_router(notebook_router)
 app.include_router(curriculum_quality_router)
+app.include_router(notification_admin_router)
+app.include_router(notification_me_router)
+app.include_router(notification_preference_router)
 app.include_router(contact_router)
 app.include_router(legal_router)
 @app.get("/api/v1/health")

@@ -95,6 +95,30 @@ export const adminApi = {
   updatePlatformSettings: (group: string, body: unknown, csrfToken: string) => request<any>(`/api/v1/admin/platform/settings/${encodeURIComponent(group)}`, { method: "PATCH", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrfToken } }),
 };
 
+export const notificationAdminApi = {
+  overview: () => request<any>("/api/v1/admin/notifications/overview"),
+  announcements: () => request<any>("/api/v1/admin/notifications/announcements"),
+  createAnnouncement: (body: unknown, csrfToken: string) => request<any>("/api/v1/admin/notifications/announcements", { ...json(body), headers: { "X-CSRF-Token": csrfToken } }),
+  announcementAction: (id: string, action: string, csrfToken: string) => request<any>(`/api/v1/admin/notifications/announcements/${id}/${action}`, { method: "POST", headers: { "X-CSRF-Token": csrfToken } }),
+  templates: () => request<any>("/api/v1/admin/notifications/templates"),
+  createTemplate: (body: unknown, csrfToken: string) => request<any>("/api/v1/admin/notifications/templates", { ...json(body), headers: { "X-CSRF-Token": csrfToken } }),
+  templateAction: (id: string, action: string, csrfToken: string) => request<any>(`/api/v1/admin/notifications/templates/${id}/${action}`, { method: "POST", headers: { "X-CSRF-Token": csrfToken } }),
+  deliveries: (query = "") => request<any>(`/api/v1/admin/notifications/deliveries${query}`),
+  failures: () => request<any>("/api/v1/admin/notifications/failures"),
+  retry: (id: string, csrfToken: string) => request<any>(`/api/v1/admin/notifications/deliveries/${id}/retry`, { method: "POST", headers: { "X-CSRF-Token": csrfToken } }),
+  processOutbox: (csrfToken: string) => request<any>("/api/v1/admin/notifications/outbox/process", { method: "POST", headers: { "X-CSRF-Token": csrfToken } }),
+  providers: () => request<any>("/api/v1/admin/notifications/providers"),
+  audit: () => request<any>("/api/v1/admin/notifications/audit"),
+};
+
+export const notificationApi = {
+  inbox: () => request<any>("/api/v1/me/notifications"),
+  read: (id: string, csrfToken: string) => request<any>(`/api/v1/me/notifications/${id}/read`, { method: "POST", headers: { "X-CSRF-Token": csrfToken } }),
+  readAll: (csrfToken: string) => request<any>("/api/v1/me/notifications/read-all", { method: "POST", headers: { "X-CSRF-Token": csrfToken } }),
+  preferences: () => request<any>("/api/v1/me/notification-preferences"),
+  updatePreferences: (body: unknown, csrfToken: string) => request<any>("/api/v1/me/notification-preferences", { method: "PATCH", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrfToken } }),
+};
+
 export const dashboardApi = {
   overview: () => request<DashboardOverview>("/api/v1/dashboard/overview"),
   courses: () => request<DashboardOverview["courses"]>("/api/v1/dashboard/courses"),
