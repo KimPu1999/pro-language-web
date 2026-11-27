@@ -117,6 +117,23 @@ def test_mongodb_first_crud_workflow_has_complete_burmese_body(client):
         for question in questions:
             assert question.correct_answer in json.loads(question.options_json)
 
+def test_linux_english_content_does_not_embed_burmese_quiz_prompt(client):
+    from app.linux_course_content import seed_linux_course
+    from app.models import Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
+
+    with client.session_factory() as db:
+        language = ProgrammingLanguage(name="Linux", slug="linux-test", color="#FCC624")
+        category = db.query(CourseCategory).filter_by(slug="fundamentals").one()
+        db.add(language); db.flush()
+        course = Course(language_id=language.id, category_id=category.id, title="Linux", slug="linux-test", description="Linux", level="beginner", duration_minutes=0, published=True, status="draft")
+        db.add(course); db.flush(); seed_linux_course(db, course); db.commit()
+        lesson = db.query(Lesson).filter_by(slug="01-pipes-permissions-and-the-first-safe-workflow").one()
+        question = db.query(QuizQuestion).join(LessonQuiz).filter(LessonQuiz.lesson_id == lesson.id, QuizQuestion.position == 1).one()
+
+        assert "chmod 777 ကို ဘာကြောင့် ရှောင်သင့်သနည်း?" not in lesson.content_en
+        assert "Why should chmod 777 usually be avoided?" in lesson.content_en
+        assert question.prompt == "Why should chmod 777 usually be avoided?"
+
 def test_cpp_curriculum_is_separate_complete_and_idempotent(client):
     from app.cpp_course_content import seed_cpp_course
     from app.models import CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
