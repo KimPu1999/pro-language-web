@@ -50,9 +50,12 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
   const hasBurmese = Boolean(lesson.content_mm?.trim());
   const translationStatus = lesson.translation_status ?? (hasBurmese && lesson.content_mm!.length < lesson.content_en.length * 0.8 ? "partial" : hasBurmese ? "available" : "missing");
   const incompleteBurmese = locale === "my" && translationStatus !== "available";
-  const lessonContent = incompleteBurmese && hasBurmese
-    ? `${lesson.content_mm}\n\nEnglish source (full lesson)\n${lesson.content_en}`
-    : localized(lesson.content_en, lesson.content_mm);
+  // A partial translation must never be mixed with English paragraphs. Until
+  // the Burmese version is complete and published, show the full English
+  // lesson as the explicitly labeled fallback.
+  const lessonContent = locale === "my" && translationStatus === "available"
+    ? lesson.content_mm ?? ""
+    : localized(lesson.content_en, null);
   const visitedLesson = useRef<string | null>(null);
 
   const lessonProgress = progress?.lessons.find(item => item.lesson_id === lesson.id);
