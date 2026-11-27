@@ -2,7 +2,7 @@ import json, math
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from urllib.parse import urlparse
-from fastapi import APIRouter, Cookie, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
+from fastapi import APIRouter, Cookie, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, normalize_email, now, require_csrf, verify_password
@@ -249,6 +249,41 @@ def list_admin_audit_logs(search: str|None=None, page: int=Query(1,ge=1), page_s
     total=db.scalar(count) or 0
     rows=db.scalars(query.order_by(AdminAuditLog.created_at.desc()).offset((page-1)*page_size).limit(page_size)).all()
     return {"items":[{"id":row.id,"action":row.action,"entity_type":row.entity_type,"entity_id":row.entity_id,"actor_id":row.actor_id,"created_at":row.created_at} for row in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+
+@router.get("/transactions")
+def list_transactions(
+    search: str | None = None,
+    status_filter: str | None = Query(None, alias="status", max_length=40),
+    start_date: datetime | None = Query(None),
+    end_date: datetime | None = Query(None),
+    sort: str = Query("created_at", pattern="^(created_at|amount|status)$"),
+    order: str = Query("desc", pattern="^(asc|desc)$"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(25, ge=1, le=100),
+    user: User = Depends(full_admin),
+):
+    """Return an honest capability response until billing is configured.
+
+    There is deliberately no fallback query against unrelated tables and no
+    synthetic financial data. The contract is stable so the UI can render a
+    safe unavailable state while a payment provider is not enabled.
+    """
+    return {
+        "configured": False,
+        "status": "not_configured",
+        "data_source": "billing_provider_not_configured",
+        "message": "Transactions are unavailable because billing is not configured for this deployment.",
+        "items": [],
+        "page": page,
+        "page_size": page_size,
+        "total": 0,
+        "pages": 0,
+        "filters": {"search": search, "status": status_filter, "start_date": start_date, "end_date": end_date, "sort": sort, "order": order},
+    }
+
+@router.get("/transactions/{transaction_id}")
+def get_transaction(transaction_id: UUID, user: User = Depends(full_admin)):
+    raise HTTPException(status.HTTP_404_NOT_FOUND, "Transactions are not configured for this deployment")
 
 def _media_response(row: MediaAsset, db: Session):
     url = f"/media/{row.storage_key}" if row.visibility == "public" else f"/api/v1/admin/media/{row.id}/content"

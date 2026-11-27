@@ -78,6 +78,11 @@ export const siteApi = {
   branding: () => request<import("./types").BrandingSettings>("/api/v1/site/branding"),
 };
 
+export const transactionsApi = {
+  list: (query = "") => request<any>(`/api/v1/admin/transactions${query}`),
+  detail: (id: string) => request<any>(`/api/v1/admin/transactions/${id}`),
+};
+
 export const localeApi = {
   set: (language: "en" | "my", csrf: string) => request<{ language: string }>("/api/v1/me/locale", { method: "PATCH", body: JSON.stringify({ language }), headers: { "X-CSRF-Token": csrf } }),
 };

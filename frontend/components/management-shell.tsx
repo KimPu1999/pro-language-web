@@ -84,6 +84,7 @@ const groups: ManagementNavGroup[] = [
       { label: "Instructors", href: "/platform/instructors", icon: GraduationCap, roles: PLATFORM_ROLES },
       { label: "Analytics", href: "/platform/analytics", icon: BarChart3, roles: PLATFORM_ROLES },
       { label: "Reports", href: "/platform/reports", icon: Activity, roles: PLATFORM_ROLES },
+      { label: "Transactions", href: "/platform/transactions", icon: Activity, roles: PLATFORM_ROLES },
       { label: "Notifications", href: "/platform/notifications", icon: Bell, roles: PLATFORM_ROLES },
     ],
   },
