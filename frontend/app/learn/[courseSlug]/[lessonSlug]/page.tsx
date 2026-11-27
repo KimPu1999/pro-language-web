@@ -54,6 +54,11 @@ export default async function LessonPage({ params }: { params: Promise<{ courseS
           <span className="rounded-full border border-line px-3 py-1 text-xs text-slate-400">Read · practice · compile</span>
         </div>
 
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Link href={`/ai-tutor?lesson_id=${encodeURIComponent(String(lesson.id))}`} className="rounded-lg border border-indigo-400/30 bg-indigo-500/10 px-3 py-2 text-sm font-semibold text-indigo-200 hover:bg-indigo-500/20">Ask AI Tutor about this lesson</Link>
+          <span className="text-xs text-slate-500">The tutor receives published lesson context only.</span>
+        </div>
+
         <div className="mt-8">
           <LessonReader
             key={lesson.id}

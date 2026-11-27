@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     ai_provider: str = "disabled"
     ai_model: str = "disabled"
     ai_enabled: bool = False
+    # Read from the deployment environment only. This value is never returned
+    # by an API route or persisted in the database.
+    openai_api_key: str = ""
+    ai_openai_base_url: str = "https://api.openai.com/v1"
     ai_request_timeout_seconds: int = 30
     ai_daily_request_limit: int = 20
     ai_max_input_chars: int = 12000
