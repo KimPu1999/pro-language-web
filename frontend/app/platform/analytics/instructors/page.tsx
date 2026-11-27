@@ -1,2 +1,2 @@
-import { AnalyticsDashboard } from "@/components/analytics-dashboard";
-export default function InstructorsAnalyticsPage() { return <AnalyticsDashboard section="instructors"/>; }
+import { InstructorAnalyticsDashboard } from "@/components/instructor-analytics-dashboard";
+export default function InstructorsAnalyticsPage() { return <InstructorAnalyticsDashboard />; }
