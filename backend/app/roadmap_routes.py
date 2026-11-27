@@ -35,6 +35,37 @@ def localized(en: str | None, mm: str | None, locale: str) -> tuple[str, str, bo
         return translated, "my", True
     return source, "en", bool(translated)
 
+def translation_is_ready(source: str | None, translated: str | None, required: bool = False) -> bool:
+    """Return whether a Burmese value is required and present.
+
+    Optional English fields do not need an empty Burmese counterpart. Required
+    labels such as titles still need an explicit Burmese value.
+    """
+    return (not required and not (source or "").strip()) or bool((translated or "").strip())
+
+def roadmap_translation_missing(row, stages, steps_by_stage):
+    missing = []
+    fields = (
+        ("title", row.title, row.title_mm, True),
+        ("description", row.description_en, row.description_mm, False),
+        ("prerequisites", row.prerequisites_en, row.prerequisites_mm, False),
+        ("outcomes", row.outcomes_en, row.outcomes_mm, False),
+    )
+    for label, source, translated, required in fields:
+        if not translation_is_ready(source, translated, required):
+            missing.append(label)
+    for stage in stages:
+        if not translation_is_ready(stage.title, stage.title_mm, True):
+            missing.append(f"stage:{stage.position}:title")
+        if not translation_is_ready(stage.description_en, stage.description_mm):
+            missing.append(f"stage:{stage.position}:description")
+        for step in steps_by_stage.get(stage.id, []):
+            if not translation_is_ready(step.title, step.title_mm, True):
+                missing.append(f"step:{step.id}:title")
+            if not translation_is_ready(step.instructions_en, step.instructions_mm):
+                missing.append(f"step:{step.id}:instructions")
+    return missing
+
 def step_dict(step,db,locale="en"):
     resources=[]
     for resource in db.scalars(select(RoadmapStepResource).where(RoadmapStepResource.step_id==step.id)).all():
@@ -54,25 +85,19 @@ def step_dict(step,db,locale="en"):
         resources.append(item)
     step_title,step_locale,step_title_translated=localized(step.title,step.title_mm,locale)
     step_instructions,step_instructions_locale,step_instructions_translated=localized(step.instructions_en,step.instructions_mm,locale)
-    return {"id":step.id,"title":step_title,"title_en":step.title,"title_mm":step.title_mm,"instructions":step_instructions,"instructions_en":step.instructions_en,"instructions_mm":step.instructions_mm,"position":step.position,"required":step.required,"resources":resources,"resolved_locale":locale if locale == "en" or (step_title_translated and step_instructions_translated) else "en"}
+    step_ready = translation_is_ready(step.title, step.title_mm, True) and translation_is_ready(step.instructions_en, step.instructions_mm)
+    return {"id":step.id,"title":step_title,"title_en":step.title,"title_mm":step.title_mm,"instructions":step_instructions,"instructions_en":step.instructions_en,"instructions_mm":step.instructions_mm,"position":step.position,"required":step.required,"resources":resources,"resolved_locale":locale if locale == "en" or step_ready else "en"}
 def roadmap_dict(row,db,include_steps=True,locale="en"):
     title,resolved_title,title_translated=localized(row.title,row.title_mm,locale); description,resolved_description,description_translated=localized(row.description_en,row.description_mm,locale); prerequisites,resolved_prerequisites,prerequisites_translated=localized(row.prerequisites_en,row.prerequisites_mm,locale); outcomes,resolved_outcomes,outcomes_translated=localized(row.outcomes_en,row.outcomes_mm,locale)
-    stages=db.scalars(select(RoadmapStage).where(RoadmapStage.roadmap_id==row.id).order_by(RoadmapStage.position)).all(); assessments=db.scalars(select(RoadmapAssessment).where(RoadmapAssessment.roadmap_id==row.id).order_by(RoadmapAssessment.position)).all(); out={"id":row.id,"title":title,"title_en":row.title,"title_mm":row.title_mm,"slug":row.slug,"career_category":row.career_category,"description":description,"description_en":row.description_en,"description_mm":row.description_mm,"prerequisites":prerequisites,"prerequisites_en":row.prerequisites_en,"prerequisites_mm":row.prerequisites_mm,"outcomes":outcomes,"outcomes_en":row.outcomes_en,"outcomes_mm":row.outcomes_mm,"estimated_hours":row.estimated_hours,"cover_image":row.cover_image,"goals":json_load(row.goals_json,[]),"skills":json_load(row.skills_json,[]),"completion_rules":json_load(row.completion_rules_json,{}),"status":row.status,"published":row.published,"requested_locale":locale,"resolved_locale":locale if locale == "en" or all((title_translated,description_translated,prerequisites_translated,outcomes_translated)) else "en","translation_available":all((title_translated,description_translated,prerequisites_translated,outcomes_translated)),"translation_missing":[] if locale == "en" else [label for label,ok in (("title",title_translated),("description",description_translated),("prerequisites",prerequisites_translated),("outcomes",outcomes_translated)) if not ok],"stages":[],"assessments":[{"id":a.id,"assessment_id":a.assessment_id,"passing_score":a.passing_score,"required":a.required,"position":a.position,"title":getattr(db.get(AssessmentDefinition,a.assessment_id),"title",None)} for a in assessments]}
-    out["stages"]=[{"id":s.id,"title":localized(s.title,s.title_mm,locale)[0],"title_en":s.title,"title_mm":s.title_mm,"description":localized(s.description_en,s.description_mm,locale)[0],"description_en":s.description_en,"description_mm":s.description_mm,"level":s.level,"objectives":json_load(s.objectives_json,[]),"skills":json_load(s.skills_json,[]),"completion_rules":json_load(s.completion_rules_json,{}),"position":s.position,"steps":[step_dict(x,db,locale) for x in db.scalars(select(RoadmapStep).where(RoadmapStep.stage_id==s.id).order_by(RoadmapStep.position)).all()] if include_steps else []} for s in stages]
-    if locale == "my":
-        missing=[]
-        for label,translated in (("title",title_translated),("description",description_translated),("prerequisites",prerequisites_translated),("outcomes",outcomes_translated)):
-            if not translated: missing.append(label)
-        all_steps=db.scalars(select(RoadmapStep).where(RoadmapStep.stage_id.in_([stage.id for stage in stages]))).all() if stages else []
-        for stage in stages:
-            if not stage.title_mm: missing.append(f"stage:{stage.position}:title")
-            if stage.description_en and not stage.description_mm: missing.append(f"stage:{stage.position}:description")
-        for step in all_steps:
-            if not step.title_mm: missing.append(f"step:{step.id}:title")
-            if step.instructions_en and not step.instructions_mm: missing.append(f"step:{step.id}:instructions")
-        out["translation_missing"]=missing
-        out["translation_available"]=not missing
-        out["resolved_locale"]="my" if not missing else "en"
+    stages=db.scalars(select(RoadmapStage).where(RoadmapStage.roadmap_id==row.id).order_by(RoadmapStage.position)).all()
+    steps_by_stage=defaultdict(list)
+    if stages:
+        for step in db.scalars(select(RoadmapStep).where(RoadmapStep.stage_id.in_([stage.id for stage in stages])).order_by(RoadmapStep.stage_id, RoadmapStep.position)).all():
+            steps_by_stage[step.stage_id].append(step)
+    translation_missing=roadmap_translation_missing(row, stages, steps_by_stage)
+    translation_available=not translation_missing
+    assessments=db.scalars(select(RoadmapAssessment).where(RoadmapAssessment.roadmap_id==row.id).order_by(RoadmapAssessment.position)).all(); out={"id":row.id,"title":title,"title_en":row.title,"title_mm":row.title_mm,"slug":row.slug,"career_category":row.career_category,"description":description,"description_en":row.description_en,"description_mm":row.description_mm,"prerequisites":prerequisites,"prerequisites_en":row.prerequisites_en,"prerequisites_mm":row.prerequisites_mm,"outcomes":outcomes,"outcomes_en":row.outcomes_en,"outcomes_mm":row.outcomes_mm,"estimated_hours":row.estimated_hours,"cover_image":row.cover_image,"goals":json_load(row.goals_json,[]),"skills":json_load(row.skills_json,[]),"completion_rules":json_load(row.completion_rules_json,{}),"status":row.status,"published":row.published,"requested_locale":locale,"resolved_locale":"my" if locale == "my" and translation_available else "en","translation_available":translation_available,"translation_missing":translation_missing,"stages":[],"assessments":[{"id":a.id,"assessment_id":a.assessment_id,"passing_score":a.passing_score,"required":a.required,"position":a.position,"title":getattr(db.get(AssessmentDefinition,a.assessment_id),"title",None)} for a in assessments]}
+    out["stages"]=[{"id":s.id,"title":localized(s.title,s.title_mm,locale)[0],"title_en":s.title,"title_mm":s.title_mm,"description":localized(s.description_en,s.description_mm,locale)[0],"description_en":s.description_en,"description_mm":s.description_mm,"level":s.level,"objectives":json_load(s.objectives_json,[]),"skills":json_load(s.skills_json,[]),"completion_rules":json_load(s.completion_rules_json,{}),"position":s.position,"steps":[step_dict(x,db,locale) for x in steps_by_stage[s.id]] if include_steps else []} for s in stages]
     step_ids=select(RoadmapStep.id).join(RoadmapStage).where(RoadmapStage.roadmap_id==row.id)
     resources=db.scalars(select(RoadmapStepResource).where(RoadmapStepResource.step_id.in_(step_ids))).all()
     out["stage_count"]=len(stages); out["step_count"]=db.scalar(select(func.count(RoadmapStep.id)).join(RoadmapStage).where(RoadmapStage.roadmap_id==row.id)) or 0; out["course_count"]=len({r.resource_id for r in resources if r.resource_type=="course"}); out["project_count"]=len({r.resource_id for r in resources if r.resource_type=="project"})

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { api, lessonQuizApi } from "@/lib/api";
 import type { CourseProgress, Lesson, LessonQuiz } from "@/lib/types";
 import { csrf } from "@/components/auth-form";
@@ -123,6 +124,7 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/community/questions/ask?type=question&course_id=${encodeURIComponent(courseId)}&lesson_id=${encodeURIComponent(lesson.id)}`} className="rounded-lg border border-line px-3 py-2 text-sm text-slate-300">Discuss this lesson</Link>
             <button
               onClick={toggleBookmark}
               className={`rounded-lg border px-3 py-2 text-sm ${bookmarked ? "border-indigo-400 bg-indigo-500/15 text-indigo-200" : "border-line text-slate-300"}`}

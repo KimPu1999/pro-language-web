@@ -1,12 +1,22 @@
 import type { LearningGoal, LearningPathEnrollment, LearningPathProgress, Roadmap, RoadmapPage } from "./types";
+import { ApiError } from "./api";
 const base=process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === "undefined" ? process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000" : "");
 async function request<T>(path:string,init?:RequestInit){
-  const response=await fetch(`${base}${path}`,{...init,credentials:"include",headers:{Accept:"application/json","Content-Type":"application/json",...init?.headers}});
-  if(!response.ok){
-    let message=`API request failed (${response.status})`;
-    try { const body=await response.json() as {detail?:string;message?:string}; message=body.detail??body.message??message; } catch { /* keep the status fallback */ }
-    throw new Error(message);
-  }
-  return response.json() as Promise<T>
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response=await fetch(`${base}${path}`,{...init,credentials:"include",signal:controller.signal,headers:{Accept:"application/json","Content-Type":"application/json",...init?.headers}});
+    if(!response.ok){
+      let message=`API request failed (${response.status})`;
+      const requestId=response.headers.get("X-Request-ID") ?? undefined;
+      try { const body=await response.json() as {detail?:string;message?:string;request_id?:string}; message=body.detail??body.message??message; } catch { /* keep the status fallback */ }
+      throw new ApiError(requestId && response.status >= 500 ? `${message} (request ${requestId})` : message, "http", response.status, requestId);
+    }
+    return response.json() as Promise<T>
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") throw new ApiError("The Learning Paths API did not respond within 8 seconds.", "timeout");
+    if (error instanceof TypeError) throw new ApiError("The Learning Paths API is unavailable. Check that FastAPI is running.", "unavailable");
+    throw error;
+  } finally { clearTimeout(timeout); }
 }
 export const roadmapApi={categories:()=>request<string[]>("/api/v1/learning-paths/categories"),list:(query="")=>request<RoadmapPage>(`/api/v1/learning-paths${query}`),detail:(slug:string,locale="en")=>request<Roadmap>(`/api/v1/learning-paths/${slug}?locale=${locale}`),stages:(slug:string)=>request<Roadmap["stages"]>(`/api/v1/learning-paths/${slug}/stages`),courses:(slug:string)=>request<{id:string;title:string;slug:string;level:string;duration_minutes:number}[]>(`/api/v1/learning-paths/${slug}/courses`),start:(slug:string,csrf:string)=>request<{id:string;status:string;progress:LearningPathProgress;idempotent?:boolean}>(`/api/v1/me/roadmaps/${slug}`,{method:"POST",headers:{"X-CSRF-Token":csrf}}),enroll:(id:string,csrf:string)=>request<{id:string;status:string;progress:LearningPathProgress;idempotent?:boolean}>(`/api/v1/learning-paths/${id}/enroll`,{method:"POST",headers:{"X-CSRF-Token":csrf}}),mine:()=>request<LearningPathEnrollment[]>("/api/v1/me/learning-paths"),progress:(id:string)=>request<LearningPathProgress & {status:string}>(`/api/v1/me/learning-paths/${id}/progress`),detailForEnrollment:(id:string,locale="en")=>request<{roadmap:Roadmap;enrollment:{id:string;status:string;started_at:string|null};progress:LearningPathProgress}>(`/api/v1/me/learning-paths/${id}?locale=${locale}`),bookmark:(id:string,csrf:string)=>request<{roadmap_id:string;bookmarked:boolean}>(`/api/v1/learning-paths/${id}/bookmark`,{method:"POST",headers:{"X-CSRF-Token":csrf}}),goal:()=>request<LearningGoal|null>("/api/v1/me/goals"),saveGoal:(body:LearningGoal,csrf:string)=>request<{status:string}>("/api/v1/me/goals",{method:"PUT",body:JSON.stringify(body),headers:{"X-CSRF-Token":csrf}}),recommendations:()=>request<unknown[]>("/api/v1/me/roadmap-recommendations"),adminList:(query="")=>request<{items:Roadmap[];page:number;page_size:number;total:number;pages:number}>(`/api/v1/admin/roadmaps${query}`),adminDetail:(id:string)=>request<Roadmap>(`/api/v1/admin/roadmaps/${id}`),adminCreate:(body:unknown,csrf:string)=>request<unknown>("/api/v1/admin/roadmaps",{method:"POST",body:JSON.stringify(body),headers:{"X-CSRF-Token":csrf}}),adminUpdate:(id:string,body:unknown,csrf:string)=>request<Roadmap>(`/api/v1/admin/roadmaps/${id}`,{method:"PATCH",body:JSON.stringify(body),headers:{"X-CSRF-Token":csrf}}),adminStage:(id:string,body:unknown,csrf:string)=>request<unknown>(`/api/v1/admin/roadmaps/${id}/stages`,{method:"POST",headers:{"X-CSRF-Token":csrf},body:JSON.stringify(body)}),adminStep:(id:string,body:unknown,csrf:string)=>request<unknown>(`/api/v1/admin/stages/${id}/steps`,{method:"POST",headers:{"X-CSRF-Token":csrf},body:JSON.stringify(body)}),adminResource:(id:string,body:unknown,csrf:string)=>request<unknown>(`/api/v1/admin/steps/${id}/resources`,{method:"POST",headers:{"X-CSRF-Token":csrf},body:JSON.stringify(body)}),adminContent:(kind:string,query="")=>request<{id:string;title:string;slug?:string|null;published?:boolean|null}[]>(`/api/v1/admin/roadmap-content?kind=${kind}${query}`),adminReorderStages:(id:string,ids:string[],csrf:string)=>request<unknown>(`/api/v1/admin/roadmaps/${id}/stages/reorder`,{method:"POST",body:JSON.stringify({ids}),headers:{"X-CSRF-Token":csrf}}),adminReorderSteps:(id:string,ids:string[],csrf:string)=>request<unknown>(`/api/v1/admin/stages/${id}/reorder`,{method:"POST",body:JSON.stringify({ids}),headers:{"X-CSRF-Token":csrf}}),adminSubmitReview:(id:string,csrf:string)=>request<unknown>(`/api/v1/admin/roadmaps/${id}/submit-review`,{method:"POST",headers:{"X-CSRF-Token":csrf}}),adminApprove:(id:string,csrf:string)=>request<unknown>(`/api/v1/admin/roadmaps/${id}/approve`,{method:"POST",headers:{"X-CSRF-Token":csrf}}),adminPublish:(id:string,csrf:string)=>request<unknown>(`/api/v1/admin/roadmaps/${id}/publish`,{method:"POST",body:JSON.stringify({action:"publish"}),headers:{"X-CSRF-Token":csrf}})};

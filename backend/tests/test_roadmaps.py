@@ -18,6 +18,16 @@ def seed_roadmap(client):
 def test_published_roadmap_detail_and_student_enrollment(client):
     roadmap_id=seed_roadmap(client); assert client.get("/api/v1/roadmaps").json()["total"]==1; assert client.get("/api/v1/roadmaps/backend-developer").status_code==200
     csrf=verified_client(client); response=client.post("/api/v1/me/roadmaps/backend-developer",headers={"X-CSRF-Token":csrf}); assert response.status_code==201; duplicate=client.post("/api/v1/me/roadmaps/backend-developer",headers={"X-CSRF-Token":csrf}); assert duplicate.status_code==200; assert duplicate.json()["idempotent"] is True; assert roadmap_id
+
+def test_translation_completeness_includes_nested_stages_and_steps(client):
+    seed_roadmap(client)
+    english=client.get("/api/v1/roadmaps/backend-developer?locale=en").json()
+    burmese=client.get("/api/v1/roadmaps/backend-developer?locale=my").json()
+    assert english["translation_available"] is False
+    assert any(item.startswith("stage:") for item in english["translation_missing"])
+    assert any(item.startswith("step:") for item in english["translation_missing"])
+    assert burmese["resolved_locale"] == "en"
+    assert burmese["translation_missing"] == english["translation_missing"]
 def test_roadmap_goal_is_owned_by_current_student(client):
     csrf=verified_client(client,"goal@example.com"); response=client.put("/api/v1/me/goals",json={"career_goal":"Python Developer","current_level":"beginner","interests":["python"],"weekly_hours":5,"pace":"steady","timezone":"Asia/Yangon"},headers={"X-CSRF-Token":csrf}); assert response.status_code==200; assert client.get("/api/v1/me/goals").json()["career_goal"]=="Python Developer"
 

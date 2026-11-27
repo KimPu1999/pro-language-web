@@ -1,7 +1,7 @@
 const base=process.env.NEXT_PUBLIC_API_BASE_URL??"";
 async function request<T>(path:string,init?:RequestInit){
   const r=await fetch(`${base}${path}`,{...init,credentials:"include",headers:{Accept:"application/json","Content-Type":"application/json",...init?.headers}});
-  if(!r.ok){let message=`API request failed (${r.status})`;try{const body=await r.json() as {detail?:string};message=body.detail??message}catch{}throw new Error(message)}
+  if(!r.ok){let message=`API request failed (${r.status})`;const requestId=r.headers.get("X-Request-ID");try{const body=await r.json() as {detail?:string;request_id?:string};message=body.detail??message;if(body.request_id&&!requestId)message+=` (request ${body.request_id})`}catch{}if(requestId&&r.status>=500)message+=` (request ${requestId})`;throw new Error(message)}
   return r.json() as Promise<T>
 }
 export const aiApi={
@@ -24,7 +24,9 @@ export const aiApi={
 export function streamUrl(id:string){return `${base}/api/v1/ai/conversations/${id}/stream`}
 export const gamificationApi={summary:()=>request<any>('/api/v1/gamification/summary'),achievements:()=>request<any>('/api/v1/gamification/achievements'),certificates:()=>request<any>('/api/v1/gamification/certificates'),leaderboard:(period='all_time')=>request<any>(`/api/v1/gamification/leaderboard?period=${period}`),preference:()=>request<any>('/api/v1/gamification/leaderboard/preferences'),savePreference:(body:any,csrf:string)=>request<any>('/api/v1/gamification/leaderboard/preferences',{method:'PUT',body:JSON.stringify(body),headers:{'X-CSRF-Token':csrf}})};
 export const communityApi={
-  feed:(search='',postType='')=>request<any>(`/api/v1/community/posts?search=${encodeURIComponent(search)}${postType?`&post_type=${postType}`:''}`),
+  feed:(search='',postType='',filters:Record<string,string|number|undefined>={})=>{const params=new URLSearchParams({search,...(postType?{post_type:postType}:{}),...Object.fromEntries(Object.entries(filters).filter(([,value])=>value!==undefined).map(([key,value])=>[key,String(value)]))});return request<any>(`/api/v1/community/posts?${params.toString()}`)},
+  categories:()=>request<any[]>('/api/v1/community/categories'),
+  tags:(search='')=>request<any>(`/api/v1/community/tags${search?`?search=${encodeURIComponent(search)}`:''}`),
   post:(body:any,csrf:string)=>request<any>('/api/v1/community/posts',{method:'POST',body:JSON.stringify(body),headers:{'X-CSRF-Token':csrf}}),
   postDetail:(slug:string)=>request<any>(`/api/v1/community/posts/${slug}`),
   updatePost:(id:string,body:any,csrf:string)=>request<any>(`/api/v1/community/posts/${id}`,{method:'PATCH',body:JSON.stringify(body),headers:{'X-CSRF-Token':csrf}}),
@@ -35,13 +37,21 @@ export const communityApi={
   comment:(id:string,body:string,csrf:string,parentId?:string)=>request<any>(`/api/v1/community/posts/${id}/comments`,{method:'POST',body:JSON.stringify({body,parent_id:parentId??null}),headers:{'X-CSRF-Token':csrf}}),
   vote:(id:string,csrf:string)=>request<any>(`/api/v1/community/posts/${id}/vote`,{method:'POST',headers:{'X-CSRF-Token':csrf}}),
   bookmark:(id:string,csrf:string)=>request<any>(`/api/v1/community/posts/${id}/bookmark`,{method:'POST',headers:{'X-CSRF-Token':csrf}}),
+  bookmarks:(page=1)=>request<any>(`/api/v1/community/bookmarks?page=${page}`),
+  follow:(id:string,csrf:string)=>request<any>(`/api/v1/community/posts/${id}/follow`,{method:'POST',headers:{'X-CSRF-Token':csrf}}),
+  followTag:(tag:string,csrf:string)=>request<any>(`/api/v1/community/tags/${encodeURIComponent(tag)}/follow`,{method:'POST',headers:{'X-CSRF-Token':csrf}}),
   snippets:()=>request<any[]>('/api/v1/community/snippets'),
   groups:()=>request<any[]>('/api/v1/community/groups'),
   group:(slug:string)=>request<any>(`/api/v1/community/groups/${slug}`),
   joinGroup:(id:string,csrf:string)=>request<any>(`/api/v1/community/groups/${id}/join`,{method:'POST',headers:{'X-CSRF-Token':csrf}}),
   members:(search='')=>request<any>(`/api/v1/community/members?search=${encodeURIComponent(search)}`),
-  notifications:()=>request<any[]>('/api/v1/community/notifications'),
+  notifications:()=>request<any>('/api/v1/community/notifications'),
+  readNotification:(id:string,csrf:string)=>request<any>(`/api/v1/community/notifications/${id}/read`,{method:'POST',headers:{'X-CSRF-Token':csrf}}),
+  readAllNotifications:(csrf:string)=>request<any>('/api/v1/community/notifications/read-all',{method:'POST',headers:{'X-CSRF-Token':csrf}}),
   adminOverview:()=>request<any>('/api/v1/community/admin/overview'),
-  reports:()=>request<any[]>('/api/v1/community/admin/reports'),
+  adminCategories:()=>request<any[]>('/api/v1/community/admin/categories'),
+  adminCreateCategory:(body:any,csrf:string)=>request<any>('/api/v1/community/admin/categories',{method:'POST',body:JSON.stringify(body),headers:{'X-CSRF-Token':csrf}}),
+  reports:(status='')=>request<any>(`/api/v1/community/admin/reports${status?`?status=${encodeURIComponent(status)}`:''}`),
+  decideReport:(id:string,body:any,csrf:string)=>request<any>(`/api/v1/community/admin/reports/${id}`,{method:'PATCH',body:JSON.stringify(body),headers:{'X-CSRF-Token':csrf}}),
 };
 export const liveClassApi={catalog:(search='')=>request<any>(`/api/v1/live-classes?search=${encodeURIComponent(search)}`),detail:(id:string)=>request<any>(`/api/v1/live-classes/${id}`),register:(id:string,csrf:string)=>request<any>(`/api/v1/live-classes/${id}/register`,{method:'POST',headers:{'X-CSRF-Token':csrf}}),cancel:(id:string,csrf:string)=>request<any>(`/api/v1/live-classes/${id}/register`,{method:'DELETE',headers:{'X-CSRF-Token':csrf}}),roomToken:(id:string)=>request<any>(`/api/v1/live-classes/${id}/room-token`)};
