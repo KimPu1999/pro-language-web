@@ -4,7 +4,7 @@ from zipfile import ZipFile
 from sqlalchemy import select
 from app.auth import password_hasher
 from app.config import settings
-from app.models import ProjectCategory, ProjectMilestone, ProjectTemplate, ProjectRubricCriterion, User
+from app.models import Course, ProjectCategory, ProjectMilestone, ProjectTemplate, ProjectRubricCriterion, User
 def verified_client(client,email="project@example.com"):
     response=client.post("/api/v1/auth/register",json={"full_name":"Project Student","email":email,"password":"strong-pwd12","confirm_password":"strong-pwd12","accept_terms":True});assert response.status_code==201
     with client.session_factory() as db:
@@ -108,3 +108,22 @@ def test_project_zip_submission_is_private_and_downloadable_by_owner_or_admin(cl
     downloaded=client.get(f"/api/v1/admin/project-submissions/{submission_id}/download")
     assert downloaded.status_code==200 and downloaded.content.startswith(b"PK")
     assert admin_csrf
+
+def test_admin_project_management_metrics_filters_versions_and_course_links(client):
+    csrf = admin_client(client, "project-workflow-admin@example.com")
+    created = client.post("/api/v1/admin/projects", json={"title":"Workflow Project","slug":"workflow-project","description_en":"Overview","learning_outcomes":"Outcomes","technology_stack":"Python","testing_guide":"Run tests"}, headers={"X-CSRF-Token":csrf})
+    assert created.status_code == 201, created.text
+    project_id = created.json()["id"]
+    with client.session_factory() as db:
+        course = db.scalar(select(Course))
+        course_id = str(course.id)
+        milestone = ProjectMilestone(project_id=project_id,title="Build",content_en="Build the project",position=0)
+        criterion = ProjectRubricCriterion(project_id=project_id,name="Functionality",weight=100,position=0)
+        db.add_all([milestone, criterion]); db.commit()
+    linked = client.post(f"/api/v1/admin/projects/{project_id}/course-links", json={"course_id":course_id}, headers={"X-CSRF-Token":csrf})
+    assert linked.status_code == 201, linked.text
+    assert client.get(f"/api/v1/admin/projects/{project_id}/course-links").json()[0]["course_slug"] == "python-foundations"
+    assert client.get(f"/api/v1/admin/projects/{project_id}/versions").json()[0]["version"] == 1
+    assert client.get("/api/v1/admin/projects?technology=Python&page_size=10").json()["total"] == 1
+    metrics = client.get("/api/v1/admin/project-metrics")
+    assert metrics.status_code == 200 and metrics.json()["drafts"] == 1 and metrics.json()["total_submissions"] == 0

@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf, verified_user
 from .db import get_db
-from .models import (PortfolioProject, ProjectAuditLog, ProjectBookmark, ProjectCategory, ProjectMilestone, ProjectRequirement, ProjectResource, ProjectReview, ProjectReviewScore, ProjectRubricCriterion, ProjectSubmission, ProjectTask, ProjectTemplate, ProjectSkill, StudentPortfolio, StudentProject, StudentProjectMilestone, VerifiedProjectSkill, User)
+from .models import (CareerRoadmap, Course, CourseModule, Lesson, PortfolioProject, ProjectAuditLog, ProjectBookmark, ProjectCategory, ProjectCourseLink, ProjectMilestone, ProjectPathLink, ProjectRequirement, ProjectResource, ProjectReview, ProjectReviewScore, ProjectRubricCriterion, ProjectSubmission, ProjectTask, ProjectTemplate, ProjectVersion, ProjectSkill, StudentPortfolio, StudentProject, StudentProjectMilestone, VerifiedProjectSkill, User)
 from .admin_routes import admin_user, audit
 from .media_storage import remove_file_if_safe, safe_media_path, save_project_image, save_project_submission_archive
 
@@ -43,7 +43,12 @@ def template_out(row,db,public=False):
     milestones=db.scalars(select(ProjectMilestone).where(ProjectMilestone.project_id==row.id).order_by(ProjectMilestone.position)).all(); criteria=db.scalars(select(ProjectRubricCriterion).where(ProjectRubricCriterion.project_id==row.id).order_by(ProjectRubricCriterion.position)).all(); requirements=db.scalars(select(ProjectRequirement).where(ProjectRequirement.project_id==row.id).order_by(ProjectRequirement.position)).all(); resources=db.scalars(select(ProjectResource).where(ProjectResource.project_id==row.id).order_by(ProjectResource.position)).all(); category=db.get(ProjectCategory,row.category_id) if row.category_id else None
     tasks_by_milestone={m.id:db.scalars(select(ProjectTask).where(ProjectTask.milestone_id==m.id).order_by(ProjectTask.position)).all() for m in milestones}
     visible_resources=[r for r in resources if r.is_public and r.status=="published"] if public else resources
-    return {"id":row.id,"title":row.title,"slug":row.slug,"description_en":row.description_en,"description_mm":row.description_mm,"difficulty":row.difficulty,"estimated_hours":row.estimated_hours,"requirements":row.requirements,"learning_outcomes":row.learning_outcomes,"technology_stack":row.technology_stack,"prerequisites":row.prerequisites,"architecture_overview":row.architecture_overview,"folder_structure":row.folder_structure,"testing_guide":row.testing_guide,"deployment_guide":row.deployment_guide,"cover_image":row.cover_image,"tags":json_value(row.tags_json,[]),"languages":json_value(row.languages_json,[]),"brief":json_value(row.brief_json,{}),"category":{"id":category.id,"name":category.name,"slug":category.slug} if category else None,"status":row.status,"published":row.published,"milestones":[{"id":m.id,"title":m.title,"slug":m.slug or f"step-{m.position}","description_en":m.description_en,"description_mm":m.description_mm,"content_en":m.content_en,"content_mm":m.content_mm,"code":m.code,"filename":m.filename,"expected_output":m.expected_output,"line_explanation":m.line_explanation,"completion_criteria":m.completion_criteria,"resources":json_value(m.resources_json,[]),"position":m.position,"required":m.required,"tasks":[{"id":t.id,"title":t.title,"description":t.description,"completion_criteria":t.completion_criteria,"position":t.position,"required":t.required} for t in tasks_by_milestone[m.id]]} for m in milestones],"requirements_items":[{"id":r.id,"title":r.title,"description":r.description,"acceptance_criteria":r.acceptance_criteria,"required":r.required,"position":r.position} for r in requirements],"resources":[{"id":r.id,"milestone_id":r.milestone_id,"title":r.title,"resource_type":r.resource_type,"url":r.url,"storage_key":r.storage_key,"description":r.description,"position":r.position,"is_public":r.is_public,"status":r.status} for r in visible_resources],"rubric":[{"id":c.id,"name":c.name,"description":getattr(c,"description",""),"weight":c.weight,"position":c.position} for c in criteria]}
+    course_links=db.execute(select(ProjectCourseLink,Course,CourseModule,Lesson).join(Course,Course.id==ProjectCourseLink.course_id).join(CourseModule,CourseModule.id==ProjectCourseLink.module_id,isouter=True).join(Lesson,Lesson.id==ProjectCourseLink.lesson_id,isouter=True).where(ProjectCourseLink.project_id==row.id).order_by(ProjectCourseLink.position)).all()
+    path_links=db.execute(select(ProjectPathLink,CareerRoadmap).join(CareerRoadmap,CareerRoadmap.id==ProjectPathLink.roadmap_id).where(ProjectPathLink.project_id==row.id).order_by(ProjectPathLink.position)).all()
+    if public:
+        course_links=[item for item in course_links if item[1].published]
+        path_links=[item for item in path_links if item[1].published]
+    return {"id":row.id,"title":row.title,"slug":row.slug,"description_en":row.description_en,"description_mm":row.description_mm,"difficulty":row.difficulty,"estimated_hours":row.estimated_hours,"requirements":row.requirements,"learning_outcomes":row.learning_outcomes,"technology_stack":row.technology_stack,"prerequisites":row.prerequisites,"architecture_overview":row.architecture_overview,"folder_structure":row.folder_structure,"testing_guide":row.testing_guide,"deployment_guide":row.deployment_guide,"cover_image":row.cover_image,"tags":json_value(row.tags_json,[]),"languages":json_value(row.languages_json,[]),"brief":json_value(row.brief_json,{}),"category":{"id":category.id,"name":category.name,"slug":category.slug} if category else None,"status":row.status,"published":row.published,"course_links":[{"id":link.id,"course_id":course.id,"course_title":course.title,"course_slug":course.slug,"module_id":module.id if module else None,"module_title":module.title if module else None,"lesson_id":lesson.id if lesson else None,"lesson_title":lesson.title if lesson else None,"position":link.position} for link,course,module,lesson in course_links],"path_links":[{"id":link.id,"roadmap_id":roadmap.id,"path_title":roadmap.title,"path_slug":roadmap.slug,"position":link.position} for link,roadmap in path_links],"milestones":[{"id":m.id,"title":m.title,"slug":m.slug or f"step-{m.position}","description_en":m.description_en,"description_mm":m.description_mm,"content_en":m.content_en,"content_mm":m.content_mm,"code":m.code,"filename":m.filename,"expected_output":m.expected_output,"line_explanation":m.line_explanation,"completion_criteria":m.completion_criteria,"resources":json_value(m.resources_json,[]),"position":m.position,"required":m.required,"tasks":[{"id":t.id,"title":t.title,"description":t.description,"completion_criteria":t.completion_criteria,"position":t.position,"required":t.required} for t in tasks_by_milestone[m.id]]} for m in milestones],"requirements_items":[{"id":r.id,"title":r.title,"description":r.description,"acceptance_criteria":r.acceptance_criteria,"required":r.required,"position":r.position} for r in requirements],"resources":[{"id":r.id,"milestone_id":r.milestone_id,"title":r.title,"resource_type":r.resource_type,"url":r.url,"storage_key":r.storage_key,"description":r.description,"position":r.position,"is_public":r.is_public,"status":r.status} for r in visible_resources],"rubric":[{"id":c.id,"name":c.name,"description":getattr(c,"description",""),"weight":c.weight,"position":c.position} for c in criteria]}
 def project_progress(db,student):
     total=db.scalar(select(func.count(ProjectMilestone.id)).where(ProjectMilestone.project_id==student.project_id,ProjectMilestone.required.is_(True))) or 0; done=db.scalar(select(func.count(StudentProjectMilestone.id)).join(ProjectMilestone,ProjectMilestone.id==StudentProjectMilestone.milestone_id).where(StudentProjectMilestone.student_project_id==student.id,StudentProjectMilestone.completed.is_(True),ProjectMilestone.required.is_(True))) or 0; return {"completed":done,"total":total,"percent":round(done/total*100,1) if total else 0}
 @router.get("/project-categories")
@@ -229,7 +234,10 @@ def review_detail(submission_id:UUID,user:User=Depends(admin_user),db:Session=De
     if not submission: raise HTTPException(404,"Submission not found")
     project=db.get(StudentProject,submission.student_project_id); template=db.get(ProjectTemplate,project.project_id) if project else None
     criteria=db.scalars(select(ProjectRubricCriterion).where(ProjectRubricCriterion.project_id==project.project_id).order_by(ProjectRubricCriterion.position)).all() if project else []
-    return {"id":submission.id,"status":submission.status,"submitted_at":submission.submitted_at,"repository_url":submission.repository_url,"branch_or_sha":submission.branch_or_sha,"demo_url":submission.demo_url,"project_description":submission.project_description,"setup_instructions":submission.setup_instructions,"attachment_name":submission.attachment_name,"attachment_size":submission.attachment_size,"has_attachment":bool(submission.attachment_key),"project":{"id":template.id,"title":template.title} if template else None,"criteria":[{"id":c.id,"name":c.name,"description":c.description,"weight":c.weight,"position":c.position} for c in criteria]}
+    student_user=db.get(User,project.user_id) if project else None
+    reviews=db.scalars(select(ProjectReview).where(ProjectReview.submission_id==submission.id).order_by(ProjectReview.created_at.desc())).all()
+    scores_by_review={review.id:db.scalars(select(ProjectReviewScore).where(ProjectReviewScore.review_id==review.id)).all() for review in reviews}
+    return {"id":submission.id,"status":submission.status,"submitted_at":submission.submitted_at,"repository_url":submission.repository_url,"branch_or_sha":submission.branch_or_sha,"demo_url":submission.demo_url,"project_description":submission.project_description,"setup_instructions":submission.setup_instructions,"reviewer_notes":submission.reviewer_notes,"attachment_name":submission.attachment_name,"attachment_size":submission.attachment_size,"has_attachment":bool(submission.attachment_key),"student":{"id":student_user.id,"display_name":student_user.display_name,"email":student_user.email} if student_user else None,"project":{"id":template.id,"title":template.title,"slug":template.slug} if template else None,"criteria":[{"id":c.id,"name":c.name,"description":c.description,"weight":c.weight,"position":c.position} for c in criteria],"review_history":[{"id":review.id,"decision":review.decision,"comments":review.comments,"total_score":review.total_score,"reviewer_id":review.reviewer_id,"created_at":review.created_at,"scores":[{"criterion_id":score.criterion_id,"score":score.score,"comment":score.comment} for score in scores_by_review[review.id]]} for review in reviews]}
 @router.post("/instructor/projects/reviews/{submission_id}")
 def review_submission(submission_id:UUID,payload:ReviewIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     submission=db.get(ProjectSubmission,submission_id)
@@ -274,7 +282,7 @@ def create_project(payload:ProjectIn,user:User=Depends(admin_user),_:None=Depend
     if payload.difficulty not in {"beginner","intermediate","advanced","professional"}:raise HTTPException(422,"Invalid difficulty")
     if payload.category_id and not db.get(ProjectCategory,payload.category_id): raise HTTPException(422,"Project category not found")
     values=payload.model_dump(exclude={"tags","languages","brief"}); values.update(tags_json=json.dumps(payload.tags),languages_json=json.dumps(payload.languages),brief_json=json.dumps(payload.brief),created_by=user.id)
-    row=ProjectTemplate(**values);db.add(row);db.flush();audit(db,user,"project_created","project",row.id);db.commit();return {"id":row.id,"slug":row.slug,"status":row.status}
+    row=ProjectTemplate(**values);db.add(row);db.flush();record_project_version(row,user,db);audit(db,user,"project_created","project",row.id);db.commit();return {"id":row.id,"slug":row.slug,"status":row.status}
 def project_quality(row,db):
     milestones=db.scalars(select(ProjectMilestone).where(ProjectMilestone.project_id==row.id)).all();criteria=db.scalars(select(ProjectRubricCriterion).where(ProjectRubricCriterion.project_id==row.id)).all();requirements_count=db.scalar(select(func.count(ProjectRequirement.id)).where(ProjectRequirement.project_id==row.id)) or 0;missing=[]
     requirements_value=row.requirements if (row.requirements or "").strip() else ("structured requirements" if requirements_count else "")
@@ -285,19 +293,82 @@ def project_quality(row,db):
     if not criteria: missing.append("grading rubric")
     elif sum(c.weight for c in criteria)!=100: missing.append("rubric weights totaling 100")
     return {"ready":not missing,"missing":missing,"milestones":len(milestones),"rubric_weight":sum(c.weight for c in criteria)}
+def record_project_version(row, user, db, status=None):
+    latest=db.scalar(select(func.max(ProjectVersion.version)).where(ProjectVersion.project_id==row.id)) or 0
+    db.add(ProjectVersion(project_id=row.id,version=latest+1,status=status or row.status,snapshot_json=json.dumps(template_out(row,db),default=str),created_by=user.id if user else None))
+@router.get("/admin/project-content")
+def admin_project_content(kind:str=Query(...,pattern="^(course|path)$"),search:str|None=None,limit:int=Query(100,ge=1,le=200),user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    pattern=f"%{search}%" if search else None
+    if kind=="course":
+        query=select(Course).order_by(Course.title).limit(limit)
+        if pattern: query=query.where(Course.title.ilike(pattern)|Course.slug.ilike(pattern))
+        return [{"id":row.id,"title":row.title,"slug":row.slug,"published":row.published} for row in db.scalars(query).all()]
+    query=select(CareerRoadmap).order_by(CareerRoadmap.title).limit(limit)
+    if pattern: query=query.where(CareerRoadmap.title.ilike(pattern)|CareerRoadmap.slug.ilike(pattern))
+    return [{"id":row.id,"title":row.title,"slug":row.slug,"published":row.published} for row in db.scalars(query).all()]
 @router.get("/admin/projects")
-def admin_projects(search:str|None=None,published:bool|None=None,page:int=Query(1,ge=1),page_size:int=Query(10,ge=1,le=50),user:User=Depends(admin_user),db:Session=Depends(get_db)):
+def admin_projects(search:str|None=None,published:bool|None=None,status:str|None=None,category:str|None=None,difficulty:str|None=None,technology:str|None=None,sort:str=Query("updated_desc",pattern="^(updated_desc|updated_asc|title_asc|title_desc)$"),page:int=Query(1,ge=1),page_size:int=Query(10,ge=1,le=50),user:User=Depends(admin_user),db:Session=Depends(get_db)):
     q=select(ProjectTemplate);count=select(func.count()).select_from(ProjectTemplate)
     if search:
         condition=ProjectTemplate.title.ilike(f"%{search}%")|ProjectTemplate.slug.ilike(f"%{search}%");q=q.where(condition);count=count.where(condition)
     if published is not None:q=q.where(ProjectTemplate.published==published);count=count.where(ProjectTemplate.published==published)
-    total=db.scalar(count) or 0;rows=db.scalars(q.order_by(ProjectTemplate.updated_at.desc()).offset((page-1)*page_size).limit(page_size)).all()
-    return {"items":[{"id":row.id,"title":row.title,"slug":row.slug,"status":row.status,"published":row.published,"updated_at":row.updated_at,"quality":project_quality(row,db)} for row in rows],"page":page,"page_size":page_size,"total":total,"pages":(total+page_size-1)//page_size if total else 0}
+    if status:q=q.where(ProjectTemplate.status==status);count=count.where(ProjectTemplate.status==status)
+    if category:
+        q=q.join(ProjectCategory,ProjectCategory.id==ProjectTemplate.category_id).where(ProjectCategory.slug==category);count=count.join(ProjectCategory,ProjectCategory.id==ProjectTemplate.category_id).where(ProjectCategory.slug==category)
+    if difficulty:q=q.where(ProjectTemplate.difficulty==difficulty);count=count.where(ProjectTemplate.difficulty==difficulty)
+    if technology:q=q.where(ProjectTemplate.technology_stack.ilike(f"%{technology}%"));count=count.where(ProjectTemplate.technology_stack.ilike(f"%{technology}%"))
+    order_by={"updated_desc":ProjectTemplate.updated_at.desc(),"updated_asc":ProjectTemplate.updated_at.asc(),"title_asc":ProjectTemplate.title.asc(),"title_desc":ProjectTemplate.title.desc()}[sort]
+    total=db.scalar(count) or 0;rows=db.scalars(q.order_by(order_by).offset((page-1)*page_size).limit(page_size)).all()
+    counts={str(project_id):count for project_id,count in db.execute(select(StudentProject.project_id,func.count(ProjectSubmission.id)).join(ProjectSubmission,ProjectSubmission.student_project_id==StudentProject.id).where(StudentProject.project_id.in_([row.id for row in rows])).group_by(StudentProject.project_id)).all()} if rows else {}
+    return {"items":[{"id":row.id,"title":row.title,"slug":row.slug,"status":row.status,"published":row.published,"updated_at":row.updated_at,"technology_stack":row.technology_stack,"category_name":db.scalar(select(ProjectCategory.name).where(ProjectCategory.id==row.category_id)) if row.category_id else None,"submission_count":counts.get(str(row.id),0),"quality":project_quality(row,db)} for row in rows],"page":page,"page_size":page_size,"total":total,"pages":(total+page_size-1)//page_size if total else 0}
 @router.get("/admin/projects/{project_id}")
 def admin_project_detail(project_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
     row=db.get(ProjectTemplate,project_id)
     if not row: raise HTTPException(404,"Project not found")
     return {"project":template_out(row,db),"quality":project_quality(row,db)}
+@router.get("/admin/projects/{project_id}/versions")
+def admin_project_versions(project_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    project_or_404(project_id,db)
+    rows=db.scalars(select(ProjectVersion).where(ProjectVersion.project_id==project_id).order_by(ProjectVersion.version.desc())).all()
+    return [{"id":row.id,"version":row.version,"status":row.status,"created_at":row.created_at,"created_by":row.created_by} for row in rows]
+@router.get("/admin/projects/{project_id}/course-links")
+def admin_project_course_links(project_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    project_or_404(project_id,db)
+    return template_out(db.get(ProjectTemplate,project_id),db)["course_links"]
+@router.post("/admin/projects/{project_id}/course-links",status_code=201)
+def add_project_course_link(project_id:UUID,payload:dict,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    project_or_404(project_id,db)
+    course_id=payload.get("course_id"); module_id=payload.get("module_id"); lesson_id=payload.get("lesson_id")
+    if not course_id: raise HTTPException(422,"course_id is required")
+    course=db.get(Course,course_id)
+    if not course: raise HTTPException(422,"Course not found")
+    module=db.get(CourseModule,module_id) if module_id else None
+    lesson=db.get(Lesson,lesson_id) if lesson_id else None
+    if module and module.course_id!=course.id: raise HTTPException(422,"Module does not belong to course")
+    if lesson and (not module or lesson.module_id!=module.id): raise HTTPException(422,"Lesson does not belong to selected module")
+    if db.scalar(select(ProjectCourseLink).where(ProjectCourseLink.project_id==project_id,ProjectCourseLink.course_id==course.id,ProjectCourseLink.module_id==module.id if module else ProjectCourseLink.module_id.is_(None),ProjectCourseLink.lesson_id==lesson.id if lesson else ProjectCourseLink.lesson_id.is_(None))): raise HTTPException(409,"Course link already exists")
+    row=ProjectCourseLink(project_id=project_id,course_id=course.id,module_id=module.id if module else None,lesson_id=lesson.id if lesson else None,position=int(payload.get("position",0)))
+    db.add(row); audit(db,user,"project_course_linked","project",project_id); db.commit(); return {"id":row.id,"course_id":course.id,"module_id":row.module_id,"lesson_id":row.lesson_id,"position":row.position}
+@router.delete("/admin/projects/{project_id}/course-links/{link_id}")
+def remove_project_course_link(project_id:UUID,link_id:UUID,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    project_or_404(project_id,db); row=db.scalar(select(ProjectCourseLink).where(ProjectCourseLink.id==link_id,ProjectCourseLink.project_id==project_id))
+    if not row: raise HTTPException(404,"Course link not found")
+    db.delete(row); audit(db,user,"project_course_unlinked","project",project_id); db.commit(); return {"deleted":True}
+@router.get("/admin/projects/{project_id}/path-links")
+def admin_project_path_links(project_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    project_or_404(project_id,db); return template_out(db.get(ProjectTemplate,project_id),db)["path_links"]
+@router.post("/admin/projects/{project_id}/path-links",status_code=201)
+def add_project_path_link(project_id:UUID,payload:dict,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    project_or_404(project_id,db); roadmap_id=payload.get("roadmap_id")
+    roadmap=db.get(CareerRoadmap,roadmap_id) if roadmap_id else None
+    if not roadmap: raise HTTPException(422,"Learning path not found")
+    if db.scalar(select(ProjectPathLink).where(ProjectPathLink.project_id==project_id,ProjectPathLink.roadmap_id==roadmap.id)): raise HTTPException(409,"Learning path link already exists")
+    row=ProjectPathLink(project_id=project_id,roadmap_id=roadmap.id,position=int(payload.get("position",0)));db.add(row);audit(db,user,"project_path_linked","project",project_id);db.commit();return {"id":row.id,"roadmap_id":roadmap.id,"position":row.position}
+@router.delete("/admin/projects/{project_id}/path-links/{link_id}")
+def remove_project_path_link(project_id:UUID,link_id:UUID,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    project_or_404(project_id,db); row=db.scalar(select(ProjectPathLink).where(ProjectPathLink.id==link_id,ProjectPathLink.project_id==project_id))
+    if not row: raise HTTPException(404,"Learning path link not found")
+    db.delete(row);audit(db,user,"project_path_unlinked","project",project_id);db.commit();return {"deleted":True}
 @router.patch("/admin/projects/{project_id}")
 def update_project(project_id:UUID,payload:ProjectPatch,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=db.get(ProjectTemplate,project_id)
@@ -310,7 +381,7 @@ def update_project(project_id:UUID,payload:ProjectPatch,user:User=Depends(admin_
     if "languages" in values: row.languages_json=json.dumps(values.pop("languages") or [])
     if "brief" in values: row.brief_json=json.dumps(values.pop("brief") or {})
     for key,value in values.items(): setattr(row,key,value)
-    audit(db,user,"project_updated","project",row.id);db.commit();return {"id":row.id,"slug":row.slug,"quality":project_quality(row,db)}
+    record_project_version(row,user,db);audit(db,user,"project_updated","project",row.id);db.commit();return {"id":row.id,"slug":row.slug,"quality":project_quality(row,db)}
 
 @router.post("/admin/projects/{project_id}/cover-image")
 async def upload_project_cover(project_id:UUID,image:UploadFile=File(...),user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
@@ -341,7 +412,7 @@ def publish_project(project_id:UUID,payload:dict,user:User=Depends(admin_user),_
     if not row: raise HTTPException(404,"Project not found")
     publish=bool(payload.get("published",True));quality=project_quality(row,db)
     if publish and not quality["ready"]: raise HTTPException(422,{"message":"Project content is not ready to publish","missing":quality["missing"]})
-    row.published=publish;row.status="published" if publish else "draft";audit(db,user,"project_published" if publish else "project_unpublished","project",row.id);db.commit();return {"id":row.id,"published":row.published,"status":row.status,"quality":quality}
+    row.published=publish;row.status="published" if publish else "draft";record_project_version(row,user,db,"published" if publish else "draft");audit(db,user,"project_published" if publish else "project_unpublished","project",row.id);db.commit();return {"id":row.id,"published":row.published,"status":row.status,"quality":quality}
 @router.post("/admin/projects/{project_id}/archive")
 def archive_project(project_id:UUID,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=db.get(ProjectTemplate,project_id)
@@ -498,15 +569,30 @@ def reorder_rubric(project_id:UUID,payload:dict,user:User=Depends(admin_user),_:
 
 @router.get("/admin/project-metrics")
 def project_metrics(user:User=Depends(admin_user),db:Session=Depends(get_db)):
-    return {"total":db.scalar(select(func.count(ProjectTemplate.id))) or 0,"published":db.scalar(select(func.count(ProjectTemplate.id)).where(ProjectTemplate.published.is_(True))) or 0,"drafts":db.scalar(select(func.count(ProjectTemplate.id)).where(ProjectTemplate.status=="draft")) or 0,"archived":db.scalar(select(func.count(ProjectTemplate.id)).where(ProjectTemplate.status=="archived")) or 0,"submissions_pending":db.scalar(select(func.count(ProjectSubmission.id)).where(ProjectSubmission.status.in_(["submitted","in_review","changes_requested"]))) or 0,"students_started":db.scalar(select(func.count(StudentProject.id))) or 0}
+    total_submissions=db.scalar(select(func.count(ProjectSubmission.id))) or 0
+    completed_reviews=db.scalar(select(func.count(ProjectReview.id))) or 0
+    return {"total":db.scalar(select(func.count(ProjectTemplate.id))) or 0,"published":db.scalar(select(func.count(ProjectTemplate.id)).where(ProjectTemplate.published.is_(True))) or 0,"drafts":db.scalar(select(func.count(ProjectTemplate.id)).where(ProjectTemplate.status=="draft")) or 0,"in_review":db.scalar(select(func.count(ProjectTemplate.id)).where(ProjectTemplate.status=="in_review")) or 0,"archived":db.scalar(select(func.count(ProjectTemplate.id)).where(ProjectTemplate.status=="archived")) or 0,"total_submissions":total_submissions,"submissions_pending":db.scalar(select(func.count(ProjectSubmission.id)).where(ProjectSubmission.status.in_(["submitted","in_review","changes_requested"]))) or 0,"completed_reviews":completed_reviews,"students_started":db.scalar(select(func.count(StudentProject.id))) or 0}
 
 @router.get("/admin/project-submissions")
-def admin_project_submissions(status:str|None=None,search:str|None=None,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+def admin_project_submissions(status:str|None=None,search:str|None=None,project_id:UUID|None=None,page:int=Query(1,ge=1),page_size:int=Query(10,ge=1,le=50),user:User=Depends(admin_user),db:Session=Depends(get_db)):
     q=select(ProjectSubmission,StudentProject,ProjectTemplate).join(StudentProject,StudentProject.id==ProjectSubmission.student_project_id).join(ProjectTemplate,ProjectTemplate.id==StudentProject.project_id)
     if status:q=q.where(ProjectSubmission.status==status)
     if search:q=q.where(ProjectTemplate.title.ilike(f"%{search}%"))
-    rows=db.execute(q.order_by(ProjectSubmission.created_at.desc())).all()
-    return [{"id":submission.id,"status":submission.status,"submitted_at":submission.submitted_at,"repository_url":submission.repository_url,"demo_url":submission.demo_url,"attachment_name":submission.attachment_name,"attachment_size":submission.attachment_size,"has_attachment":bool(submission.attachment_key),"project_id":template.id,"project_title":template.title,"student_project_id":student.id} for submission,student,template in rows]
+    if project_id:q=q.where(StudentProject.project_id==project_id)
+    count=select(func.count()).select_from(ProjectSubmission).join(StudentProject,StudentProject.id==ProjectSubmission.student_project_id).join(ProjectTemplate,ProjectTemplate.id==StudentProject.project_id)
+    if status:count=count.where(ProjectSubmission.status==status)
+    if search:count=count.where(ProjectTemplate.title.ilike(f"%{search}%"))
+    if project_id:count=count.where(StudentProject.project_id==project_id)
+    total=db.scalar(count) or 0; rows=db.execute(q.order_by(ProjectSubmission.created_at.desc()).offset((page-1)*page_size).limit(page_size)).all()
+    return {"items":[{"id":submission.id,"status":submission.status,"submitted_at":submission.submitted_at,"repository_url":submission.repository_url,"demo_url":submission.demo_url,"attachment_name":submission.attachment_name,"attachment_size":submission.attachment_size,"has_attachment":bool(submission.attachment_key),"project_id":template.id,"project_title":template.title,"student_project_id":student.id,"student_id":student.user_id} for submission,student,template in rows],"page":page,"page_size":page_size,"total":total,"pages":(total+page_size-1)//page_size if total else 0}
+
+@router.get("/admin/project-submissions/{submission_id}")
+def admin_submission_detail(submission_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    return review_detail(submission_id,user,db)
+
+@router.post("/admin/project-submissions/{submission_id}/review")
+def admin_submission_review(submission_id:UUID,payload:ReviewIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    return review_submission(submission_id,payload,user,_,db)
 
 
 @router.get("/admin/project-submissions/{submission_id}/download")
