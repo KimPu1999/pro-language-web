@@ -164,7 +164,85 @@ PROJECTS = [
     ("E-Commerce Application", "e-commerce-application", "full-stack-development", "advanced", "Next.js, FastAPI, PostgreSQL", 40),
     ("Real-Time Chat Application", "real-time-chat-application", "full-stack-development", "advanced", "React, FastAPI, WebSockets", 32),
     ("SaaS Dashboard", "saas-dashboard", "software-engineering", "professional", "Next.js, FastAPI, PostgreSQL", 48),
+    ("PHP Calculator", "php-calculator", "programming-languages", "beginner", "PHP", 6),
+    ("Student Grade Manager", "student-grade-manager", "programming-languages", "beginner", "PHP, PostgreSQL", 10),
+    ("PHP Registration Form", "php-registration-form", "backend-development", "beginner", "PHP, PostgreSQL", 12),
+    ("PHP + PostgreSQL CRUD", "php-postgresql-crud", "database-development", "intermediate", "PHP, PDO, PostgreSQL", 18),
+    ("Laravel Student Management", "laravel-student-management", "backend-development", "intermediate", "PHP, Laravel, PostgreSQL, Blade", 24),
+    ("Laravel Blog CMS", "laravel-blog-cms", "full-stack-development", "intermediate", "PHP, Laravel, PostgreSQL, Blade, Livewire", 30),
+    ("Laravel REST API", "laravel-rest-api", "backend-development", "intermediate", "PHP, Laravel, PostgreSQL, Sanctum", 28),
+    ("React + Laravel Dashboard", "react-laravel-dashboard", "full-stack-development", "intermediate", "PHP, Laravel, React, TypeScript, Tailwind CSS", 36),
+    ("E-commerce Management API", "ecommerce-management-api", "full-stack-development", "advanced", "PHP, Laravel, PostgreSQL, Redis", 44),
+    ("Role-Based Admin Panel", "role-based-admin-panel", "full-stack-development", "advanced", "PHP, Laravel, React, PostgreSQL, Sanctum", 40),
+    ("Inventory Management", "inventory-management", "full-stack-development", "advanced", "PHP, Laravel, PostgreSQL, Queues", 42),
+    ("Realtime Notification System", "realtime-notification-system", "full-stack-development", "advanced", "PHP, Laravel, Redis, WebSockets, React", 38),
+    ("Multi-Tenant SaaS Platform", "multi-tenant-saas-platform", "software-engineering", "professional", "PHP, Laravel, PostgreSQL, Redis, Docker", 60),
+    ("Subscription Billing System", "subscription-billing-system", "software-engineering", "professional", "PHP, Laravel, PostgreSQL, Queues, Webhooks", 56),
+    ("Enterprise Approval Workflow", "enterprise-approval-workflow", "software-engineering", "professional", "PHP, Laravel, PostgreSQL, Policies, Notifications", 52),
+    ("Production SaaS Capstone", "production-saas-capstone", "software-engineering", "professional", "PHP, Laravel, React, PostgreSQL, Redis, Docker, CI/CD", 80),
 ]
+LARAVEL_PROJECT_PLAN_INPUTS = {
+    "php-calculator": ("Parse numeric input safely and test arithmetic operations.", "calculations(id, expression, result, created_at)", "POST /calculate; GET /calculations", "Reject malformed expressions, bound numeric ranges, and never evaluate arbitrary PHP."),
+    "student-grade-manager": ("Store students and assessments, calculate weighted grades, and expose a teacher report.", "students(id, name); assessments(id, student_id, score, weight)", "POST /students; POST /assessments; GET /reports/students/{student}", "Authorize teacher actions, validate scores and weights, and protect student data."),
+    "php-registration-form": ("Build a server-rendered registration flow with confirmation and duplicate-email handling.", "users(id, email, password_hash, created_at)", "GET /register; POST /register; GET /registration/complete", "Hash passwords, validate email uniqueness, protect CSRF, and avoid account enumeration."),
+    "php-postgresql-crud": ("Implement a PDO CRUD workflow with transactions and prepared statements.", "records(id, name, status, created_at, updated_at)", "GET /records; POST /records; PATCH /records/{id}; DELETE /records/{id}", "Use prepared statements, ownership checks, CSRF, and transaction rollback."),
+    "laravel-student-management": ("Create a Blade and Eloquent application for students, courses, attendance, and progress.", "students, courses, enrollments, attendance_records", "GET /students; POST /students; GET /students/{student}/progress", "Use policies, Form Requests, escaped Blade output, and audit-sensitive updates."),
+    "laravel-blog-cms": ("Publish posts with drafts, tags, editor previews, moderation, and public search.", "users, posts, tags, post_tag, revisions", "GET /posts; POST /admin/posts; POST /admin/posts/{post}/publish", "Authorize editorial roles, sanitize rich text, rate-limit publishing, and keep revision history."),
+    "laravel-rest-api": ("Ship a versioned JSON API with resources, filters, pagination, and Sanctum authentication.", "users, profiles, projects, api_tokens", "GET /api/v1/projects; POST /api/v1/projects; PATCH /api/v1/projects/{project}", "Validate JSON, authorize ownership, use API Resources, rate limits, and consistent errors."),
+    "react-laravel-dashboard": ("Connect a React TypeScript dashboard to a Laravel API with loading, error, search, and pagination states.", "users, dashboard_widgets, activity_events", "GET /api/v1/dashboard; GET /api/v1/activity", "Use Sanctum or an explicit token boundary, avoid leaking private fields, and test failure states."),
+    "ecommerce-management-api": ("Model catalog, inventory, carts, orders, and idempotent order transitions.", "products, inventory, carts, cart_items, orders, order_items", "GET /api/v1/products; POST /api/v1/orders; POST /api/v1/orders/{order}/cancel", "Use transactions, authorization, idempotency keys, price snapshots, and queue-safe fulfillment."),
+    "role-based-admin-panel": ("Build an admin console with roles, permissions, audit events, and protected React screens.", "users, roles, permissions, role_user, permission_role, audit_logs", "GET /api/v1/admin/users; PATCH /api/v1/admin/users/{user}/roles", "Enforce policies server-side, require MFA for sensitive actions, and audit every permission change."),
+    "inventory-management": ("Track warehouses, stock movements, reservations, low-stock alerts, and reconciliation.", "warehouses, products, stock_movements, reservations, alerts", "GET /api/v1/inventory; POST /api/v1/stock-movements; POST /api/v1/reservations", "Use row-level consistency, authorization, idempotent commands, and immutable movement records."),
+    "realtime-notification-system": ("Publish tenant-safe notifications through events, queues, Redis, and WebSockets.", "users, notifications, notification_preferences, delivery_attempts", "GET /api/v1/notifications; POST /api/v1/notifications/read", "Authorize private channels, validate broadcast payloads, retry safely, and avoid sensitive event data."),
+    "multi-tenant-saas-platform": ("Build tenant provisioning, scoped data access, member roles, billing state, and operational boundaries.", "tenants, users, memberships, plans, subscriptions, tenant_settings", "POST /api/v1/tenants; GET /api/v1/tenants/{tenant}/members", "Resolve tenant context server-side, scope every query, test isolation, and protect provisioning actions."),
+    "subscription-billing-system": ("Handle plans, subscriptions, invoices, webhook reconciliation, retries, and customer access.", "customers, plans, subscriptions, invoices, webhook_events", "POST /api/v1/subscriptions; POST /webhooks/billing; GET /api/v1/invoices", "Verify webhook signatures, enforce idempotency, never trust client billing state, and redact payment data."),
+    "enterprise-approval-workflow": ("Coordinate multi-step approvals with policies, delegation, notifications, and immutable decisions.", "requests, approval_steps, approvers, decisions, audit_logs", "POST /api/v1/requests; POST /api/v1/requests/{request}/decisions; GET /api/v1/approvals", "Check approver authority at decision time, prevent replay, preserve audit history, and secure attachments."),
+    "production-saas-capstone": ("Deliver a production-shaped SaaS slice with React, Laravel APIs, tenant isolation, operations, and release evidence.", "tenants, users, memberships, subscriptions, domain_entities, audit_logs", "GET /api/v1/me; POST /api/v1/tenants; GET /api/v1/metrics/health", "Combine authentication, authorization, tenant isolation, secret management, rate limits, backups, and incident-safe logging."),
+}
+
+def laravel_project_plan(title, slug, technologies):
+    focus, schema, endpoints, security = LARAVEL_PROJECT_PLAN_INPUTS[slug]
+    api_code = "Route::middleware('auth:sanctum')->apiResource('items', ItemController::class);"
+    if slug in {"php-calculator", "student-grade-manager", "php-registration-form", "php-postgresql-crud"}:
+        api_code = "$statement = $pdo->prepare('SELECT id, name FROM records WHERE status = :status');"
+    return {
+        "description_en": f"{focus} Build {title} as a reviewable {technologies} project with explicit boundaries and measurable acceptance criteria.",
+        "description_mm": f"{title} ကို {technologies} အသုံးပြုပြီး boundary၊ test နှင့် security requirement များပါဝင်သော လက်တွေ့ project အဖြစ် တည်ဆောက်ပါ။",
+        "requirements": f"Understand {technologies}. Define the data contract, run the isolated test database, and record implementation decisions before changing code.",
+        "learning_outcomes": f"Implement {focus.lower()} Explain the {title} architecture, verify the data flow, and defend the security and testing decisions.",
+        "prerequisites": f"Complete the related PHP/Laravel lessons before starting {title}; use placeholder data and an isolated database.",
+        "architecture_overview": f"{focus} Keep the presentation, application, persistence, and integration boundaries separate. {security}",
+        "folder_structure": "app/Http/Controllers/\napp/Http/Requests/\napp/Models/\napp/Policies/\napp/Services/\ndatabase/migrations/\nresources/js/\nroutes/\ntests/Feature/\ntests/Unit/\ndocs/",
+        "testing_guide": f"Test the happy path, invalid input, unauthorized access, duplicate or retry behavior, and persistence for {title}. Include API contract assertions where applicable.",
+        "deployment_guide": "Review environment variables, migrations, queues, cache, logs, health checks, backups, rollback, and secret rotation before a human approves deployment.",
+        "brief": {
+            "objective": focus,
+            "database_schema": schema,
+            "api_endpoints": endpoints,
+            "security_requirements": security,
+            "assessment_rubric": ["Architecture and boundary decisions — 25%", "Correct behavior and data integrity — 25%", "Security and authorization — 20%", "Tests and failure handling — 20%", "Documentation and operational readiness — 10%"],
+        },
+        "steps": [
+            ("scope", "Scope and acceptance criteria", f"Define users, constraints, data ownership, failure cases, and measurable acceptance criteria for {title}. {focus}", "README.md\n", "A reviewed scope and acceptance checklist exists."),
+            ("architecture", "Architecture and database schema", f"Document the boundary between the UI, Laravel/PHP application, persistence, and integrations. Schema: {schema}", "docs/architecture.md\n database/migrations/", "The schema and request flow are documented before implementation."),
+            ("implementation", "Core implementation", f"Implement the smallest vertical slice for {title}. Use the relevant validation, policy, service, model, and response boundary. {api_code}", "routes/api.php\napp/Http/Controllers/ItemController.php", "The valid workflow returns the documented result and persists the expected state."),
+            ("frontend", "Interface and integration", f"Add the required Blade or React TypeScript screen, form state, loading state, error state, search or pagination behavior, and API contract for {title}.", "resources/js/pages/Items.tsx\nresources/views/items/index.blade.php", "The interface handles valid, invalid, loading, and unauthorized responses."),
+            ("security", "Security and failure handling", f"Verify authorization, input validation, secret handling, rate limits, retries, and safe error responses. {security}", "tests/Feature/SecurityTest.php\napp/Policies/ItemPolicy.php", "Security tests cover the identified abuse and failure paths."),
+            ("testing", "Assessment and release evidence", f"Run unit and feature tests, inspect database changes, document the API endpoints ({endpoints}), and prepare the deployment checklist.", "tests/Feature/\ndocs/release-checklist.md", "The project has reproducible tests, documented output, and a rollback plan."),
+        ],
+    }
+
+def laravel_project_step_mm(title, step_slug):
+    steps = {
+        "scope": f"{title} ၏ အသုံးပြုသူများ၊ လိုအပ်ချက်များ၊ ကန့်သတ်ချက်များ၊ data ownership နှင့် အောင်မြင်မှုကို တိုင်းတာမည့် acceptance criteria များကို သတ်မှတ်ပါ။ Valid case၊ invalid case နှင့် failure case များကို စာရင်းပြုစုပါ။",
+        "architecture": f"{title} အတွက် UI၊ Laravel/PHP application၊ database နှင့် external integration boundary များကို ခွဲခြားရေးသားပါ။ Database schema၊ relationship နှင့် request flow ကို implementation မစတင်မီ document လုပ်ပါ။",
+        "implementation": f"{title} ၏ အနည်းဆုံးအလုပ်လုပ်သော vertical slice ကို တည်ဆောက်ပါ။ Request validation၊ policy၊ service၊ model နှင့် API response တို့ကို သင့်တော်သော layer များတွင် ထားပြီး valid result နှင့် persisted state ကို စစ်ပါ။",
+        "frontend": f"{title} အတွက် Blade သို့မဟုတ် React TypeScript interface ကို တည်ဆောက်ပါ။ Form state၊ loading state၊ error state၊ search သို့မဟုတ် pagination နှင့် API contract ကို သေချာကိုင်တွယ်ပါ။",
+        "security": f"{title} တွင် authorization၊ input validation၊ secret handling၊ rate limit၊ retry နှင့် safe error response များကို စစ်ဆေးပါ။ ခွင့်မရှိသော user၊ ထပ်ခါတလဲလဲ request နှင့် မမှန်ကန်သော input အတွက် test ရေးပါ။",
+        "testing": f"{title} ၏ unit test နှင့် feature test များကို run ပါ။ Database change၊ API endpoint၊ expected output၊ rollback နှင့် deployment checklist ကို document လုပ်ပြီး reviewer ပြန်စစ်နိုင်အောင် evidence ထားပါ။",
+    }
+    return steps[step_slug]
+
 LEGACY_SLUGS = {slug: f"{language}-foundations" for _, slug, language, _, _ in COURSES}
 
 def get_or_create(db, model, slug, **values):
@@ -202,26 +280,46 @@ def seed_projects(db):
         row = db.scalar(select(ProjectTemplate).where(ProjectTemplate.slug == slug))
         if row:
             continue
+        plan = laravel_project_plan(title, slug, technologies) if slug in LARAVEL_PROJECT_PLAN_INPUTS else None
         row = ProjectTemplate(
             title=title, slug=slug, category_id=categories[category_slug].id,
-            description_en=f"Build {title} through a guided, theory-first project with an honest scope and reviewable milestones.",
-            difficulty=difficulty, estimated_hours=hours, requirements=f"Understand the basics of {technologies}. Read each project step and keep your own implementation notes.",
-            learning_outcomes=f"Explain the architecture of {title}; identify the main implementation trade-offs; test and document a maintainable solution.",
-            technology_stack=technologies, prerequisites="Complete the relevant beginner lessons before starting.",
-            architecture_overview="Start with a small, testable boundary; keep presentation, application logic, and persistence responsibilities separate where the project requires them.",
-            folder_structure="README.md\nsrc/\ntests/\ndocs/", testing_guide="Write focused tests for the core behavior and verify the documented examples.",
-            deployment_guide="Review configuration, secrets, logging, and the deployment target before publishing a real service.",
-            status="published", published=True,
+            description_en=plan["description_en"] if plan else f"Build {title} through a guided, theory-first project with an honest scope and reviewable milestones.",
+            description_mm=plan["description_mm"] if plan else None,
+            difficulty=difficulty, estimated_hours=hours, requirements=plan["requirements"] if plan else f"Understand the basics of {technologies}. Read each project step and keep your own implementation notes.",
+            learning_outcomes=plan["learning_outcomes"] if plan else f"Explain the architecture of {title}; identify the main implementation trade-offs; test and document a maintainable solution.",
+            technology_stack=technologies, prerequisites=plan["prerequisites"] if plan else "Complete the relevant beginner lessons before starting.",
+            architecture_overview=plan["architecture_overview"] if plan else "Start with a small, testable boundary; keep presentation, application logic, and persistence responsibilities separate where the project requires them.",
+            folder_structure=plan["folder_structure"] if plan else "README.md\nsrc/\ntests/\ndocs/",
+            testing_guide=plan["testing_guide"] if plan else "Write focused tests for the core behavior and verify the documented examples.",
+            deployment_guide=plan["deployment_guide"] if plan else "Review configuration, secrets, logging, and the deployment target before publishing a real service.",
+            brief_json=json.dumps(plan["brief"]) if plan else "{}",
+            status="draft" if plan else "published", published=False if plan else True,
         )
         db.add(row); db.flush()
-        steps = [
+        steps = plan["steps"] if plan else [
             ("introduction", "Introduction and scope", "Understand the problem, users, constraints, and the completion criteria before writing code.", "README.md\n", "The project scope is written down before implementation."),
             ("architecture", "Architecture and folder structure", "Map the major components and choose boundaries that make the project easy to test and maintain.", "src/\ntests/\n", "The repository has a documented structure."),
             ("implementation", "Implementation plan", "Break the project into small deliverables and connect each deliverable to a verifiable behavior.", "# Implement one behavior at a time\n", "Each behavior has a clear verification step."),
             ("testing", "Testing and deployment checklist", "Review tests, error handling, security, configuration, and operational readiness.", "# Run the test suite\n", "The project is ready for a deliberate review."),
         ]
-        for position, (step_slug, step_title, content, code, output) in enumerate(steps, 1):
-            db.add(ProjectMilestone(project_id=row.id, title=step_title, slug=step_slug, description_en=content, content_en=content, code=code, filename="README.md", expected_output=output, line_explanation="Read the file path and the adjacent explanation together; each line identifies one part of the project workflow.", position=position, required=True))
+        for position, step in enumerate(steps, 1):
+            step_slug, step_title, content, code, output = step
+            db.add(ProjectMilestone(
+                project_id=row.id,
+                title=step_title,
+                slug=step_slug,
+                description_en=content,
+                description_mm=f"{step_title} အဆင့်တွင် {title} အတွက် လိုအပ်သော အလုပ်များကို အစီအစဉ်တကျ ပြုလုပ်ပါ။" if plan else None,
+                content_en=content,
+                content_mm=laravel_project_step_mm(title, step_slug) if plan else None,
+                code=code,
+                filename="README.md",
+                expected_output=output,
+                line_explanation="Read the file path and the adjacent explanation together; each line identifies one part of the project workflow.",
+                completion_criteria=f"Document the result and verify the acceptance criteria for {title}." if plan else "",
+                position=position,
+                required=True,
+            ))
 
 def main():
     with SessionLocal.begin() as db:

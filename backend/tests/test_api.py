@@ -482,6 +482,77 @@ def test_php_curriculum_is_published_and_idempotent(client):
     assert response.json()["title"] == "PHP Programming — From Zero to Advanced"
     assert len(response.json()["modules"]) == 36
 
+def test_laravel_curriculum_expands_and_is_idempotent(client):
+    from app.laravel_course_content import MODULE_LESSON_TOPICS, MODULE_ONE, PLANNED_MODULES, seed_laravel_course
+    from app.models import CodingExercise, CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
+    import json
+
+    with client.session_factory() as db:
+        language = db.query(ProgrammingLanguage).filter_by(slug="php").one_or_none()
+        if language is None:
+            language = ProgrammingLanguage(name="PHP", slug="php", color="#777BB4")
+            db.add(language); db.flush()
+        category = db.query(CourseCategory).filter_by(slug="backend-development").one_or_none()
+        if category is None:
+            category = CourseCategory(name="Backend Development", slug="backend-development")
+            db.add(category); db.flush()
+        course = Course(language_id=language.id, category_id=category.id, title="Laravel", slug="laravel-expanded-test", description="Laravel", level="beginner", duration_minutes=0, published=False, status="draft")
+        db.add(course); db.flush()
+        seed_laravel_course(db, course)
+        db.commit()
+        first_lessons = db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all()
+        first_ids = {lesson.slug: lesson.id for lesson in first_lessons}
+        seed_laravel_course(db, course)
+        db.commit()
+
+        modules = db.query(CourseModule).filter_by(course_id=course.id).order_by(CourseModule.order_index).all()
+        lessons = db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).order_by(CourseModule.order_index, Lesson.order_index).all()
+        quizzes = db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all()
+        questions = db.query(QuizQuestion).join(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all()
+        examples = db.query(CodeExample).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all()
+        exercises = db.query(CodingExercise).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all()
+
+        assert [module.title for module in modules] == PLANNED_MODULES
+        assert len(modules) == 40
+        assert len(lessons) == len(MODULE_ONE) + sum(len(items) for items in MODULE_LESSON_TOPICS.values()) == 203
+        assert {lesson.slug: lesson.id for lesson in lessons} == first_ids
+        assert all(not lesson.published and lesson.status == "draft" and "အသေးစိတ်သီအိုရီ" in lesson.content_mm and "လုံခြုံရေးအကောင်းဆုံးနည်းလမ်းများ" in lesson.content_mm for lesson in lessons)
+        assert all(
+            ("Security best practices" in lesson.content_en or "Security considerations" in lesson.content_en)
+            and ("Practical lab" in lesson.content_en or "Hands-on exercise" in lesson.content_en)
+            for lesson in lessons
+        )
+        assert len(quizzes) == 203
+        assert len(questions) == 203 * 4
+        assert len(examples) == 203
+        assert len(exercises) == 203 * 3
+        assert all(question.correct_answer in json.loads(question.options_json) for question in questions)
+        assert all(exercise.status == "draft" and exercise.description_mm for exercise in exercises)
+        assert course.title == "Laravel & PHP Full-Stack Development — From Zero to Professional"
+
+    response = client.get("/api/v1/courses/laravel-expanded-test")
+    assert response.status_code == 404
+
+def test_laravel_project_path_is_created_as_reviewable_drafts(client):
+    from app.seed import LARAVEL_PROJECT_PLAN_INPUTS, seed_projects
+    from app.models import ProjectMilestone, ProjectTemplate
+    import json
+
+    with client.session_factory() as db:
+        seed_projects(db)
+        db.commit()
+        rows = db.query(ProjectTemplate).filter(ProjectTemplate.slug.in_(list(LARAVEL_PROJECT_PLAN_INPUTS))).all()
+        assert len(rows) == 16
+        assert all(row.status == "draft" and row.published is False for row in rows)
+        for row in rows:
+            milestones = db.query(ProjectMilestone).filter_by(project_id=row.id).order_by(ProjectMilestone.position).all()
+            assert len(milestones) == 6
+            assert all(milestone.content_en and milestone.content_mm and milestone.code for milestone in milestones)
+            brief = json.loads(row.brief_json)
+            assert brief["database_schema"] and brief["api_endpoints"] and brief["security_requirements"]
+
+    assert client.get("/api/v1/projects?technology=Laravel").json()["total"] == 0
+
 def test_csharp_curriculum_is_published_and_idempotent(client):
     from app.csharp_course_content import MODULES, MODULE_ONE, seed_csharp_course
     from app.models import CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
