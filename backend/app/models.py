@@ -230,7 +230,74 @@ class MediaAsset(TimestampMixin, Base):
     caption: Mapped[str]=mapped_column(Text,default="")
     collection: Mapped[str]=mapped_column(String(80),default="general")
     status: Mapped[str]=mapped_column(String(20),default="active",index=True)
+    processing_status: Mapped[str]=mapped_column(String(24),default="ready",index=True)
+    visibility: Mapped[str]=mapped_column(String(20),default="public",index=True)
+    checksum: Mapped[str|None]=mapped_column(String(64),nullable=True,index=True)
+    folder_id: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("media_folders.id",ondelete="SET NULL"),nullable=True,index=True)
+    deleted_at: Mapped[datetime|None]=mapped_column(DateTime(timezone=True),nullable=True)
     uploaded_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True,index=True)
+
+class MediaFolder(TimestampMixin, Base):
+    __tablename__="media_folders"
+    __table_args__=(UniqueConstraint("parent_id","name"),)
+    id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4)
+    name: Mapped[str]=mapped_column(String(120))
+    parent_id: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("media_folders.id",ondelete="CASCADE"),nullable=True,index=True)
+    status: Mapped[str]=mapped_column(String(20),default="active",index=True)
+    created_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True)
+
+class MediaReference(TimestampMixin, Base):
+    __tablename__="media_references"
+    __table_args__=(UniqueConstraint("asset_id","resource_type","resource_id","field_name"), Index("ix_media_references_asset","asset_id"))
+    id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4)
+    asset_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("media_assets.id",ondelete="CASCADE"),index=True)
+    resource_type: Mapped[str]=mapped_column(String(60))
+    resource_id: Mapped[str]=mapped_column(String(120))
+    field_name: Mapped[str]=mapped_column(String(80))
+
+class MediaVariant(TimestampMixin, Base):
+    __tablename__="media_variants"
+    __table_args__=(UniqueConstraint("asset_id","variant_key"),)
+    id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4)
+    asset_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("media_assets.id",ondelete="CASCADE"),index=True)
+    variant_key: Mapped[str]=mapped_column(String(60))
+    storage_key: Mapped[str]=mapped_column(String(500),unique=True)
+    mime_type: Mapped[str]=mapped_column(String(120))
+    size_bytes: Mapped[int]=mapped_column(Integer)
+    width: Mapped[int|None]=mapped_column(Integer,nullable=True)
+    height: Mapped[int|None]=mapped_column(Integer,nullable=True)
+    status: Mapped[str]=mapped_column(String(20),default="ready",index=True)
+
+class MediaUploadSession(TimestampMixin, Base):
+    __tablename__="media_upload_sessions"
+    id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4)
+    original_filename: Mapped[str]=mapped_column(String(255))
+    status: Mapped[str]=mapped_column(String(24),default="pending",index=True)
+    bytes_received: Mapped[int]=mapped_column(Integer,default=0)
+    error_message: Mapped[str]=mapped_column(Text,default="")
+    storage_key: Mapped[str|None]=mapped_column(String(500),nullable=True)
+    created_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True,index=True)
+
+class MediaAuditEvent(TimestampMixin, Base):
+    __tablename__="media_audit_events"
+    id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4)
+    asset_id: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("media_assets.id",ondelete="SET NULL"),nullable=True,index=True)
+    actor_id: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True,index=True)
+    action: Mapped[str]=mapped_column(String(60))
+    outcome: Mapped[str]=mapped_column(String(20),default="success")
+    metadata_json: Mapped[str]=mapped_column(Text,default="{}")
+
+class ExternalResourceLink(TimestampMixin, Base):
+    __tablename__="external_resource_links"
+    id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4)
+    title: Mapped[str]=mapped_column(String(180))
+    url: Mapped[str]=mapped_column(String(2000))
+    description: Mapped[str]=mapped_column(Text,default="")
+    locale: Mapped[str]=mapped_column(String(10),default="en")
+    resource_type: Mapped[str]=mapped_column(String(60),default="general")
+    resource_id: Mapped[str|None]=mapped_column(String(120),nullable=True)
+    status: Mapped[str]=mapped_column(String(20),default="active",index=True)
+    created_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True)
 
 class ToolCategory(TimestampMixin, Base):
     __tablename__ = "tool_categories"

@@ -1,16 +1,17 @@
 import json, math
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
+from urllib.parse import urlparse
 from fastapi import APIRouter, Cookie, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, normalize_email, now, require_csrf, verify_password
 from .db import get_db
-from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeExample, ContentReviewEvent, ContentReviewItem, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, Lesson, LessonProgress, LessonQuiz, LessonRevision, MediaAsset, PlatformSetting, ProgrammingLanguage, ProjectTemplate, PublishingReview, QuizAttempt, QuizQuestion, User
+from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeExample, ContentReviewEvent, ContentReviewItem, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, ExternalResourceLink, Lesson, LessonProgress, LessonQuiz, LessonRevision, MediaAsset, MediaAuditEvent, MediaFolder, MediaReference, PlatformSetting, ProgrammingLanguage, ProjectTemplate, PublishingReview, QuizAttempt, QuizQuestion, User
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
 from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, MediaMetadataIn, NavigationSettings, PlatformFeatureSettings, PlatformGeneralSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
-from .media_storage import ALLOWED_MIME_TYPES, ensure_media_root, remove_file_if_safe, safe_media_path, save_course_image, save_media_upload
+from .media_storage import ALLOWED_MIME_TYPES, ensure_media_root, normalize_filename, remove_file_if_safe, safe_media_path, save_course_image, save_media_upload, sha256_file, storage_status
 from .navigation_config import NAVIGATION_DRAFT_KEY, NAVIGATION_KEY, NAVIGATION_PUBLISHED_KEY, read_admin_navigation, read_navigation, save_navigation, validate_navigation
 from .platform_settings_service import get_settings_group, save_settings_group as save_platform_settings_group
 router=APIRouter(prefix="/api/v1/admin",tags=["admin"])
@@ -250,12 +251,13 @@ def list_admin_audit_logs(search: str|None=None, page: int=Query(1,ge=1), page_s
     return {"items":[{"id":row.id,"action":row.action,"entity_type":row.entity_type,"entity_id":row.entity_id,"actor_id":row.actor_id,"created_at":row.created_at} for row in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
 
 def _media_response(row: MediaAsset, db: Session):
-    url = f"/media/{row.storage_key}"
+    url = f"/media/{row.storage_key}" if row.visibility == "public" else f"/api/v1/admin/media/{row.id}/content"
     used_in = []
     for course in db.scalars(select(Course).where(Course.thumbnail == url)).all(): used_in.append({"type": "course", "id": str(course.id), "title": course.title})
     for project in db.scalars(select(ProjectTemplate).where(ProjectTemplate.cover_image == url)).all(): used_in.append({"type": "project", "id": str(project.id), "title": project.title})
     for roadmap in db.scalars(select(CareerRoadmap).where(CareerRoadmap.cover_image == url)).all(): used_in.append({"type": "career_path", "id": str(roadmap.id), "title": roadmap.title})
-    return {"id": row.id, "original_filename": row.original_filename, "storage_key": row.storage_key, "url": url, "mime_type": row.mime_type, "size_bytes": row.size_bytes, "width": row.width, "height": row.height, "title": row.title or row.original_filename, "alt_text": row.alt_text, "caption": row.caption, "collection": row.collection, "status": row.status, "uploaded_by": row.uploaded_by, "created_at": row.created_at, "updated_at": row.updated_at, "used_in": used_in}
+    refs = db.scalars(select(MediaReference).where(MediaReference.asset_id == row.id)).all()
+    return {"id": row.id, "original_filename": row.original_filename, "storage_key": row.storage_key, "url": url, "mime_type": row.mime_type, "size_bytes": row.size_bytes, "width": row.width, "height": row.height, "title": row.title or row.original_filename, "alt_text": row.alt_text, "caption": row.caption, "collection": row.collection, "status": row.status, "processing_status": row.processing_status, "visibility": row.visibility, "checksum": row.checksum, "folder_id": row.folder_id, "uploaded_by": row.uploaded_by, "created_at": row.created_at, "updated_at": row.updated_at, "used_in": used_in, "references": [{"id": ref.id, "resource_type": ref.resource_type, "resource_id": ref.resource_id, "field_name": ref.field_name} for ref in refs]}
 
 def _sync_legacy_media(db: Session):
     root = ensure_media_root().resolve()
@@ -267,7 +269,7 @@ def _sync_legacy_media(db: Session):
         key = path.relative_to(root).as_posix()
         if key in known: continue
         stat = path.stat()
-        db.add(MediaAsset(original_filename=path.name, storage_key=key, mime_type=mime_by_suffix[path.suffix.lower()], size_bytes=stat.st_size, title=path.stem, collection=path.parts[0] if len(path.parts) > 1 else "general", status="active"))
+        db.add(MediaAsset(original_filename=normalize_filename(path.name), storage_key=key, mime_type=mime_by_suffix[path.suffix.lower()], size_bytes=stat.st_size, title=path.stem[:180], collection=path.parts[0] if len(path.parts) > 1 else "general", status="active", processing_status="ready", visibility="public", checksum=sha256_file(path)))
         changed = True
     if changed: db.commit()
 
@@ -288,15 +290,55 @@ def list_public_media(search: str|None=None, media_type: str|None=None, collecti
     total = db.scalar(count) or 0
     return {"items": [_media_response(row, db) for row in rows], "page": page, "page_size": page_size, "total": total, "pages": math.ceil(total / page_size) if total else 0}
 
+@router.get("/media/storage-status")
+def media_storage_status(user: User=Depends(admin_user)):
+    return storage_status()
+
+@router.get("/media/folders")
+def list_media_folders(user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    rows = db.scalars(select(MediaFolder).where(MediaFolder.status == "active").order_by(MediaFolder.name.asc())).all()
+    return {"items": [{"id": row.id, "name": row.name, "parent_id": row.parent_id, "status": row.status} for row in rows]}
+
+@router.post("/media/folders", status_code=201)
+def create_media_folder(name: str, parent_id: UUID|None=None, user: User=Depends(full_admin), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+    clean = name.strip()
+    if not 1 <= len(clean) <= 120: raise HTTPException(422, "Folder name must be between 1 and 120 characters")
+    if parent_id and not db.get(MediaFolder, parent_id): raise HTTPException(404, "Parent folder not found")
+    row = MediaFolder(name=clean, parent_id=parent_id, created_by=user.id)
+    db.add(row); audit(db, user, "media_folder_created", "media_folder", row.id); db.commit(); db.refresh(row)
+    return {"id": row.id, "name": row.name, "parent_id": row.parent_id, "status": row.status}
+
 @router.post("/media", status_code=201)
-async def upload_media(file: UploadFile=File(...), title: str=Form(""), alt_text: str=Form(""), caption: str=Form(""), collection: str=Form("general"), user: User=Depends(admin_user), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
+async def upload_media(file: UploadFile=File(...), title: str=Form(""), alt_text: str=Form(""), caption: str=Form(""), collection: str=Form("general"), visibility: str|None=Form(None), folder_id: UUID|None=Form(None), user: User=Depends(admin_user), _: None=Depends(require_csrf), db: Session=Depends(get_db)):
     if not collection or len(collection) > 80 or not all(char.isalnum() or char in "_-" for char in collection): raise HTTPException(422, "Collection must contain only letters, numbers, hyphens, or underscores")
     media_policy = get_settings_group(db, "media")["values"]
-    url, _, mime_type, size_bytes, width, height = await save_media_upload(file, max_bytes=int(media_policy["maximum_upload_size_mb"]) * 1024 * 1024, allowed_types=set(media_policy["allowed_file_types"]))
+    visibility = visibility or media_policy["default_visibility"]
+    if visibility not in {"public", "private"}: raise HTTPException(422, "Visibility must be public or private")
+    if folder_id and not db.get(MediaFolder, folder_id): raise HTTPException(404, "Folder not found")
+    if visibility == "private": raise HTTPException(409, "Private media uploads require a configured object-storage provider")
+    check_rate_limit(f"media-upload:{user.id}", limit=30, window_seconds=3600)
+    provider = storage_status()
+    if not provider["configured"] or not provider["writable"]: raise HTTPException(503, "Media uploads are unavailable because storage is not configured")
+    url, path, mime_type, size_bytes, width, height = await save_media_upload(file, max_bytes=int(media_policy["maximum_upload_size_mb"]) * 1024 * 1024, allowed_types=set(media_policy["allowed_file_types"]))
     key = url.removeprefix("/media/")
-    row = MediaAsset(original_filename=(file.filename or "upload")[:255], storage_key=key, mime_type=mime_type, size_bytes=size_bytes, width=width, height=height, title=title[:180] or (file.filename or "upload")[:180], alt_text=alt_text[:240], caption=caption[:2000], collection=collection, uploaded_by=user.id)
-    db.add(row); audit(db, user, "media_uploaded", "media", row.id); db.commit(); db.refresh(row)
-    return _media_response(row, db)
+    try:
+        row = MediaAsset(original_filename=normalize_filename(file.filename), storage_key=key, mime_type=mime_type, size_bytes=size_bytes, width=width, height=height, title=title[:180] or normalize_filename(file.filename)[:180], alt_text=alt_text[:240], caption=caption[:2000], collection=collection, folder_id=folder_id, uploaded_by=user.id, processing_status="ready", visibility="public", checksum=sha256_file(path))
+        db.add(row); db.flush()
+        db.add(MediaAuditEvent(asset_id=row.id, actor_id=user.id, action="uploaded", metadata_json=json.dumps({"provider": provider["provider"], "mime_type": mime_type, "size_bytes": size_bytes})))
+        audit(db, user, "media_uploaded", "media", row.id); db.commit(); db.refresh(row)
+        return _media_response(row, db)
+    except Exception:
+        db.rollback()
+        remove_file_if_safe(url)
+        raise
+
+@router.get("/media/{media_id}/content")
+def private_media_content(media_id: UUID, user: User=Depends(admin_user), db: Session=Depends(get_db)):
+    from fastapi.responses import FileResponse
+    row = db.get(MediaAsset, media_id)
+    if not row: raise HTTPException(404, "Media not found")
+    if row.visibility != "private": raise HTTPException(404, "Private media not found")
+    raise HTTPException(503, "Private media storage is not configured")
 
 @router.get("/media/{media_id}")
 def get_media(media_id: UUID, user: User=Depends(admin_user), db: Session=Depends(get_db)):

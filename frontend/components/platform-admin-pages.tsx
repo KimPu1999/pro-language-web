@@ -139,7 +139,76 @@ export function PlatformNotificationsPage() {
 
 function NotificationOverview({ data, text, onProcess }: { data: any; text: typeof notificationCopy.en; onProcess: () => void }) { const deliveries = data?.deliveries ?? {}; return <div className="space-y-5"><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[["Draft", data?.announcements?.draft ?? 0], ["Published", data?.announcements?.published ?? 0], ["Queued", deliveries.queued ?? 0], ["Failed", data?.failed_deliveries ?? 0]].map(([label, value]) => <Card key={String(label)} className="p-5"><p className="text-xs uppercase tracking-[.16em] text-slate-500">{label}</p><p className="mt-3 text-3xl font-bold">{String(value)}</p></Card>)}</div><Card className="flex flex-wrap items-center justify-between gap-4 p-5"><div><h2 className="font-semibold">Durable outbox</h2><p className="mt-1 text-sm text-slate-400">{data?.queued_outbox ?? 0} queued records. Processing is manual until a production worker is configured.</p></div><button onClick={onProcess} className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold">{text.process}</button></Card></div>; }
 function NotificationTable({ title, columns, rows, empty }: { title: string; columns: string[]; rows: string[][]; empty: string }) { return <Card className="overflow-x-auto"><div className="border-b border-line p-5"><h2 className="font-semibold">{title}</h2></div>{rows.length ? <table className="min-w-full text-left text-sm"><thead className="text-xs uppercase tracking-wide text-slate-500"><tr>{columns.map(column => <th key={column} className="px-5 py-3">{column}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={index} className="border-t border-line">{row.map((cell, cellIndex) => <td key={cellIndex} className="px-5 py-4 text-slate-300">{cell}</td>)}</tr>)}</tbody></table> : <div className="p-5"><EmptyState title={empty} description="" /></div>}</Card>; }
-export function PlatformMediaPage(){const { t } = useI18n(); return <AdminPlaceholder eyebrow={t("mediaAssets")} title={t("mediaLibrary")} description={t("mediaLibraryDescription")} detail={t("uploadStorageUnavailable")}/>;}
+type MediaAsset = { id: string; title: string; original_filename: string; url: string; mime_type: string; size_bytes: number; width?: number; height?: number; collection: string; status: string; processing_status: string; visibility: string; alt_text: string; caption: string; used_in: { type: string; title: string }[] };
+
+function formatMediaSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+export function PlatformMediaPage() {
+  const { locale, t } = useI18n();
+  const my = locale === "my";
+  const copy = my ? {
+    eyebrow: "ပလက်ဖောင်း Assets", title: "မီဒီယာစာကြည့်တိုက်", description: "စစ်ဆေးပြီး database ထဲတွင် မှတ်တမ်းတင်ထားသော ပုံနှင့် PDF များကို စီမံပါ။", refresh: "ပြန်ယူရန်", upload: "ဖိုင်တင်ရန်", search: "အမည်၊ ဖိုင်အမည်၊ alt text ရှာရန်", all: "အားလုံး", image: "ပုံများ", pdf: "PDF", unavailable: "လုံခြုံသော upload storage provider မသတ်မှတ်ရသေးသောကြောင့် upload မလုပ်နိုင်သေးပါ။", noAssets: "မီဒီယာဖိုင် မရှိသေးပါ။", loading: "မီဒီယာဒေတာ ရယူနေသည်…", failed: "မီဒီယာဒေတာ ရယူမရပါ။", saved: "Metadata သိမ်းပြီးပါပြီ။", archive: "Archive", inUse: "အသုံးပြုနေသောနေရာ", metadata: "Metadata", titleField: "ခေါင်းစဉ်", alt: "Alt text", caption: "Caption", save: "သိမ်းရန်", cancel: "ပယ်ဖျက်ရန်", ready: "အသင့်", provider: "Storage provider"
+  } : {
+    eyebrow: "Platform assets", title: "Media Library", description: "Manage validated images and PDFs that are persisted in the database and connected to platform content.", refresh: "Refresh", upload: "Upload files", search: "Search title, filename, or alt text", all: "All", image: "Images", pdf: "PDF", unavailable: "No safe upload storage provider is configured. Upload controls remain unavailable.", noAssets: "No media assets found.", loading: "Loading media records…", failed: "Media records are unavailable.", saved: "Metadata saved.", archive: "Archive", inUse: "Used in", metadata: "Metadata", titleField: "Title", alt: "Alt text", caption: "Caption", save: "Save", cancel: "Cancel", ready: "Ready", provider: "Storage provider"
+  };
+  const [items, setItems] = useState<MediaAsset[]>([]);
+  const [storage, setStorage] = useState<any>(null);
+  const [query, setQuery] = useState("");
+  const [type, setType] = useState("");
+  const [selected, setSelected] = useState<MediaAsset | null>(null);
+  const [draft, setDraft] = useState({ title: "", alt_text: "", caption: "" });
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const load = useCallback(async () => {
+    setLoading(true); setError("");
+    try {
+      const params = new URLSearchParams({ page: "1", page_size: "48" });
+      if (query.trim()) params.set("search", query.trim());
+      if (type) params.set("media_type", type);
+      const [media, status] = await Promise.all([adminApi.media(`?${params.toString()}`), adminApi.mediaStorageStatus()]);
+      setItems(media.items ?? []); setStorage(status);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : copy.failed); }
+    finally { setLoading(false); }
+  }, [copy.failed, query, type]);
+  useEffect(() => { void load(); }, [load]);
+  const open = (item: MediaAsset) => { setSelected(item); setDraft({ title: item.title ?? "", alt_text: item.alt_text ?? "", caption: item.caption ?? "" }); };
+  const upload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []); if (!files.length || !storage?.configured) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      for (const file of files) { const body = new FormData(); body.append("file", file); await adminApi.uploadMedia(body, csrf()); }
+      setMessage(my ? "ဖိုင်များကို တင်ပြီးပါပြီ။" : "Files uploaded and validated."); await load();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : copy.failed); }
+    finally { setBusy(false); event.target.value = ""; }
+  };
+  const save = async () => {
+    if (!selected) return; setBusy(true); setError("");
+    try { const updated = await adminApi.updateMedia(selected.id, draft, csrf()); setItems(value => value.map(item => item.id === updated.id ? updated : item)); setSelected(updated); setMessage(copy.saved); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : copy.failed); }
+    finally { setBusy(false); }
+  };
+  const archive = async () => {
+    if (!selected || selected.used_in?.length || !window.confirm(my ? "ဤဖိုင်ကို archive လုပ်မည်လား။" : "Archive this unused asset?")) return;
+    setBusy(true); setError("");
+    try { await adminApi.archiveMedia(selected.id, csrf()); setSelected(null); setMessage(my ? "Archive လုပ်ပြီးပါပြီ။" : "Asset archived."); await load(); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : copy.failed); }
+    finally { setBusy(false); }
+  };
+  return <section className="space-y-7">
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm text-indigo-300">{copy.eyebrow}</p><h1 className="mt-2 text-3xl font-bold">{copy.title}</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">{copy.description}</p></div><div className="flex gap-2"><button onClick={() => void load()} disabled={loading || busy} className="rounded-xl border border-line px-4 py-2.5 text-sm font-semibold hover:bg-elevated">{copy.refresh}</button><label className={`cursor-pointer rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold ${(!storage?.configured || busy) ? "pointer-events-none opacity-50" : ""}`}><input type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" onChange={upload} disabled={!storage?.configured || busy}/>{busy ? (my ? "လုပ်ဆောင်နေသည်…" : "Processing…") : copy.upload}</label></div></div>
+    {storage && <Card className={`flex flex-wrap items-center justify-between gap-3 p-4 ${storage.configured ? "border-emerald-400/30" : "border-amber-400/30"}`}><div><p className="text-xs uppercase tracking-wider text-slate-500">{copy.provider}</p><p className="mt-1 text-sm text-slate-200">{storage.provider} · {storage.status}</p></div><p className={`max-w-2xl text-sm ${storage.configured ? "text-emerald-300" : "text-amber-300"}`}>{storage.configured ? storage.detail : copy.unavailable}</p></Card>}
+    {error && <Card className="p-4 text-sm text-red-300" role="alert">{error}</Card>}{message && <Card className="p-4 text-sm text-emerald-300" role="status">{message}</Card>}
+    <Card className="flex flex-wrap gap-3 p-4"><input value={query} onChange={event => setQuery(event.target.value)} placeholder={copy.search} className="min-w-[240px] flex-1 rounded-xl border border-line bg-ink px-3 py-2.5 text-sm"/><select value={type} onChange={event => setType(event.target.value)} className="rounded-xl border border-line bg-ink px-3 py-2.5 text-sm"><option value="">{copy.all}</option><option value="image">{copy.image}</option><option value="application/pdf">{copy.pdf}</option></select></Card>
+    {loading ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[1,2,3,4].map(item => <Skeleton key={item} className="h-56" />)}</div> : items.length === 0 ? <Card className="p-8"><EmptyState title={copy.noAssets} description={storage?.configured ? copy.description : copy.unavailable}/></Card> : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{items.map(item => <button key={item.id} onClick={() => open(item)} className="overflow-hidden rounded-2xl border border-line bg-surface text-left transition hover:border-indigo-400/60"><div className="flex h-40 items-center justify-center bg-ink">{item.mime_type.startsWith("image/") ? <img src={item.url} alt={item.alt_text || item.title} className="h-full w-full object-cover" /> : <span className="rounded-xl bg-red-500/15 px-4 py-3 text-sm font-bold text-red-200">PDF</span>}</div><div className="p-4"><p className="truncate font-semibold text-slate-100">{item.title}</p><p className="mt-1 truncate text-xs text-slate-500">{item.original_filename}</p><div className="mt-3 flex items-center justify-between text-xs text-slate-400"><span>{formatMediaSize(item.size_bytes)}</span><span className="capitalize">{item.processing_status || copy.ready}</span></div></div></button>)}</div>}
+    {selected && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center" onClick={() => setSelected(null)}><Card className="max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6" onClick={event => event.stopPropagation()}><div className="flex items-start justify-between gap-4"><div><p className="text-xs uppercase tracking-wider text-indigo-300">{copy.metadata}</p><h2 className="mt-1 text-xl font-bold">{selected.original_filename}</h2></div><button onClick={() => setSelected(null)} className="text-slate-400">×</button></div><div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="text-sm text-slate-300">{copy.titleField}<input value={draft.title} onChange={event => setDraft({ ...draft, title: event.target.value })} className="mt-2 w-full rounded-xl border border-line bg-ink px-3 py-2" /></label><label className="text-sm text-slate-300">{copy.alt}<input value={draft.alt_text} onChange={event => setDraft({ ...draft, alt_text: event.target.value })} className="mt-2 w-full rounded-xl border border-line bg-ink px-3 py-2" /></label></div><label className="mt-4 block text-sm text-slate-300">{copy.caption}<textarea value={draft.caption} onChange={event => setDraft({ ...draft, caption: event.target.value })} rows={4} className="mt-2 w-full rounded-xl border border-line bg-ink px-3 py-2" /></label><div className="mt-5 flex flex-wrap gap-3 text-xs text-slate-400"><span>{selected.mime_type}</span><span>{formatMediaSize(selected.size_bytes)}</span><span>{selected.visibility}</span><span>{selected.status}</span></div>{selected.used_in?.length > 0 && <div className="mt-5 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200"><p className="font-semibold">{copy.inUse}</p><p className="mt-2">{selected.used_in.map(item => `${item.type}: ${item.title}`).join(" · ")}</p></div>}<div className="mt-6 flex justify-end gap-2"><button onClick={() => setSelected(null)} className="rounded-xl border border-line px-4 py-2.5 text-sm">{copy.cancel}</button><button onClick={() => void archive()} disabled={busy || selected.used_in?.length > 0} className="rounded-xl border border-red-400/30 px-4 py-2.5 text-sm text-red-300 disabled:opacity-40">{copy.archive}</button><button onClick={() => void save()} disabled={busy} className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold">{copy.save}</button></div></Card></div>}
+  </section>;
+}
 type PlatformSettingRecord = { group: string; status: string; version: number; values: Record<string, any>; updated_at?: string | null };
 
 const settingsCopy = {

@@ -31,7 +31,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, 8000);
   const run = (async () => {
-    const response = await fetch(`${base}${path}`, { ...init, credentials: "include", signal: controller.signal, headers: { Accept: "application/json", "Content-Type": "application/json", ...init?.headers } });
+    const multipart = typeof FormData !== "undefined" && init?.body instanceof FormData;
+    const requestHeaders = { Accept: "application/json", ...(multipart ? {} : { "Content-Type": "application/json" }), ...init?.headers };
+    const response = await fetch(`${base}${path}`, { ...init, credentials: "include", signal: controller.signal, headers: requestHeaders });
     if (!response.ok) {
       let message = `API request failed (${response.status})`;
       const requestId = response.headers.get("X-Request-ID") ?? undefined;
@@ -93,6 +95,12 @@ export const adminApi = {
   platformSettings: () => request<any>("/api/v1/admin/platform/settings"),
   platformSettingsHistory: (query = "") => request<any>(`/api/v1/admin/platform/settings/history${query}`),
   updatePlatformSettings: (group: string, body: unknown, csrfToken: string) => request<any>(`/api/v1/admin/platform/settings/${encodeURIComponent(group)}`, { method: "PATCH", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrfToken } }),
+  media: (query = "") => request<any>(`/api/v1/admin/media${query}`),
+  mediaStorageStatus: () => request<any>("/api/v1/admin/media/storage-status"),
+  mediaFolders: () => request<any>("/api/v1/admin/media/folders"),
+  uploadMedia: (body: FormData, csrfToken: string) => request<any>("/api/v1/admin/media", { method: "POST", body, headers: { "X-CSRF-Token": csrfToken } }),
+  updateMedia: (id: string, body: unknown, csrfToken: string) => request<any>(`/api/v1/admin/media/${id}`, { method: "PATCH", body: JSON.stringify(body), headers: { "X-CSRF-Token": csrfToken } }),
+  archiveMedia: (id: string, csrfToken: string) => request<any>(`/api/v1/admin/media/${id}`, { method: "DELETE", headers: { "X-CSRF-Token": csrfToken } }),
 };
 
 export const notificationAdminApi = {

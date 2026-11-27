@@ -25,7 +25,15 @@ class Settings(BaseSettings):
     db_pool_recycle_seconds: int = 1800
     db_connect_timeout_seconds: int = 5
     media_root: str = "./media"
+    media_private_root: str = "./private-media"
     media_url_prefix: str = "/media"
+    media_storage_provider: str = "local"
+    media_local_uploads_enabled: bool = False
+    media_s3_endpoint: str = ""
+    media_s3_bucket: str = ""
+    media_s3_region: str = ""
+    media_s3_access_key: str = ""
+    media_s3_secret_key: str = ""
     course_image_max_bytes: int = 5 * 1024 * 1024
     media_max_bytes: int = 20 * 1024 * 1024
     project_submission_max_bytes: int = 20 * 1024 * 1024

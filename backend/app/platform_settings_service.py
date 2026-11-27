@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from .config import settings
 from .models import AdminAuditLog, PlatformSetting, PlatformSettingHistory, User
+from .media_storage import storage_status
 from .schemas import (
     BrandingSettings,
     PlatformEmailSettings,
@@ -90,12 +91,13 @@ def _record(group: str, db: Session) -> dict[str, Any]:
 
 
 def integration_status() -> dict[str, Any]:
+    media = storage_status()
     return {
         "group": "integrations",
         "status": "configured",
         "values": {
             "database": {"configured": True, "status": "live query"},
-            "media_storage": {"configured": True, "status": "filesystem-backed"},
+            "media_storage": {"configured": bool(media["configured"]), "status": media["status"], "provider": media["provider"], "detail": media["detail"]},
             "email": {"configured": settings.mailer_mode != "console", "status": settings.mailer_mode},
             "runner": {"configured": settings.runner_enabled, "status": "enabled" if settings.runner_enabled else "disabled"},
             "ai": {"configured": settings.ai_enabled, "status": settings.ai_provider if settings.ai_enabled else "disabled"},
@@ -112,6 +114,7 @@ def integration_status() -> dict[str, Any]:
 
 
 def system_status() -> dict[str, Any]:
+    media = storage_status()
     return {
         "group": "system",
         "status": "configured",
@@ -121,6 +124,8 @@ def system_status() -> dict[str, Any]:
             "environment": settings.app_env,
             "api_version": "1.0.0",
             "media_root_configured": bool(settings.media_root),
+            "media_storage_provider": media["provider"],
+            "media_storage_status": media["status"],
             "cache": "in-process versioned cache",
             "secrets_source": "deployment environment",
         },

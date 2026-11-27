@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
+import hashlib
+import re
 from zipfile import BadZipFile, ZipFile
 from uuid import uuid4
 
@@ -22,11 +24,37 @@ def media_root() -> Path:
     configured = Path(settings.media_root).expanduser()
     return configured if configured.is_absolute() else Path(__file__).resolve().parents[1] / configured
 
+def private_media_root() -> Path:
+    configured = Path(settings.media_private_root).expanduser()
+    return configured if configured.is_absolute() else Path(__file__).resolve().parents[1] / configured
+
 
 def ensure_media_root() -> Path:
     root = media_root()
     root.mkdir(parents=True, exist_ok=True)
     return root
+
+def ensure_private_media_root() -> Path:
+    root = private_media_root()
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+def storage_status() -> dict[str, object]:
+    provider = (settings.media_storage_provider or "").strip().lower()
+    if provider in {"s3", "r2", "object_storage"}:
+        credentials_ready = bool(settings.media_s3_endpoint and settings.media_s3_bucket and settings.media_s3_region and settings.media_s3_access_key and settings.media_s3_secret_key)
+        return {"provider": provider, "configured": credentials_ready, "writable": False, "status": "configured_but_unavailable" if credentials_ready else "not_configured", "detail": "Object storage credentials are present, but this deployment has no object-storage adapter installed." if credentials_ready else "Object storage endpoint, bucket, region, and credentials are incomplete."}
+    if provider == "local":
+        # Local disk is a development/test provider. Production must use a real
+        # object-storage adapter so media is not placed in the web process.
+        allowed = settings.app_env.lower() in {"development", "test", "local"}
+        try:
+            root, private = ensure_media_root(), ensure_private_media_root()
+            writable = allowed and root.is_dir() and private.is_dir()
+        except OSError:
+            writable = False
+        return {"provider": "local", "configured": writable, "writable": writable, "status": "ready" if writable else "not_configured", "detail": "Local media storage is available for this deployment." if writable else "Local uploads are disabled or the storage directories are unavailable."}
+    return {"provider": provider or "disabled", "configured": False, "writable": False, "status": "not_configured", "detail": "No supported media storage provider is configured."}
 
 
 def _jpeg_dimensions(data: bytes) -> tuple[int, int] | None:
@@ -185,6 +213,29 @@ def safe_media_path(url: str | None) -> Path | None:
     except ValueError:
         return None
     return candidate
+
+def safe_private_media_path(key: str | None) -> Path | None:
+    if not key or key.startswith("/") or ".." in Path(key).parts:
+        return None
+    root = ensure_private_media_root().resolve()
+    candidate = (root / key).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return None
+    return candidate if candidate.is_file() else None
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+def normalize_filename(value: str | None) -> str:
+    name = Path(value or "upload").name
+    name = re.sub(r"[^A-Za-z0-9._ -]+", "_", name).strip(" .") or "upload"
+    return name[:255]
 
 
 def remove_file_if_safe(url: str | None) -> None:

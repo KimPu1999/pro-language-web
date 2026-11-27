@@ -23,9 +23,11 @@ def test_media_library_upload_metadata_and_safe_in_use_archive(client, monkeypat
     monkeypatch.setattr(settings, "media_root", str(tmp_path / "media"))
     assert client.get("/api/v1/admin/media").status_code in {401, 403}
     csrf = admin_login(client)
+    storage = client.get("/api/v1/admin/media/storage-status")
+    assert storage.status_code == 200 and storage.json()["provider"] == "local" and storage.json()["configured"] is True
     uploaded = client.post("/api/v1/admin/media", files={"file": ("hero.png", PNG, "image/png")}, data={"title": "Hero image", "alt_text": "A learning hero", "collection": "homepage"}, headers={"X-CSRF-Token": csrf})
     assert uploaded.status_code == 201, uploaded.text
-    asset = uploaded.json(); assert asset["mime_type"] == "image/png"; assert asset["url"].startswith("/media/library/")
+    asset = uploaded.json(); assert asset["mime_type"] == "image/png"; assert asset["url"].startswith("/media/library/"); assert asset["processing_status"] == "ready"; assert len(asset["checksum"]) == 64
     listed = client.get("/api/v1/admin/media?search=Hero"); assert listed.status_code == 200; assert listed.json()["total"] == 1
     updated = client.patch(f"/api/v1/admin/media/{asset['id']}", json={"title": "Updated hero", "alt_text": "Updated alt", "caption": "Caption", "collection": "homepage"}, headers={"X-CSRF-Token": csrf})
     assert updated.status_code == 200 and updated.json()["title"] == "Updated hero"
