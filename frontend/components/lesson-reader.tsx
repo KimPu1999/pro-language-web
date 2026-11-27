@@ -144,7 +144,7 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
 
       <article aria-label={t("lessonContent")}>
         {locale === "my" && incompleteBurmese && <p className="mb-5 rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm leading-6 text-amber-200" role="status">{hasBurmese ? t("myanmarPartial") : t("myanmarMissing")}</p>}
-        <LessonContent content={lessonContent} />
+        <LessonContent content={lessonContent} excludeSections={locale === "en" ? ["Myanmar explanation"] : []} />
       </article>
 
       {lesson.code_examples.length > 0 && (

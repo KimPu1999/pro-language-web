@@ -34,6 +34,12 @@ describe("shared UI", () => {
     expect(screen.getByText("မြန်မာအကြောင်းအရာ အပြည့်အစုံ")).toBeVisible();
   });
 
+  it("can remove legacy Burmese sections from the English lesson", () => {
+    render(<LessonContent content={"Introduction\nEnglish content\n\nMyanmar explanation\nမြန်မာအကြောင်းအရာ"} excludeSections={["Myanmar explanation"]} />);
+    expect(screen.getByText("English content")).toBeVisible();
+    expect(screen.queryByText("မြန်မာအကြောင်းအရာ")).not.toBeInTheDocument();
+  });
+
   it("renders lesson content and copies code snippets", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });

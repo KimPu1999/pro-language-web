@@ -249,11 +249,12 @@ export function CodeSample({ code, language = "c", output = false, label }: { co
 }
 
 
-export function LessonContent({ content, className = "" }: { content: string; className?: string }) {
+export function LessonContent({ content, className = "", excludeSections = [] }: { content: string; className?: string; excludeSections?: string[] }) {
   // Render every authored block. The same renderer is used for English and
   // Burmese, so filtering a section by its English heading can silently remove
   // valid Burmese lesson content.
-  const blocks = parseLessonContent(content);
+  const excluded = new Set(excludeSections);
+  const blocks = parseLessonContent(content).filter(block => !excluded.has(block.section));
   return (
     <div className={`lesson-content max-w-none break-words font-sans text-slate-300 ${className}`}>
       {blocks.map((block, index) => {
