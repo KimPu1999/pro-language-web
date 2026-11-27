@@ -20,6 +20,24 @@ def seed_project(client):
         category=ProjectCategory(name="Backend Development",slug="backend-development",status="active");db.add(category);db.flush();row=ProjectTemplate(title="Portfolio API",slug="portfolio-api",description_en="Build an API.",difficulty="intermediate",estimated_hours=20,technology_stack="Python, FastAPI",category_id=category.id,status="published",published=True);db.add(row);db.flush();db.add(ProjectMilestone(project_id=row.id,title="Design",slug="design",description_en="Design the API",content_en="Design theory",position=0));db.commit();return row.id
 def test_published_project_start_and_duplicate_prevention(client):
     project_id=seed_project(client);assert client.get("/api/v1/projects").json()["total"]==1;csrf=verified_client(client);response=client.post("/api/v1/me/projects/portfolio-api",headers={"X-CSRF-Token":csrf});assert response.status_code==201;assert client.post("/api/v1/me/projects/portfolio-api",headers={"X-CSRF-Token":csrf}).status_code==409;assert project_id
+
+def test_my_project_dashboard_returns_empty_page_for_new_student(client):
+    verified_client(client, "project-dashboard@example.com")
+    response = client.get("/api/v1/me/projects/dashboard?page=1&page_size=10")
+    assert response.status_code == 200, response.text
+    assert response.json() == {"items": [], "page": 1, "page_size": 10, "total": 0, "pages": 0}
+
+def test_my_project_dashboard_serializes_owned_projects(client):
+    seed_project(client)
+    csrf = verified_client(client, "project-dashboard-owned@example.com")
+    started = client.post("/api/v1/me/projects/portfolio-api", headers={"X-CSRF-Token": csrf})
+    assert started.status_code == 201
+    response = client.get("/api/v1/me/projects/dashboard")
+    assert response.status_code == 200, response.text
+    item = response.json()["items"][0]
+    assert isinstance(item["id"], str)
+    assert isinstance(item["project_id"], str)
+    assert item["updated_at"]
 def test_github_submission_rejects_non_github_url(client):
     seed_project(client);csrf=verified_client(client,"project-url@example.com");start=client.post("/api/v1/me/projects/portfolio-api",headers={"X-CSRF-Token":csrf}).json();response=client.post(f"/api/v1/me/projects/{start['id']}/submissions",json={"repository_url":"https://example.com/repo","branch_or_sha":"main"},headers={"X-CSRF-Token":csrf});assert response.status_code==422
 

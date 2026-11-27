@@ -102,7 +102,7 @@ def my_project_dashboard(search:str|None=None,status:str|None=None,technology:st
     if technology:
         condition=ProjectTemplate.technology_stack.ilike(f"%{technology}%");base=base.where(condition);count=count.where(condition)
     total=db.scalar(count) or 0; rows=db.execute(base.order_by(StudentProject.updated_at.desc()).offset((page-1)*page_size).limit(page_size)).all()
-    items=[{"id":student.id,"project_id":template.id,"title":template.title,"difficulty":template.difficulty,"technology_stack":template.technology_stack,"status":"completed" if student.status=="approved" else student.status,"progress":project_progress(db,student),"updated_at":student.updated_at} for student,template in rows]
+    items=[{"id":str(student.id),"project_id":str(template.id),"title":template.title,"difficulty":template.difficulty,"technology_stack":template.technology_stack,"status":"completed" if student.status=="approved" else student.status,"progress":project_progress(db,student),"updated_at":student.updated_at.isoformat() if student.updated_at else None} for student,template in rows]
     return {"items":items,"page":page,"page_size":page_size,"total":total,"pages":(total+page_size-1)//page_size if total else 0}
 @router.get("/me/projects/{project_id}")
 def my_project(project_id:UUID,user:User=Depends(current_user),db:Session=Depends(get_db)):
