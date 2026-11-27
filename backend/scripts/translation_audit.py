@@ -26,6 +26,13 @@ from app.models import Challenge, CodingExercise, Course, CourseModule, Lesson, 
 ROOT = Path(__file__).resolve().parents[2]
 FRONTEND_ROOTS = (ROOT / "frontend", ROOT / "apps" / "platform", ROOT / "apps" / "admin")
 BURMESE_TEXT = re.compile(r"[\u1000-\u109f]")
+SECTION_HEADINGS = (
+    "Introduction", "Learning objectives", "Prerequisites", "Detailed theory",
+    "Architecture explanation", "Syntax", "Java syntax", "Code example",
+    "Complete source code", "Expected output", "Line-by-line explanation",
+    "Common mistakes", "Security considerations", "Best practices",
+    "Practice exercises", "Practical exercises", "Quiz", "Summary", "Next lesson",
+)
 
 def translation_state(value: str | None, source: str | None = None) -> str:
     translated = len(BURMESE_TEXT.findall(value or ""))
@@ -33,6 +40,27 @@ def translation_state(value: str | None, source: str | None = None) -> str:
         return "missing"
     source_length = len((source or "").strip())
     return "partial" if source_length and translated < max(20, source_length // 5) else "available"
+
+def structure_audit(content: str | None) -> dict[str, Any]:
+    text = content or ""
+    headings = [line.strip() for line in text.splitlines() if line.strip() in SECTION_HEADINGS]
+    return {
+        "headings": headings,
+        "heading_count": len(headings),
+        "code_blocks": len(re.findall(r"^```", text, re.MULTILINE)) // 2,
+        "lists": sum(1 for line in text.splitlines() if re.match(r"^\s*(?:[-*]|\d+[.)])\s+", line)),
+        "paragraphs": len([part for part in re.split(r"\n\s*\n", text.strip()) if part.strip()]),
+    }
+
+def parity_audit(english: str | None, burmese: str | None) -> dict[str, Any]:
+    source = structure_audit(english)
+    target = structure_audit(burmese)
+    target_headings = set(target["headings"])
+    missing_headings = [heading for heading in source["headings"] if heading not in target_headings]
+    english_words = re.findall(r"\b[A-Za-z]{3,}\b", burmese or "")
+    burmese_chars = len(BURMESE_TEXT.findall(burmese or ""))
+    english_leakage = len(english_words) >= 12 and len(english_words) > max(8, burmese_chars // 3)
+    return {"source": source, "translation": target, "missing_sections": missing_headings, "english_leakage": english_leakage}
 
 
 def _non_generated_files(root: Path):
@@ -92,13 +120,14 @@ def database_audit() -> dict[str, Any]:
             for module in course.modules:
                 for lesson in module.lessons:
                     state = translation_state(lesson.content_mm, lesson.content_en)
-                    lesson_rows.append({"course_id": str(course.id), "course_slug": course.slug, "course_title": course.title, "level": course.level, "module_id": str(module.id), "module_title": module.title, "lesson_id": str(lesson.id), "lesson_slug": lesson.slug, "title": lesson.title, "published": lesson.published, "status": lesson.status, "translation_state": state, "english_characters": len((lesson.content_en or "").strip()), "burmese_characters": len(BURMESE_TEXT.findall(lesson.content_mm or ""))})
+                    parity = parity_audit(lesson.content_en, lesson.content_mm)
+                    lesson_rows.append({"course_id": str(course.id), "course_slug": course.slug, "course_title": course.title, "level": course.level, "module_id": str(module.id), "module_title": module.title, "lesson_id": str(lesson.id), "lesson_slug": lesson.slug, "title": lesson.title, "published": lesson.published, "status": lesson.status, "translation_state": state, "english_characters": len((lesson.content_en or "").strip()), "burmese_characters": len(BURMESE_TEXT.findall(lesson.content_mm or "")), "parity": parity, "needs_review": state != "available" or bool(parity["missing_sections"]) or parity["english_leakage"]})
         published_lesson_rows = [row for row in lesson_rows if row["published"]]
         return {
             "courses": {"total": len(courses), "published": sum(row.published for row in courses), "slugs": sorted(row.slug for row in courses)},
             "modules": {"total": modules},
             "lessons": {"total": len(lessons), "published": len(published_lessons), "available": sum(row["translation_state"] == "available" for row in lesson_rows), "partial": sum(row["translation_state"] == "partial" for row in lesson_rows), "missing": sum(row["translation_state"] == "missing" for row in lesson_rows), "published_available": sum(row["translation_state"] == "available" for row in published_lesson_rows), "published_partial": sum(row["translation_state"] == "partial" for row in published_lesson_rows), "published_missing": sum(row["translation_state"] == "missing" for row in published_lesson_rows)},
-            "lesson_gaps": [row for row in lesson_rows if row["translation_state"] != "available"],
+            "lesson_gaps": [row for row in lesson_rows if row["needs_review"]],
             "challenges": {"total": len(challenges), "published": len(published_challenges), "burmese_description": count_field(challenges, "description_mm"), "published_burmese_description": count_field(published_challenges, "description_mm")},
             "projects": {"total": len(projects), "published": len(published_projects), "burmese_description": count_field(projects, "description_mm"), "published_burmese_description": count_field(published_projects, "description_mm")},
             "syntax_references": {"total": len(syntax_references), "published": sum(row.status == "published" for row in syntax_references), "bilingual_fields": False},

@@ -250,11 +250,12 @@ export function CodeSample({ code, language = "c", output = false, label }: { co
 
 
 export function LessonContent({ content, className = "" }: { content: string; className?: string }) {
-  // Older seeded lessons also contain a legacy inline translation section;
-  // hide that duplicate so the toggle remains authoritative for all 75 lessons.
-  const blocks = parseLessonContent(content).filter(block => block.section !== "Myanmar explanation");
+  // Render every authored block. The same renderer is used for English and
+  // Burmese, so filtering a section by its English heading can silently remove
+  // valid Burmese lesson content.
+  const blocks = parseLessonContent(content);
   return (
-    <div className={`lesson-content max-w-none text-slate-300 ${className}`}>
+    <div className={`lesson-content max-w-none break-words font-sans text-slate-300 ${className}`}>
       {blocks.map((block, index) => {
         if (block.kind === "heading") {
           const id = block.text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");

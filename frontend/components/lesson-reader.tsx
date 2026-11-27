@@ -47,7 +47,12 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
   const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [progress, setProgress] = useState<CourseProgress | null>(null);
   const example = lesson.code_examples[exampleIndex];
-  const lessonContent = localized(lesson.content_en, lesson.content_mm);
+  const hasBurmese = Boolean(lesson.content_mm?.trim());
+  const translationStatus = lesson.translation_status ?? (hasBurmese && lesson.content_mm!.length < lesson.content_en.length * 0.8 ? "partial" : hasBurmese ? "available" : "missing");
+  const incompleteBurmese = locale === "my" && translationStatus !== "available";
+  const lessonContent = incompleteBurmese && hasBurmese
+    ? `${lesson.content_mm}\n\nEnglish source (full lesson)\n${lesson.content_en}`
+    : localized(lesson.content_en, lesson.content_mm);
   const visitedLesson = useRef<string | null>(null);
 
   const lessonProgress = progress?.lessons.find(item => item.lesson_id === lesson.id);
@@ -135,7 +140,7 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
       <LessonNotes courseId={courseId} lessonId={lesson.id} courseSlug={courseSlug} lessonSlug={lesson.slug} />
 
       <article aria-label={t("lessonContent")}>
-        {locale === "my" && !lesson.content_mm?.trim() && <p className="mb-5 rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-amber-200" role="status">{t("myanmarMissing")}</p>}
+        {locale === "my" && incompleteBurmese && <p className="mb-5 rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm leading-6 text-amber-200" role="status">{hasBurmese ? t("myanmarPartial") : t("myanmarMissing")}</p>}
         <LessonContent content={lessonContent} />
       </article>
 

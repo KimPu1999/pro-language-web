@@ -1,9 +1,11 @@
-import { render } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { fireEvent, screen } from "@testing-library/dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Badge, Button, Card } from "../components/ui";
 import { BilingualLessonContent } from "../components/translation";
 import { LessonContent, parseLessonContent } from "../components/lesson-content";
+
+afterEach(cleanup);
 
 describe("shared UI", () => {
   it("renders common controls", () => {
@@ -25,6 +27,11 @@ describe("shared UI", () => {
     expect(blocks.filter(block => block.kind === "heading").map(block => block.kind === "heading" ? block.text : "")).toContain("Complete C program — demo");
     expect(blocks.filter(block => block.kind === "list")).toHaveLength(1);
     expect(blocks.filter(block => block.kind === "code")).toHaveLength(2);
+  });
+
+  it("keeps Burmese explanation sections in the rendered lesson", () => {
+    render(<LessonContent content={"Introduction\nEnglish content\n\nMyanmar explanation\nမြန်မာအကြောင်းအရာ အပြည့်အစုံ"} />);
+    expect(screen.getByText("မြန်မာအကြောင်းအရာ အပြည့်အစုံ")).toBeVisible();
   });
 
   it("renders lesson content and copies code snippets", async () => {
