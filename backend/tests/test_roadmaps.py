@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy import select
 from app.auth import password_hasher
-from app.models import CareerRoadmap, Course, RoadmapStage, RoadmapStep, User
+from app.models import CareerRoadmap, Course, RoadmapStage, RoadmapStep, RoadmapStepResource, User
 
 def verified_client(client,email="roadmap@example.com"):
     response=client.post("/api/v1/auth/register",json={"full_name":"Roadmap Student","email":email,"password":"strong-pwd12","confirm_password":"strong-pwd12","accept_terms":True}); assert response.status_code==201
@@ -10,10 +10,14 @@ def verified_client(client,email="roadmap@example.com"):
     return client.cookies.get("cm_csrf")
 def seed_roadmap(client):
     with client.session_factory() as db:
-        roadmap=CareerRoadmap(title="Backend Developer",slug="backend-developer",career_category="Backend",description_en="Build services.",outcomes_en="Ship APIs",estimated_hours=20,status="published",published=True); db.add(roadmap);db.flush();stage=RoadmapStage(roadmap_id=roadmap.id,title="Foundations",description_en="Start here",level="beginner",position=0);db.add(stage);db.flush();db.add(RoadmapStep(stage_id=stage.id,title="HTTP basics",instructions_en="Learn HTTP",position=0));db.commit();return roadmap.id
+        roadmap=CareerRoadmap(title="Backend Developer",slug="backend-developer",career_category="Backend",description_en="Build services.",outcomes_en="Ship APIs",estimated_hours=20,status="published",published=True); db.add(roadmap);db.flush();stage=RoadmapStage(roadmap_id=roadmap.id,title="Foundations",description_en="Start here",level="beginner",position=0);db.add(stage);db.flush()
+        step=RoadmapStep(stage_id=stage.id,title="HTTP basics",instructions_en="Learn HTTP",position=0); db.add(step); db.flush()
+        course=db.scalar(select(Course).where(Course.published.is_(True)))
+        db.add(RoadmapStepResource(step_id=step.id,resource_type="course",resource_id=course.id))
+        db.commit();return roadmap.id
 def test_published_roadmap_detail_and_student_enrollment(client):
     roadmap_id=seed_roadmap(client); assert client.get("/api/v1/roadmaps").json()["total"]==1; assert client.get("/api/v1/roadmaps/backend-developer").status_code==200
-    csrf=verified_client(client); response=client.post("/api/v1/me/roadmaps/backend-developer",headers={"X-CSRF-Token":csrf}); assert response.status_code==201; assert client.post("/api/v1/me/roadmaps/backend-developer",headers={"X-CSRF-Token":csrf}).status_code==409; assert roadmap_id
+    csrf=verified_client(client); response=client.post("/api/v1/me/roadmaps/backend-developer",headers={"X-CSRF-Token":csrf}); assert response.status_code==201; duplicate=client.post("/api/v1/me/roadmaps/backend-developer",headers={"X-CSRF-Token":csrf}); assert duplicate.status_code==200; assert duplicate.json()["idempotent"] is True; assert roadmap_id
 def test_roadmap_goal_is_owned_by_current_student(client):
     csrf=verified_client(client,"goal@example.com"); response=client.put("/api/v1/me/goals",json={"career_goal":"Python Developer","current_level":"beginner","interests":["python"],"weekly_hours":5,"pace":"steady","timezone":"Asia/Yangon"},headers={"X-CSRF-Token":csrf}); assert response.status_code==200; assert client.get("/api/v1/me/goals").json()["career_goal"]=="Python Developer"
 
@@ -36,6 +40,8 @@ def test_admin_career_path_draft_builder_and_publish(client):
     step_id=step.json()["id"]
     with client.session_factory() as db: course_id=db.scalar(select(Course.id))
     linked=client.post(f"/api/v1/admin/steps/{step_id}/resources",json={"resource_type":"course","resource_id":str(course_id)},headers={"X-CSRF-Token":csrf}); assert linked.status_code==200
+    assert client.post(f"/api/v1/admin/roadmaps/{roadmap_id}/submit-review",json={},headers={"X-CSRF-Token":csrf}).status_code==200
+    assert client.post(f"/api/v1/admin/roadmaps/{roadmap_id}/approve",json={},headers={"X-CSRF-Token":csrf}).status_code==200
     assert client.post(f"/api/v1/admin/roadmaps/{roadmap_id}/publish",json={},headers={"X-CSRF-Token":csrf}).status_code==200
     detail=client.get(f"/api/v1/admin/roadmaps/{roadmap_id}").json(); assert detail["published"] is True; assert detail["goals"]==["Ship accessible interfaces"]
 

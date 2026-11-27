@@ -8,7 +8,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 from .config import settings
 from .db import get_db
-from .models import ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, LearningPath, Lesson, PlatformSetting, ProgrammingLanguage, StudentChallengeProgress, User, UserProfile
+from .models import CareerRoadmap, ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, Lesson, PlatformSetting, ProgrammingLanguage, StudentChallengeProgress, User, UserProfile
 from .schemas import BrandingSettings, CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut, FooterSettings, HomepageSettings, LanguageOut, LessonOut, ModuleOut, NavigationSettings, PageOut, PathOut, PlatformPageOut
 from .footer_config import read_footer
 from .navigation_config import NAVIGATION_PUBLISHED_KEY, read_navigation
@@ -19,7 +19,7 @@ from .dashboard_routes import router as dashboard_router
 from .admin_routes import public_homepage, router as admin_router
 from .runner_routes import router as runner_router
 from .challenge_routes import router as challenge_router
-from .roadmap_routes import router as roadmap_router
+from .roadmap_routes import public_ready_clause, router as roadmap_router
 from .project_routes import router as project_router
 from .ai_routes import router as ai_router
 from .gamification_routes import router as gamification_router
@@ -292,4 +292,7 @@ def lesson(lesson_id: UUID, db: Session=Depends(get_db)):
     if not row: raise HTTPException(404,"Published lesson not found")
     return row
 @app.get("/api/v1/paths",response_model=list[PathOut])
-def paths(db: Session=Depends(get_db)): return db.scalars(select(LearningPath).where(LearningPath.published.is_(True)).order_by(LearningPath.title)).all()
+def paths(db: Session=Depends(get_db)):
+    """Compatibility alias for clients that still use the old paths endpoint."""
+    rows=db.scalars(select(CareerRoadmap).where(public_ready_clause()).order_by(CareerRoadmap.title)).all()
+    return [PathOut(id=row.id,title=row.title,slug=row.slug,description=row.description_en) for row in rows]

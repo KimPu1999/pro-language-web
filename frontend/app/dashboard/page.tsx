@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, Clock, ListChecks, RefreshCw, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ApiError, api, dashboardApi } from "@/lib/api";
-import type { Dashboard, DashboardActivity, User, WeeklyActivity } from "@/lib/types";
+import { roadmapApi } from "@/lib/roadmap-api";
+import type { Dashboard, DashboardActivity, LearningPathEnrollment, User, WeeklyActivity } from "@/lib/types";
 import { Card, Skeleton } from "@/components/ui";
 import { useDashboardPreferences } from "@/components/student-dashboard-shell";
 
@@ -16,6 +17,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [activity, setActivity] = useState<DashboardActivity[]>([]);
   const [weekly, setWeekly] = useState<WeeklyActivity | null>(null);
+  const [learningPaths, setLearningPaths] = useState<LearningPathEnrollment[]>([]);
   const [error, setError] = useState("");
   const [hour, setHour] = useState<number | null>(null);
   const { language } = useDashboardPreferences();
@@ -25,16 +27,18 @@ export default function DashboardPage() {
     // They should not form a second network waterfall after the core cards.
     Promise.all([
       Promise.all([api.me(), api.dashboard()]),
-      Promise.allSettled([dashboardApi.recentActivity(), dashboardApi.weeklyActivity()]),
+      Promise.allSettled([dashboardApi.recentActivity(), dashboardApi.weeklyActivity(), roadmapApi.mine()]),
     ])
       .then(([[nextUser, nextData], results]) => {
         setUser(nextUser);
         setData(nextData);
-        const [activityResult, weeklyResult] = results;
+        const [activityResult, weeklyResult, pathsResult] = results;
         if (activityResult.status === "fulfilled") setActivity(activityResult.value);
         else setActivity([]);
         if (weeklyResult.status === "fulfilled") setWeekly(weeklyResult.value);
         else setWeekly(null);
+        if (pathsResult.status === "fulfilled") setLearningPaths(pathsResult.value);
+        else setLearningPaths([]);
       })
       .catch(reason => {
         if (reason instanceof ApiError && reason.status === 401) { window.location.href = `/login?next=${encodeURIComponent("/dashboard")}`; return; }
@@ -69,8 +73,13 @@ export default function DashboardPage() {
     </div>
     <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]"><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{metrics.map(metric => <Card className="p-4 sm:p-5" key={metric.label}><div className="flex items-start justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[.12em] text-slate-500">{metric.label}</p><span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[.04]"><metric.icon size={16} className={metric.tone} /></span></div><p className="mt-5 text-2xl font-bold tracking-tight text-slate-50">{metric.value}</p><p className="mt-1 text-xs text-slate-500">{metric.note}</p></Card>)}</div><Card className="p-5"><div className="flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-[.16em] text-slate-500">Insights</p><h2 className="mt-2 text-lg font-semibold">Recent activity</h2></div><ListChecks className="text-emerald-300" size={18} /></div>{activity.length ? <div className="mt-4 space-y-3">{activity.slice(0, 3).map((item, index) => <Link href={`/courses/${item.course_slug}`} className="flex gap-3 rounded-xl p-2 transition hover:bg-elevated" key={`${item.event_type}-${item.timestamp}-${index}`}><span className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-300"><ListChecks size={14} /></span><span className="min-w-0"><span className="block truncate text-sm font-medium">{item.title}</span><span className="mt-1 block truncate text-xs text-slate-500">{item.lesson_title ?? item.course_title}</span></span></Link>)}</div> : <p className="mt-5 rounded-xl bg-elevated p-3 text-xs leading-5 text-slate-500">Verified learning activity will appear here after your first lesson or quiz.</p>}</Card></div>
     <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]"><section><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-semibold uppercase tracking-[.16em] text-indigo-300">Keep going</p><h2 className="mt-1 text-xl font-semibold">Continue learning</h2></div><Link href="/dashboard/courses" className="text-sm font-medium text-indigo-300 hover:text-white">View all <ArrowRight className="ml-1 inline" size={14} /></Link></div>{data.enrollments.length ? <div className="grid gap-4 md:grid-cols-3">{data.enrollments.slice(0, 3).map((item, index) => <CourseCard item={item} variant={index} key={item.id} />)}</div> : <Card className="p-8 text-center"><BookOpen className="mx-auto text-slate-600" size={28} /><h3 className="mt-4 font-semibold">Your courses will appear here</h3><Link href="/courses" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold">Browse courses <ArrowRight size={15} /></Link></Card>}</section><Card className="p-5"><div className="flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-[.16em] text-slate-500">Plan ahead</p><h2 className="mt-1 text-lg font-semibold">Upcoming tasks</h2></div><Clock className="text-amber-300" size={18} /></div><div className="mt-5 rounded-xl bg-elevated p-4"><p className="text-sm font-medium text-slate-300">No upcoming tasks</p><p className="mt-1 text-xs leading-5 text-slate-500">Quizzes and project deadlines will appear here when they are assigned.</p></div><Link href="/dashboard/study-plan" className="mt-4 inline-flex text-sm font-medium text-indigo-300 hover:text-white">Open study planner <ArrowRight className="ml-1" size={14} /></Link></Card></div>
+    <LearningPathsPanel items={learningPaths} />
     <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(280px,.8fr)]"><WeeklyChart weekly={weekly} /><ProgressOverview enrolled={data.enrollments.length} completed={completed} inProgress={inProgress} notStarted={notStarted} /></div>
   </div>;
+}
+
+function LearningPathsPanel({ items }: { items: LearningPathEnrollment[] }) {
+  return <section className="mt-8"><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-semibold uppercase tracking-[.18em] text-indigo-300">My learning paths</p><h2 className="mt-1 text-xl font-semibold">Continue a roadmap</h2></div><Link href="/learning-paths" className="text-sm font-medium text-indigo-300 hover:text-white">Browse paths <ArrowRight className="ml-1 inline" size={14} /></Link></div>{items.length ? <div className="grid gap-4 md:grid-cols-3">{items.slice(0, 3).map(item => <Card className="p-5" key={item.id}><div className="flex items-center justify-between gap-3"><h3 className="truncate font-semibold">{item.roadmap_title ?? item.roadmap_slug}</h3><span className="text-xs text-indigo-300">{Math.round(item.progress.progress_percent)}%</span></div><div className="mt-4 h-2 rounded-full bg-elevated"><div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-400" style={{ width: `${Math.min(100, Math.max(0, item.progress.progress_percent))}%` }} /></div><p className="mt-3 text-xs text-slate-500">{item.progress.completed_steps}/{item.progress.total_steps} verified steps</p><Link href={item.progress.resume?.href ?? `/learning-paths/${item.roadmap_slug}`} className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-indigo-300 hover:text-white">{item.progress.resume ? "Resume path" : "Open path"} <ArrowRight size={14} /></Link></Card>)}</div> : <Card className="p-6"><p className="text-sm text-slate-400">You have not joined a learning path yet.</p><Link href="/learning-paths" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold">Explore learning paths <ArrowRight size={15} /></Link></Card>}</section>;
 }
 
 function CourseCard({ item, variant }: { item: Dashboard["enrollments"][number]; variant: number }) {
