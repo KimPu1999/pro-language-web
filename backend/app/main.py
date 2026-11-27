@@ -1,4 +1,4 @@
-import json, logging, math, time, uuid
+import json, logging, math, re, time, uuid
 from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -63,6 +63,15 @@ logger=logging.getLogger("codemaster.api")
 app=FastAPI(title="CodeMaster Academy API", version="1.0.0")
 app.mount(settings.media_url_prefix, StaticFiles(directory=ensure_media_root()), name="media")
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allow_credentials=True, allow_methods=["GET","POST","PUT","PATCH","DELETE","OPTIONS"], allow_headers=["Content-Type","X-CSRF-Token"])
+
+BURMESE_TEXT = re.compile(r"[\u1000-\u109f]")
+
+def _lesson_payload(row: Lesson, locale: str = "en"):
+    content_mm = row.content_mm or ""
+    burmese_chars = len(BURMESE_TEXT.findall(content_mm))
+    english_chars = len((row.content_en or "").strip())
+    translation_status = "missing" if burmese_chars == 0 else ("partial" if english_chars and burmese_chars < max(20, english_chars // 5) else "available")
+    return {"id": row.id, "title": row.title, "slug": row.slug, "content_en": row.content_en, "content_mm": row.content_mm, "order_index": row.order_index, "code_examples": row.code_examples, "requested_locale": locale, "translation_status": translation_status, "translation_available": translation_status == "available"}
 @app.middleware("http")
 async def request_context(request, call_next):
     request_id=request.headers.get("X-Request-ID") or str(uuid.uuid4())
@@ -241,23 +250,24 @@ def course_learning(slug: str, db: Session=Depends(get_db)):
     modules=public_modules(row.modules, summaries=True)
     return course_payload(row, len(modules), sum(len(module["lessons"]) for module in modules), modules)
 @app.get("/api/v1/courses/{slug}/lessons/{lesson_slug}",response_model=LessonOut)
-def course_lesson(slug: str, lesson_slug: str, db: Session=Depends(get_db)):
+def course_lesson(slug: str, lesson_slug: str, locale: str = Query("en", pattern=r"^(en|my)$"), db: Session=Depends(get_db)):
     # Accept old links that encoded the punctuation from pre-sanitized lesson
     # slugs. New links are generated without punctuation.
     lesson_slug = lesson_slug.rstrip("?&#")
     row=db.scalar(select(Lesson).join(CourseModule, Lesson.module_id==CourseModule.id).join(Course, CourseModule.course_id==Course.id).where(Course.slug==slug, Course.published.is_(True), Lesson.slug==lesson_slug, Lesson.published.is_(True)).options(selectinload(Lesson.code_examples)))
     if not row: raise HTTPException(404,"Published lesson not found")
-    return row
+    return _lesson_payload(row, locale)
 @app.get("/api/v1/courses/{slug}/modules",response_model=list[ModuleOut])
 def modules(slug: str, db: Session=Depends(get_db)):
     row=db.scalar(course_query().where(Course.slug==slug).options(selectinload(Course.modules).selectinload(CourseModule.lessons)))
     if not row: raise HTTPException(404,"Published course not found")
     return row.modules
 @app.get("/api/v1/courses/{slug}/lessons",response_model=list[LessonOut])
-def course_lessons(slug: str, db: Session=Depends(get_db)):
+def course_lessons(slug: str, locale: str = Query("en", pattern=r"^(en|my)$"), db: Session=Depends(get_db)):
     row=db.scalar(course_query().where(Course.slug==slug))
     if not row: raise HTTPException(404,"Published course not found")
-    return db.scalars(select(Lesson).join(CourseModule, Lesson.module_id==CourseModule.id).where(CourseModule.course_id==row.id, Lesson.published.is_(True)).options(selectinload(Lesson.code_examples)).order_by(CourseModule.order_index, Lesson.order_index)).all()
+    lessons = db.scalars(select(Lesson).join(CourseModule, Lesson.module_id==CourseModule.id).where(CourseModule.course_id==row.id, Lesson.published.is_(True)).options(selectinload(Lesson.code_examples)).order_by(CourseModule.order_index, Lesson.order_index)).all()
+    return [_lesson_payload(item, locale) for item in lessons]
 @app.get("/api/v1/lessons/{lesson_id}/examples",response_model=list[ExampleOut])
 def lesson_examples(lesson_id: UUID, db: Session=Depends(get_db)):
     row=db.scalar(select(Lesson).join(CourseModule, Lesson.module_id==CourseModule.id).join(Course, CourseModule.course_id==Course.id).where(Lesson.id==lesson_id, Lesson.published.is_(True), Course.published.is_(True)).options(selectinload(Lesson.code_examples)))

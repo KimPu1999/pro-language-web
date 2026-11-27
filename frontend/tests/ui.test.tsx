@@ -12,9 +12,11 @@ describe("shared UI", () => {
     expect(screen.getByRole("button", { name: "Start learning" })).toBeEnabled();
   });
 
-  it("renders English-only lesson explanations", () => {
-    render(<BilingualLessonContent english="English explanation" myanmar="မြန်မာရှင်းလင်းချက်" />);
-    expect(screen.queryByText("မြန်မာရှင်းလင်းချက်")).not.toBeInTheDocument();
+  it("renders the requested lesson language", () => {
+    const view = render(<BilingualLessonContent english="English explanation" myanmar="မြန်မာရှင်းလင်းချက်" locale="my" />);
+    expect(screen.getByText("မြန်မာရှင်းလင်းချက်")).toBeVisible();
+    expect(screen.queryByText("English explanation")).not.toBeInTheDocument();
+    view.rerender(<BilingualLessonContent english="English explanation" myanmar="မြန်မာရှင်းလင်းချက်" />);
     expect(screen.getByText("English explanation")).toBeVisible();
   });
 

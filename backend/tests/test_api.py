@@ -751,6 +751,12 @@ def test_course_detail_and_lesson(client):
     assert "content_en" not in learning.json()["modules"][0]["lessons"][0]
     lesson=client.get("/api/v1/courses/python-foundations/lessons/hello"); assert lesson.status_code==200
     assert lesson.json()["content_en"] == "Hello lesson"
+    burmese=client.get("/api/v1/courses/python-foundations/lessons/hello?locale=my"); assert burmese.status_code==200
+    assert burmese.json()["requested_locale"] == "my"
+    assert burmese.json()["translation_status"] == "partial"
+    assert burmese.json()["translation_available"] is False
+    assert burmese.json()["content_mm"] == "မြန်မာ"
+    assert client.get("/api/v1/courses/python-foundations/lessons/hello?locale=fr").status_code == 422
     assert client.get("/api/v1/courses/python-foundations/lessons/hello%3F").status_code==200
     assert client.get("/api/v1/courses/python-foundations/lessons/missing").status_code==404
 def test_missing_and_unpublished(client):

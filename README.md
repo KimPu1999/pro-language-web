@@ -89,6 +89,9 @@ alembic upgrade head
 python -m app.seed
 PYTHONPATH=. pytest
 
+# idempotently seed the Phase 03 learning path catalog
+PYTHONPATH=. python scripts/seed_learning_paths.py
+
 # frontend
 cd frontend
 npm run test:unit

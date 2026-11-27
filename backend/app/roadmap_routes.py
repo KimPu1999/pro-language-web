@@ -44,6 +44,9 @@ def step_dict(step,db):
 def roadmap_dict(row,db,include_steps=True):
     stages=db.scalars(select(RoadmapStage).where(RoadmapStage.roadmap_id==row.id).order_by(RoadmapStage.position)).all(); assessments=db.scalars(select(RoadmapAssessment).where(RoadmapAssessment.roadmap_id==row.id).order_by(RoadmapAssessment.position)).all(); out={"id":row.id,"title":row.title,"slug":row.slug,"career_category":row.career_category,"description_en":row.description_en,"description_mm":row.description_mm,"prerequisites_en":row.prerequisites_en,"outcomes_en":row.outcomes_en,"estimated_hours":row.estimated_hours,"cover_image":row.cover_image,"goals":json_load(row.goals_json,[]),"skills":json_load(row.skills_json,[]),"completion_rules":json_load(row.completion_rules_json,{}),"status":row.status,"published":row.published,"stages":[],"assessments":[{"id":a.id,"assessment_id":a.assessment_id,"passing_score":a.passing_score,"required":a.required,"position":a.position,"title":getattr(db.get(AssessmentDefinition,a.assessment_id),"title",None)} for a in assessments]}
     out["stages"]=[{"id":s.id,"title":s.title,"description_en":s.description_en,"description_mm":s.description_mm,"level":s.level,"objectives":json_load(s.objectives_json,[]),"skills":json_load(s.skills_json,[]),"completion_rules":json_load(s.completion_rules_json,{}),"position":s.position,"steps":[step_dict(x,db) for x in db.scalars(select(RoadmapStep).where(RoadmapStep.stage_id==s.id).order_by(RoadmapStep.position)).all()] if include_steps else []} for s in stages]
+    step_ids=select(RoadmapStep.id).join(RoadmapStage).where(RoadmapStage.roadmap_id==row.id)
+    resources=db.scalars(select(RoadmapStepResource).where(RoadmapStepResource.step_id.in_(step_ids))).all()
+    out["stage_count"]=len(stages); out["step_count"]=db.scalar(select(func.count(RoadmapStep.id)).join(RoadmapStage).where(RoadmapStage.roadmap_id==row.id)) or 0; out["course_count"]=len({r.resource_id for r in resources if r.resource_type=="course"}); out["project_count"]=len({r.resource_id for r in resources if r.resource_type=="project"})
     return out
 def evidence_complete(db,user_id,step_id):
     resources=db.scalars(select(RoadmapStepResource).where(RoadmapStepResource.step_id==step_id)).all()
@@ -59,14 +62,20 @@ def progress_view(db,enrollment):
     steps=db.scalars(select(RoadmapStep).join(RoadmapStage).where(RoadmapStage.roadmap_id==enrollment.roadmap_id)).all(); completed=sum(1 for s in steps if evidence_complete(db,enrollment.user_id,s.id)); return {"completed_steps":completed,"total_steps":len(steps),"progress_percent":round(completed/len(steps)*100,1) if steps else 0}
 @router.get("/learning-paths")
 @router.get("/roadmaps")
-def list_roadmaps(search:str|None=None,career_category:str|None=None,difficulty:str|None=None,page:int=Query(1,ge=1),page_size:int=Query(12,ge=1,le=50),db:Session=Depends(get_db)):
+def list_roadmaps(search:str|None=None,career_category:str|None=None,difficulty:str|None=None,duration:str|None=None,technology:str|None=None,sort:str="title",page:int=Query(1,ge=1),page_size:int=Query(12,ge=1,le=50),db:Session=Depends(get_db)):
     q=select(CareerRoadmap).where(CareerRoadmap.published.is_(True)); count=select(func.count()).select_from(CareerRoadmap).where(CareerRoadmap.published.is_(True))
     if search:q=q.where(CareerRoadmap.title.ilike(f"%{search}%"));count=count.where(CareerRoadmap.title.ilike(f"%{search}%"))
     if career_category:q=q.where(CareerRoadmap.career_category==career_category);count=count.where(CareerRoadmap.career_category==career_category)
     if difficulty:
         matching=select(RoadmapStage.roadmap_id).where(RoadmapStage.level==difficulty)
         q=q.where(CareerRoadmap.id.in_(matching)); count=count.where(CareerRoadmap.id.in_(matching))
-    total=db.scalar(count) or 0; rows=db.scalars(q.order_by(CareerRoadmap.title).offset((page-1)*page_size).limit(page_size)).all(); return {"items":[roadmap_dict(x,db,False) for x in rows],"page":page,"page_size":page_size,"total":total,"pages":(total+page_size-1)//page_size if total else 0}
+    if duration=="short": q=q.where(CareerRoadmap.estimated_hours<=40); count=count.where(CareerRoadmap.estimated_hours<=40)
+    elif duration=="medium": q=q.where(CareerRoadmap.estimated_hours>40,CareerRoadmap.estimated_hours<=120); count=count.where(CareerRoadmap.estimated_hours>40,CareerRoadmap.estimated_hours<=120)
+    elif duration=="long": q=q.where(CareerRoadmap.estimated_hours>120); count=count.where(CareerRoadmap.estimated_hours>120)
+    if technology:
+        term=f"%{technology.strip()}%"; q=q.where(CareerRoadmap.skills_json.ilike(term)); count=count.where(CareerRoadmap.skills_json.ilike(term))
+    ordering={"newest":CareerRoadmap.created_at.desc(),"duration_asc":CareerRoadmap.estimated_hours.asc(),"duration_desc":CareerRoadmap.estimated_hours.desc()}.get(sort,CareerRoadmap.title.asc())
+    total=db.scalar(count) or 0; rows=db.scalars(q.order_by(ordering).offset((page-1)*page_size).limit(page_size)).all(); return {"items":[roadmap_dict(x,db,False) for x in rows],"page":page,"page_size":page_size,"total":total,"pages":(total+page_size-1)//page_size if total else 0}
 @router.get("/learning-paths/categories")
 def learning_path_categories(db:Session=Depends(get_db)):
     return db.scalars(select(CareerRoadmap.career_category).where(CareerRoadmap.published.is_(True)).distinct().order_by(CareerRoadmap.career_category)).all()

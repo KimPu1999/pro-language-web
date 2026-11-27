@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 
 from app.db import SessionLocal
 from app.models import Challenge, CodingExercise, Course, CourseModule, Lesson, LessonQuiz, ProjectTemplate, QuizQuestion, SyntaxReference
@@ -24,6 +25,14 @@ from app.models import Challenge, CodingExercise, Course, CourseModule, Lesson, 
 
 ROOT = Path(__file__).resolve().parents[2]
 FRONTEND_ROOTS = (ROOT / "frontend", ROOT / "apps" / "platform", ROOT / "apps" / "admin")
+BURMESE_TEXT = re.compile(r"[\u1000-\u109f]")
+
+def translation_state(value: str | None, source: str | None = None) -> str:
+    translated = len(BURMESE_TEXT.findall(value or ""))
+    if translated == 0:
+        return "missing"
+    source_length = len((source or "").strip())
+    return "partial" if source_length and translated < max(20, source_length // 5) else "available"
 
 
 def _non_generated_files(root: Path):
@@ -62,7 +71,7 @@ def source_audit() -> dict[str, Any]:
 
 def database_audit() -> dict[str, Any]:
     with SessionLocal() as db:
-        courses = db.scalars(select(Course)).all()
+        courses = db.scalars(select(Course).options(selectinload(Course.modules).selectinload(CourseModule.lessons))).all()
         modules = db.scalar(select(func.count(CourseModule.id))) or 0
         lessons = db.scalars(select(Lesson)).all()
         challenges = db.scalars(select(Challenge)).all()
@@ -73,15 +82,23 @@ def database_audit() -> dict[str, Any]:
         questions = db.scalar(select(func.count(QuizQuestion.id))) or 0
 
         def count_field(rows, field: str) -> int:
-            return sum(bool((getattr(row, field, None) or "").strip()) for row in rows)
+            return sum(translation_state(getattr(row, field, None)) == "available" for row in rows)
 
         published_lessons = [row for row in lessons if row.published]
         published_challenges = [row for row in challenges if row.published]
         published_projects = [row for row in projects if row.published]
+        lesson_rows = []
+        for course in courses:
+            for module in course.modules:
+                for lesson in module.lessons:
+                    state = translation_state(lesson.content_mm, lesson.content_en)
+                    lesson_rows.append({"course_id": str(course.id), "course_slug": course.slug, "course_title": course.title, "level": course.level, "module_id": str(module.id), "module_title": module.title, "lesson_id": str(lesson.id), "lesson_slug": lesson.slug, "title": lesson.title, "published": lesson.published, "status": lesson.status, "translation_state": state, "english_characters": len((lesson.content_en or "").strip()), "burmese_characters": len(BURMESE_TEXT.findall(lesson.content_mm or ""))})
+        published_lesson_rows = [row for row in lesson_rows if row["published"]]
         return {
             "courses": {"total": len(courses), "published": sum(row.published for row in courses), "slugs": sorted(row.slug for row in courses)},
             "modules": {"total": modules},
-            "lessons": {"total": len(lessons), "published": len(published_lessons), "burmese": count_field(lessons, "content_mm"), "published_burmese": count_field(published_lessons, "content_mm")},
+            "lessons": {"total": len(lessons), "published": len(published_lessons), "available": sum(row["translation_state"] == "available" for row in lesson_rows), "partial": sum(row["translation_state"] == "partial" for row in lesson_rows), "missing": sum(row["translation_state"] == "missing" for row in lesson_rows), "published_available": sum(row["translation_state"] == "available" for row in published_lesson_rows), "published_partial": sum(row["translation_state"] == "partial" for row in published_lesson_rows), "published_missing": sum(row["translation_state"] == "missing" for row in published_lesson_rows)},
+            "lesson_gaps": [row for row in lesson_rows if row["translation_state"] != "available"],
             "challenges": {"total": len(challenges), "published": len(published_challenges), "burmese_description": count_field(challenges, "description_mm"), "published_burmese_description": count_field(published_challenges, "description_mm")},
             "projects": {"total": len(projects), "published": len(published_projects), "burmese_description": count_field(projects, "description_mm"), "published_burmese_description": count_field(published_projects, "description_mm")},
             "syntax_references": {"total": len(syntax_references), "published": sum(row.status == "published" for row in syntax_references), "bilingual_fields": False},

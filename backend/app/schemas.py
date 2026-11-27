@@ -1,6 +1,6 @@
 from uuid import UUID, uuid4
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from .tool_registry import APPROVED_IMPLEMENTATION_KEYS
 class LanguageOut(BaseModel):
@@ -43,6 +43,9 @@ class LessonSyntaxReferencesIn(BaseModel):
     reference_ids: list[UUID] = Field(default_factory=list, max_length=20)
 class LessonOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; content_en: str; content_mm: str|None; order_index: int; code_examples: list[ExampleOut]=Field(default_factory=list)
+    requested_locale: Literal["en", "my"] = "en"
+    translation_status: Literal["available", "missing", "partial"] = "missing"
+    translation_available: bool = False
 class ModuleOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; order_index: int; lessons: list[LessonOut]=Field(default_factory=list)
 class LessonSummaryOut(BaseModel):

@@ -77,7 +77,7 @@ export const localeApi = {
 };
 
 export const translationApi = {
-  coverage: () => request<{ items: { source_type: string; source_id: string; course_id?: string; title: string; status: string; published: boolean; has_burmese: boolean; edit_url: string }[]; summary: { total: number; available: number; missing: number; published_total: number; published_missing: number; data_source: string } }>("/api/v1/admin/curriculum-quality/translation-coverage"),
+  coverage: () => request<{ items: { source_type: string; source_id: string; course_id?: string; title: string; status: string; published: boolean; has_burmese: boolean; translation_state: "available" | "missing" | "partial"; edit_url: string }[]; summary: { total: number; available: number; missing: number; published_total: number; published_missing: number; data_source: string } }>("/api/v1/admin/curriculum-quality/translation-coverage"),
 };
 
 export const adminApi = {

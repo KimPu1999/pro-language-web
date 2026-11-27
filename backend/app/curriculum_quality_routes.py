@@ -47,6 +47,15 @@ LESSON_REQUIREMENTS = (
     ("next_lesson", ("next lesson", "continue")),
 )
 
+BURMESE_TEXT = re.compile(r"[\u1000-\u109f]")
+
+def _translation_state(value: str | None, source: str | None = None) -> str:
+    translated = len(BURMESE_TEXT.findall(value or ""))
+    if translated == 0:
+        return "missing"
+    source_length = len((source or "").strip())
+    return "partial" if source_length and translated < max(20, source_length // 5) else "available"
+
 TOPIC_EXPECTATIONS = {
     "c-programming": ("pointers", "memory management", "structures", "file handling", "data structures", "algorithms", "debugging"),
     "cpp-programming": ("classes", "templates", "stl", "memory", "concurrency", "testing"),
@@ -84,13 +93,16 @@ def translation_coverage(user: User = Depends(_admin), db: Session = Depends(get
     for course in courses:
         lessons = [lesson for module in course.modules for lesson in module.lessons]
         for lesson in lessons:
-            items.append({"source_type": "lesson", "source_id": str(lesson.id), "course_id": str(course.id), "title": lesson.title, "status": lesson.status, "published": lesson.published, "has_burmese": bool(lesson.content_mm and lesson.content_mm.strip()), "edit_url": f"/admin/courses/{course.id}/builder"})
+            state = _translation_state(lesson.content_mm, lesson.content_en)
+            items.append({"source_type": "lesson", "source_id": str(lesson.id), "course_id": str(course.id), "title": lesson.title, "status": lesson.status, "published": lesson.published, "has_burmese": state == "available", "translation_state": state, "edit_url": f"/admin/courses/{course.id}/builder"})
         for reference in course.syntax_references:
-            items.append({"source_type": "syntax_reference", "source_id": str(reference.id), "course_id": str(course.id), "title": reference.title, "status": reference.status, "published": reference.status == "published", "has_burmese": False, "edit_url": "/admin/translations"})
+            items.append({"source_type": "syntax_reference", "source_id": str(reference.id), "course_id": str(course.id), "title": reference.title, "status": reference.status, "published": reference.status == "published", "has_burmese": False, "translation_state": "missing", "edit_url": "/admin/translations"})
     for challenge in challenges:
-        items.append({"source_type": "challenge", "source_id": str(challenge.id), "title": challenge.title, "status": challenge.status, "published": challenge.published, "has_burmese": bool(challenge.description_mm and challenge.description_mm.strip()), "edit_url": "/platform/challenges"})
+        state = _translation_state(challenge.description_mm, challenge.description)
+        items.append({"source_type": "challenge", "source_id": str(challenge.id), "title": challenge.title, "status": challenge.status, "published": challenge.published, "has_burmese": state == "available", "translation_state": state, "edit_url": "/platform/challenges"})
     for project in projects:
-        items.append({"source_type": "project", "source_id": str(project.id), "title": project.title, "status": project.status, "published": project.published, "has_burmese": bool(project.description_mm and project.description_mm.strip()), "edit_url": "/admin/projects"})
+        state = _translation_state(project.description_mm, project.description_en)
+        items.append({"source_type": "project", "source_id": str(project.id), "title": project.title, "status": project.status, "published": project.published, "has_burmese": state == "available", "translation_state": state, "edit_url": "/admin/projects"})
     published = [item for item in items if item["published"]]
     return {"items": items, "summary": {"total": len(items), "available": sum(1 for item in items if item["has_burmese"]), "missing": sum(1 for item in items if not item["has_burmese"]), "published_total": len(published), "published_missing": sum(1 for item in published if not item["has_burmese"]), "data_source": "database"}}
 
