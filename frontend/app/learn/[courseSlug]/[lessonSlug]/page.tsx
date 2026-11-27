@@ -4,6 +4,7 @@ import { api, courseLearningApi, syntaxApi } from "@/lib/api";
 import type { CourseLearning, Lesson } from "@/lib/types";
 import { LessonReader } from "@/components/lesson-reader";
 import { LearningSidebar } from "@/components/learning-sidebar";
+import { PublicFooter } from "@/components/public-footer";
 
 export default async function LessonPage({ params }: { params: Promise<{ courseSlug: string; lessonSlug: string }> }) {
   const { courseSlug, lessonSlug } = await params;
@@ -89,6 +90,7 @@ export default async function LessonPage({ params }: { params: Promise<{ courseS
             </Link>
           )}
         </nav>
+        <PublicFooter />
       </article>
     </section>
   );
