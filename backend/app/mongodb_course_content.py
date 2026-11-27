@@ -68,8 +68,101 @@ MODULE_ONE = [
      "javascript", "A reliable workflow starts with a disposable database, known sample documents, small reads, precise writes, expected output, and reset/cleanup. The Academy playground uses in-memory state and does not connect to platform PostgreSQL or a real MongoDB server.",
      "Reliable workflow တွင် disposable data၊ sample documents၊ precise writes၊ expected output နှင့် reset ပါဝင်သည်။ Academy playground သည် in-memory state သာသုံးသည်။",
      "Complete the playground CRUD challenge and record the query, expected result, and reset step.",
-     ("Academy MongoDB playground ၏ database က ဘာဖြစ်သနည်း?", ["An isolated in-memory simulation", "Production PostgreSQL", "A student's real Atlas cluster"], "An isolated in-memory simulation", "The simulator protects platform and student data.")),
+     ("What database does the Academy MongoDB playground use?", ["An isolated in-memory simulation", "Production PostgreSQL", "A student's real Atlas cluster"], "An isolated in-memory simulation", "The simulator protects platform and student data.")),
 ]
+
+# Keep the Burmese lesson body complete. Code, commands, identifiers, and
+# expected values remain unchanged so both locales contain the same runnable
+# material.
+FIRST_CRUD_MM_CONTENT = """Introduction
+First MongoDB CRUD Workflow သင်ခန်းစာတွင် MongoDB ကို လုံခြုံစွာ လေ့ကျင့်ရန် သီးခြား virtual database တစ်ခုကို အသုံးပြုပြီး data ထည့်ခြင်း၊ ဖတ်ခြင်း၊ ပြင်ခြင်း၊ ဖျက်ခြင်း၊ ရလဒ်စစ်ဆေးခြင်းနှင့် လေ့ကျင့်ခန်းအပြီး cleanup ပြုလုပ်ခြင်းတို့ကို အဆင့်လိုက် လေ့လာမည်။
+
+Learning objectives
+- Disposable database နှင့် sample documents များကို အသုံးပြုပြီး CRUD workflow တစ်ခုကို အစမှအဆုံး ဆောင်ရွက်နိုင်ရန်။
+- Query filter များ၊ field များ၊ index များနှင့် write operation များကို ရည်ရွယ်ချက်ရှိရှိ ရွေးချယ်နိုင်ရန်။
+- Write ပြီးတိုင်း result ကို စစ်ဆေးပြီး လေ့ကျင့်ခန်း data ကို reset သို့မဟုတ် cleanup ပြုလုပ်နိုင်ရန်။
+- Browser ထဲသို့ database credential မထည့်ဘဲ server-side boundary နှင့် data safety ကို ထိန်းသိမ်းနိုင်ရန်။
+
+Prerequisites
+Module 1 lesson 7 ကို အရင်ပြီးဆုံးထားပါ။ JSON အခြေခံ၊ collection နှင့် document အဓိပ္ပာယ်၊ filter ရေးသားပုံတို့ကို သိထားလျှင် လေ့ကျင့်ခန်းကို ပိုမိုလွယ်ကူစွာ လိုက်လုပ်နိုင်မည်။ ဤသင်ခန်းစာအတွက် အမှန်တကယ် MongoDB server သို့မဟုတ် Atlas account မလိုအပ်ပါ။
+
+MongoDB architecture explanation
+application/API -> driver -> database -> collection -> BSON document -> index/query plan
+
+Detailed theory
+စိတ်ချရသော CRUD workflow သည် မည်သည့် data ကို ပြင်မည်၊ မည်သည့် result ကို မျှော်လင့်မည်နှင့် လေ့ကျင့်ခန်းပြီးလျှင် မည်သို့ရှင်းလင်းမည်ကို အရင်သတ်မှတ်ခြင်းမှ စတင်သည်။ ပထမဦးစွာ production data မဟုတ်သော disposable database နှင့် သိပြီးသား sample documents များကို ရွေးပါ။ ထို့နောက် data အများကြီးကို တစ်ခါတည်း မဖတ်ဘဲ document အနည်းငယ်ကို စစ်ဆေးပြီး field အမည်၊ type နှင့် လက်ရှိအခြေအနေကို သိအောင်လုပ်ပါ။
+
+Create operation သည် document အသစ်ထည့်ခြင်းဖြစ်သည်။ ထည့်မည့် field များ၏ အမည်၊ type နှင့် လိုအပ်ချက်ကို စစ်ဆေးပြီး collection မှာ မှန်ကန်ကြောင်း အတည်ပြုပါ။ Read operation တွင် filter ဖြင့် လိုအပ်သော document များကိုသာ ရွေးပြီး projection ဖြင့် မလိုအပ်သော field များကို မပြန်ပေးပါနှင့်။ Update operation သည် မည်သည့် document ကို ပြင်မည်ဆိုသည်ကို unique သို့မဟုတ် လုံလောက်စွာ တိကျသော filter ဖြင့် သတ်မှတ်ရမည်။ Delete operation ကို disposable practice data အတွက်သာ အသုံးပြုပြီး မဖျက်မီ target scope ကို ပြန်စစ်ပါ။
+
+Academy playground သည် in-memory state ကို အသုံးပြုသော သင်ကြားရေး simulator ဖြစ်သည်။ ထို့ကြောင့် platform PostgreSQL၊ production MongoDB server သို့မဟုတ် ကျောင်းသား၏ Atlas cluster သို့ ချိတ်ဆက်ခြင်းမရှိပါ။ ဒီအချက်ကြောင့် reset လုပ်ခြင်းသည် လေ့ကျင့်ခန်းအတွင်းရှိ virtual documents များကိုသာ ပြန်ထားပေးပြီး အပြင်ဘက် data ကို မထိခိုက်စေပါ။ တကယ့် application တွင်တော့ database connection, authorization, validation, backup နှင့် audit policy များကို server-side တွင် ထည့်သွင်းထားရမည်။
+
+mongosh and JSON/BSON examples
+use academy_demo
+db.todos.insertMany([{title: 'Learn BSON', done: false}, {title: 'Build query', done: false}])
+db.todos.find({done: false})
+
+အပေါ်က command များတွင် academy_demo database ကို ရွေးပြီး todos collection ထဲသို့ document နှစ်ခု ထည့်ထားသည်။ done: false filter သည် မပြီးသေးသော todo များကိုသာ ရွေးသည်။ title နှင့် done တို့သည် field identifier များဖြစ်သောကြောင့် အမည်နှင့် type ကို မတော်တဆ ပြောင်းမရေးပါနှင့်။
+
+Expected output
+ပထမ command ၏ output တွင် ထည့်သွင်းထားသော document အရေအတွက်နှင့် MongoDB က ထုတ်ပေးသော identifier များကို စစ်ပါ။ နောက် command ၏ result တွင် Learn BSON နှင့် Build query document နှစ်ခုလုံး၌ done တန်ဖိုးသည် false ဖြစ်နေကြောင်း စစ်ဆေးပါ။ mongosh version အလိုက် output format ကွာနိုင်သော်လည်း result count၊ field value နှင့် document အရေအတွက်ကို မစစ်ဘဲ write အောင်မြင်သည်ဟု မယူဆပါနှင့်။
+
+Step-by-step implementation
+1. Academy playground ကိုဖွင့်ပြီး isolated database နှင့် sample collection ကို ရွေးပါ။
+2. လက်ရှိ documents အနည်းငယ်ကို အရင်ဖတ်ပြီး collection အမည်၊ field များနှင့် data type များကို စစ်ပါ။
+3. လိုအပ်သော CRUD operation တစ်ခုစီကို တိကျသော filter နှင့် allowlisted field များဖြင့် လုပ်ဆောင်ပါ။
+4. Write result၊ ပြောင်းလဲသွားသော document နှင့် count ကို ပြန်ဖတ်ပြီး မျှော်လင့်ထားသည့် result နှင့် နှိုင်းယှဉ်ပါ။
+5. Query၊ မျှော်လင့်ထားသော result နှင့် reset လုပ်မည့်အဆင့်ကို မှတ်တမ်းတင်ပါ။
+6. လေ့ကျင့်ခန်းပြီးလျှင် virtual database ကို reset လုပ်ပြီး နောက်တစ်ကြိမ် စမ်းသပ်ရာတွင် state အဟောင်း မကျန်စေပါနှင့်။
+
+Data modeling explanation
+Document တစ်ခုကို မည်သို့ဖတ်မည်၊ မည်သို့ပြင်မည်၊ ဆက်စပ် data ကို ဘယ်နှစ်ကြိမ်လိုမည်ဆိုသော access pattern ကို အရင်စဉ်းစားပါ။ Document size၊ array cardinality၊ consistency လိုအပ်ချက်၊ validation နှင့် index လိုအပ်ချက်တို့ကိုလည်း ထည့်တွက်ပါ။ အတူတကွ အမြဲဖတ်ရသော data နှင့် အရွယ်အစားကန့်သတ်ချက်အတွင်းရှိ data ကို embed လုပ်နိုင်သော်လည်း သီးခြားလွတ်လပ်စွာ တိုးပွားမည့် data ကို reference လုပ်ရန် လိုနိုင်သည်။ Relational table ကို တိုက်ရိုက်ကူးယူခြင်းထက် application ၏ အမှန်တကယ်ဖတ်ရှုရေးသားပုံနှင့် ကိုက်ညီအောင် model ပြုလုပ်ပါ။
+
+Common errors
+- Empty filter ဖြင့် update သို့မဟုတ် delete လုပ်ခြင်းကြောင့် document အားလုံး ပြောင်းလဲသွားခြင်း သို့မဟုတ် ဖျက်သွားခြင်း။
+- Flexible schema ကို design မလိုဟု မှားယွင်းယူဆခြင်း။
+- Public API မှ unrestricted query operator များကို တိုက်ရိုက်လက်ခံခြင်း။
+- Projection မသုံးဘဲ မလိုအပ်သော field သို့မဟုတ် sensitive data များကို ပြန်ပေးခြင်း။
+- Write result ကို မစစ်ဘဲ operation အောင်မြင်သည်ဟု ယူဆခြင်း။
+- Reset မလုပ်ဘဲ လေ့ကျင့်ခန်းဟောင်း၏ state နှင့် အသစ်ကို ရောထွေးခြင်း။
+
+Troubleshooting
+ရလဒ်မမှန်လျှင် database အမည်၊ collection အမည်၊ field path၊ BSON type နှင့် filter shape ကို အရင်စစ်ပါ။ done သည် Boolean ဖြစ်သော်လည်း string false ဖြင့် ရှာမိလျှင် တူညီသော result မရနိုင်ပါ။ Result count နှင့် လက်ရှိ documents ကို သီးခြားဖတ်ပြီး query ကို အနည်းဆုံး reproducible sample ဖြင့် ပြန်စမ်းပါ။ Index သို့မဟုတ် permission ပြဿနာဖြစ်နိုင်သည့် real deployment တွင် server log နှင့် explain plan ကိုလည်း စစ်ဆေးပါ။ Playground state မရှင်းလင်းတော့လျှင် virtual database ကို reset ပြုလုပ်ပါ။
+
+Best practices
+- User input ကို validate လုပ်ပြီး field၊ operator၊ sort key နှင့် page size များကို allowlist သတ်မှတ်ပါ။
+- Update နှင့် delete တွင် တိကျသော filter သုံးပြီး write ပြီးတိုင်း result ကို verify လုပ်ပါ။
+- အမှန်တကယ်အသုံးပြုသည့် access pattern ကို တိုင်းတာပြီးမှ index ထည့်ကာ explain plan ဖြင့် စစ်ပါ။
+- List response များတွင် projection၊ deterministic sorting နှင့် pagination သုံးပါ။
+- Credential များကို server-side တွင်သာ သိမ်းပြီး TLS၊ RBAC၊ backup နှင့် audit log များကို real deployment တွင် အသုံးပြုပါ။
+
+Security considerations
+Academy playground သည် isolated in-memory simulator ဖြစ်ပြီး untrusted query ကို platform PostgreSQL၊ production database သို့မဟုတ် ကျောင်းသား၏ MongoDB account ပေါ်တွင် မလုပ်ဆောင်ပါ။ Browser code ထဲသို့ credential မထည့်ပါနှင့်။ Real API တစ်ခုတည်ဆောက်ရာတွင် client က collection name နှင့် operator အားလုံးကို အလိုအလျောက်ပေးနိုင်အောင် မလုပ်ဘဲ server-side schema၊ authorization နှင့် query allowlist ဖြင့် ကန့်သတ်ပါ။
+
+Hands-on exercise
+Academy MongoDB playground တွင် CRUD challenge ကို ပြီးအောင်လုပ်ပါ။ အောက်ပါအချက်များကို မှတ်တမ်းတင်ပါ။
+1. အသုံးပြုခဲ့သော query သို့မဟုတ် command။
+2. မျှော်လင့်ထားသော document၊ field value နှင့် result count။
+3. Write ပြီးနောက် အတည်ပြုရန် အသုံးပြုခဲ့သော read query။
+4. လေ့ကျင့်ခန်းအပြီး virtual data ကို reset လုပ်ရန် အဆင့်။
+
+Quiz
+Academy MongoDB playground တွင် အသုံးပြုသော database သည် မည်သည့်အမျိုးအစား ဖြစ်သနည်း?
+ရွေးချယ်ရန် - သီးခြား in-memory simulation | Production PostgreSQL | ကျောင်းသား၏ အမှန်တကယ် Atlas cluster
+မှန်ကန်သောအဖြေ - သီးခြား in-memory simulation
+ရှင်းလင်းချက် - Simulator သည် platform data နှင့် ကျောင်းသား၏ data များကို မထိခိုက်စေရန် သီးခြား memory state ကိုသာ အသုံးပြုသည်။
+
+Mini project
+Virtual course catalog တစ်ခုကို တည်ဆောက်ပါ။ Sample documents များထည့်ခြင်း၊ CRUD operation များ၊ ခွင့်ပြုထားသော search filter၊ projection၊ တည်ငြိမ်သော sorting၊ pagination နှင့် reset/cleanup မှတ်စုတို့ ပါဝင်ရမည်။ Project အတွက် query တစ်ခုစီ၏ ရည်ရွယ်ချက်၊ မျှော်လင့်ထားသော result နှင့် data မထိခိုက်စေရန် အသုံးပြုထားသော filter ကို ရေးပြပါ။
+
+Summary
+ယခုအခါ isolated virtual database တစ်ခုအတွင်း MongoDB CRUD workflow ကို စနစ်တကျ ဆောင်ရွက်နိုင်ပြီဖြစ်သည်။ Data ကို အရင်စစ်ဆေးခြင်း၊ တိကျသော filter ဖြင့် write လုပ်ခြင်း၊ result ကို ပြန်လည်အတည်ပြုခြင်း၊ မလိုအပ်သော field များကို မပြခြင်းနှင့် လေ့ကျင့်ခန်းပြီးနောက် reset လုပ်ခြင်းတို့သည် data integrity နှင့် security boundary ကို ထိန်းသိမ်းပေးသည်။
+
+Next lesson
+နောက်သင်ခန်းစာတွင် query playground ကို ဆက်လက်အသုံးပြုပြီး filtering နှင့် read result များကို ပိုမိုလေ့ကျင့်ပါ။
+
+Safety note
+ဤဥပမာများသည် ကြိုတင်သတ်မှတ်ထားသော educational content များဖြစ်သည်။ Production database သို့ ချိတ်ဆက်ခြင်း သို့မဟုတ် မယုံကြည်ရသော query ကို အမှန်တကယ် execute လုပ်ခြင်း မရှိပါ။
+"""
 
 def _slug(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
@@ -153,6 +246,12 @@ Safety note
 Examples are predefined educational content. No production database or untrusted query execution is available.
 """
 
+def _content_mm(position: int, item: tuple) -> str:
+    if item[0] == "First MongoDB CRUD Workflow":
+        return FIRST_CRUD_MM_CONTENT
+    title, _, _, _, _, mm, exercise, _ = item
+    return f"{title}\n\n{mm}\n\nလေ့ကျင့်ခန်း\n{exercise}"
+
 def seed_mongodb_course(db, course):
     course.title = "MongoDB — From Zero to Professional NoSQL Database Developer"
     course.short_description = "A free, practical path from document modeling and CRUD to aggregation, security, scaling, and production operations."
@@ -178,7 +277,7 @@ def seed_mongodb_course(db, course):
         lesson.title, lesson.slug = title, slug
         lesson.description = item[1]
         lesson.content_en = _content(position, item)
-        lesson.content_mm = f"{title}\n\n{item[5]}\n\nလေ့ကျင့်ခန်း\n{item[6]}"
+        lesson.content_mm = _content_mm(position, item)
         lesson.duration_minutes, lesson.status, lesson.published = 45, "published", True
         example = db.scalar(select(CodeExample).where(CodeExample.lesson_id == lesson.id).order_by(CodeExample.position, CodeExample.created_at, CodeExample.id))
         values = {"title": f"{title} example", "language": item[3], "filename": item[3], "code": item[2], "description": "Safe MongoDB example using isolated practice data; the Academy does not execute it against production.", "position": 1}

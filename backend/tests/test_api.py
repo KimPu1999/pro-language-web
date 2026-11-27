@@ -90,6 +90,33 @@ def test_c_curriculum_seed_is_complete_and_idempotent(client):
             assert question.correct_answer in json.loads(question.options_json), question.prompt
         assert db.query(CodeExample).filter_by(lesson_id=lessons[-1].id).count() == 2
 
+def test_mongodb_first_crud_workflow_has_complete_burmese_body(client):
+    from app.mongodb_course_content import FIRST_CRUD_MM_CONTENT, seed_mongodb_course
+    from app.models import CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
+    import json
+
+    with client.session_factory() as db:
+        language = ProgrammingLanguage(name="MongoDB", slug="mongodb-test", color="#47A248")
+        category = db.query(CourseCategory).filter_by(slug="fundamentals").one()
+        db.add(language); db.flush()
+        course = Course(language_id=language.id, category_id=category.id, title="MongoDB", slug="mongodb-test", description="MongoDB", level="beginner", duration_minutes=0, published=True, status="draft")
+        db.add(course); db.flush(); seed_mongodb_course(db, course); db.commit()
+        lesson = db.query(Lesson).filter_by(slug="01-first-mongodb-crud-workflow").one()
+        quiz = db.query(LessonQuiz).filter_by(lesson_id=lesson.id).one()
+        questions = db.query(QuizQuestion).filter_by(quiz_id=quiz.id).order_by(QuizQuestion.position).all()
+
+        assert lesson.content_mm == FIRST_CRUD_MM_CONTENT
+        assert len(lesson.content_mm) > len(lesson.content_en)
+        for heading in ("Introduction", "Learning objectives", "Detailed theory", "Expected output", "Hands-on exercise", "Quiz", "Mini project", "Summary", "Safety note"):
+            assert heading in lesson.content_mm
+        assert "db.todos.insertMany" in lesson.content_mm
+        assert "What database does the Academy MongoDB playground use?" in lesson.content_en
+        assert "Academy MongoDB playground ၏ database" not in lesson.content_en
+        assert len(db.query(CodeExample).filter_by(lesson_id=lesson.id).all()) == 1
+        assert len(questions) == 3
+        for question in questions:
+            assert question.correct_answer in json.loads(question.options_json)
+
 def test_cpp_curriculum_is_separate_complete_and_idempotent(client):
     from app.cpp_course_content import seed_cpp_course
     from app.models import CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
