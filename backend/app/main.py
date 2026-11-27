@@ -33,6 +33,7 @@ from .collaboration_routes import router as collaboration_router
 from .ecosystem_routes import router as ecosystem_router
 from .organization_routes import router as organization_router
 from .security_routes import router as security_router
+from .platform_security_routes import router as platform_security_router
 from .automation_routes import router as automation_router
 from .content_studio_routes import router as content_studio_router
 from .content_review_routes import router as content_review_router
@@ -101,6 +102,7 @@ app.include_router(collaboration_router)
 app.include_router(ecosystem_router)
 app.include_router(organization_router)
 app.include_router(security_router)
+app.include_router(platform_security_router)
 app.include_router(automation_router)
 app.include_router(content_studio_router)
 app.include_router(content_review_router)

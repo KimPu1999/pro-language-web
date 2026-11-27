@@ -16,7 +16,9 @@ logger = logging.getLogger("codemaster.auth")
 def profile_payload(user: User, db: Session):
     profile=db.scalar(select(UserProfile).where(UserProfile.user_id==user.id))
     return {"id":user.id,"email":user.email,"full_name":user.display_name,"role":user.role,"email_verified":bool(user.email_verified_at),"email_verified_at":user.email_verified_at,"profile":{"bio":profile.bio if profile else None,"learning_interests":profile.learning_interests.split("|") if profile and profile.learning_interests else [],"preferred_language":profile.preferred_language if profile else None,"learning_level":profile.learning_level if profile else None,"show_myanmar":profile.show_myanmar if profile else False,"avatar_url":profile.avatar_url if profile else None}}
-def log_event(db, event, user_id=None, request=None): db.add(SecurityAuditLog(user_id=user_id,event=event,ip_address=request.client.host if request and request.client else None))
+def log_event(db, event, user_id=None, request=None, metadata=None):
+    safe_metadata = {"request_id": getattr(request.state, "request_id", None), **(metadata or {})} if request else (metadata or {})
+    db.add(SecurityAuditLog(user_id=user_id,event=event,ip_address=request.client.host if request and request.client else None,metadata_json=json.dumps(safe_metadata, sort_keys=True)))
 def send_verification(db, user, request):
     raw=new_token(); db.add(EmailVerificationToken(user_id=user.id,token_hash=hash_token(raw),expires_at=now()+timedelta(hours=settings.verification_ttl_hours))); mailer.send(user.email,"Verify your CodeMaster Academy email",f"Open {settings.app_base_url}/verify-email?token={raw}"); log_event(db,"verification_requested",user.id,request)
 def public_registration_enabled(db):
@@ -44,6 +46,8 @@ def login(payload: LoginIn, response: Response, request: Request, db: Session=De
     # Keep password verification before the account-status check so inactive
     # accounts do not become an account-enumeration oracle.
     if not valid or user.account_status != "active":
+        log_event(db, "login_failed", user.id if user else None, request, {"reason": "invalid_credentials"})
+        db.commit()
         logger.info("login_failed request_id=%s lookup_ms=%.1f password_verify_ms=%.1f total_ms=%.1f error_category=invalid_credentials", getattr(request.state, "request_id", "-"), lookup_ms, verify_ms, (time.perf_counter() - started) * 1000)
         raise HTTPException(401,"Invalid email or password")
     session_started = time.perf_counter()
