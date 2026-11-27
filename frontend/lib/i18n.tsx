@@ -16,8 +16,8 @@ const messages: Record<Locale, Messages> = {
 };
 
 const supplementalMessages: Record<Locale, Messages> = {
-  en: { learnProgramming: "Learn programming from first principles", chooseLanguage: "Choose a language, follow its prerequisites, and learn the theory before you ever need to write or execute code.", myanmarPartial: "This Burmese translation is incomplete. The available Burmese text and the full English source are shown so no lesson content is hidden." },
-  my: { learnProgramming: "Programming ကို အခြေခံမှ စတင်လေ့လာပါ", chooseLanguage: "ဘာသာစကားတစ်ခုရွေးပြီး လိုအပ်သောအခြေခံများကို လိုက်နာလေ့လာပါ။ ကုဒ်ရေးခြင်းမစမီ သီအိုရီကို နားလည်ပါ။", myanmarPartial: "မြန်မာဘာသာပြန်သည် မပြည့်စုံသေးပါ။ သင်ခန်းစာအကြောင်းအရာ မပျောက်စေရန် ရရှိထားသော မြန်မာစာနှင့် အင်္ဂလိပ်အကြောင်းအရာအပြည့်ကို ပြသထားပါသည်။" },
+  en: { learnProgramming: "Learn programming from first principles", chooseLanguage: "Choose a language, follow its prerequisites, and learn the theory before you ever need to write or execute code.", myanmarPartial: "This Burmese translation is incomplete.", myanmarIncomplete: "This Burmese translation is incomplete.", readEnglish: "Read in English" },
+  my: { learnProgramming: "Programming ကို အခြေခံမှ စတင်လေ့လာပါ", chooseLanguage: "ဘာသာစကားတစ်ခုရွေးပြီး လိုအပ်သောအခြေခံများကို လိုက်နာလေ့လာပါ။ ကုဒ်ရေးခြင်းမစမီ သီအိုရီကို နားလည်ပါ။", myanmarPartial: "မြန်မာဘာသာပြန်သည် မပြည့်စုံသေးပါ။", myanmarIncomplete: "ဤသင်ခန်းစာ၏ မြန်မာဘာသာပြန် အပြည့်အစုံ မရရှိသေးပါ။", readEnglish: "အင်္ဂလိပ်ဘာသာဖြင့် ဖတ်ရန်" },
 };
 
 type I18nValue = { locale: Locale; setLocale: (locale: Locale) => void; t: (key: string) => string; localized: (english?: string | null, burmese?: string | null) => string };

@@ -71,7 +71,8 @@ def _lesson_payload(row: Lesson, locale: str = "en"):
     burmese_chars = len(BURMESE_TEXT.findall(content_mm))
     english_chars = len((row.content_en or "").strip())
     translation_status = "missing" if burmese_chars == 0 else ("partial" if english_chars and burmese_chars < max(20, english_chars // 5) else "available")
-    return {"id": row.id, "title": row.title, "slug": row.slug, "content_en": row.content_en, "content_mm": row.content_mm, "order_index": row.order_index, "code_examples": row.code_examples, "requested_locale": locale, "translation_status": translation_status, "translation_available": translation_status == "available"}
+    fallback_used = locale == "my" and translation_status != "available"
+    return {"id": row.id, "title": row.title, "slug": row.slug, "content_en": row.content_en, "content_mm": row.content_mm, "content": row.content_en if fallback_used or locale == "en" else content_mm, "order_index": row.order_index, "code_examples": row.code_examples, "requested_locale": locale, "resolved_locale": "en" if fallback_used else locale, "fallback_used": fallback_used, "translation_status": translation_status, "translation_available": translation_status == "available"}
 @app.middleware("http")
 async def request_context(request, call_next):
     request_id=request.headers.get("X-Request-ID") or str(uuid.uuid4())

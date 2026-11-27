@@ -44,6 +44,9 @@ class LessonSyntaxReferencesIn(BaseModel):
 class LessonOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; content_en: str; content_mm: str|None; order_index: int; code_examples: list[ExampleOut]=Field(default_factory=list)
     requested_locale: Literal["en", "my"] = "en"
+    resolved_locale: Literal["en", "my"] = "en"
+    content: str = ""
+    fallback_used: bool = False
     translation_status: Literal["available", "missing", "partial"] = "missing"
     translation_available: bool = False
 class ModuleOut(BaseModel):

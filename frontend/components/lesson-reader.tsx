@@ -46,20 +46,20 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
   const [quizLoading, setQuizLoading] = useState(true);
   const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [progress, setProgress] = useState<CourseProgress | null>(null);
+  const [showEnglishFallback, setShowEnglishFallback] = useState(false);
   const example = lesson.code_examples[exampleIndex];
   const hasBurmese = Boolean(lesson.content_mm?.trim());
   const translationStatus = lesson.translation_status ?? (hasBurmese && lesson.content_mm!.length < lesson.content_en.length * 0.8 ? "partial" : hasBurmese ? "available" : "missing");
   const incompleteBurmese = locale === "my" && translationStatus !== "available";
-  // A partial translation must never be mixed with English paragraphs. Until
-  // the Burmese version is complete and published, show the full English
-  // lesson as the explicitly labeled fallback.
-  const lessonContent = locale === "my" && translationStatus === "available"
-    ? lesson.content_mm ?? ""
+  const lessonContent = locale === "my" && !showEnglishFallback
+    ? (hasBurmese ? lesson.content_mm ?? "" : lesson.content_en)
     : localized(lesson.content_en, null);
   const visitedLesson = useRef<string | null>(null);
 
   const lessonProgress = progress?.lessons.find(item => item.lesson_id === lesson.id);
   const percentage = progress && progress.total_lessons ? (progress.completed_lessons / progress.total_lessons) * 100 : 0;
+
+  useEffect(() => { setShowEnglishFallback(false); }, [locale, lesson.id]);
 
   useEffect(() => {
     let active = true;
@@ -143,7 +143,7 @@ export function LessonReader({ lesson, courseId, courseSlug, courseTitle, module
       <LessonNotes courseId={courseId} lessonId={lesson.id} courseSlug={courseSlug} lessonSlug={lesson.slug} />
 
       <article aria-label={t("lessonContent")}>
-        {locale === "my" && incompleteBurmese && <p className="mb-5 rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm leading-6 text-amber-200" role="status">{hasBurmese ? t("myanmarPartial") : t("myanmarMissing")}</p>}
+        {locale === "my" && incompleteBurmese && <div className="mb-5 rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm leading-6 text-amber-200" role="status"><p>{t("myanmarIncomplete")}</p><button type="button" className="mt-2 font-semibold text-amber-100 underline underline-offset-4" onClick={() => setShowEnglishFallback(true)}>{t("readEnglish")}</button></div>}
         <LessonContent content={lessonContent} excludeSections={locale === "en" ? ["Myanmar explanation"] : []} />
       </article>
 
