@@ -553,6 +553,51 @@ def test_laravel_project_path_is_created_as_reviewable_drafts(client):
 
     assert client.get("/api/v1/projects?technology=Laravel").json()["total"] == 0
 
+def test_networking_curriculum_expands_and_is_idempotent(client):
+    from app.networking_course_content import MODULE_LESSON_TOPICS, MODULE_ONE, PLANNED_MODULES, seed_networking_course
+    from app.models import CodingExercise, CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion
+    import json
+
+    with client.session_factory() as db:
+        language = db.query(ProgrammingLanguage).filter_by(slug="networking").one_or_none()
+        if language is None:
+            language = ProgrammingLanguage(name="Networking", slug="networking", color="#38BDF8")
+            db.add(language); db.flush()
+        category = db.query(CourseCategory).filter_by(slug="cybersecurity").one_or_none()
+        if category is None:
+            category = CourseCategory(name="Cybersecurity", slug="cybersecurity")
+            db.add(category); db.flush()
+        course = Course(language_id=language.id, category_id=category.id, title="Networking", slug="networking-expanded-test", description="Networking", level="beginner", duration_minutes=0, published=False, status="draft")
+        db.add(course); db.flush()
+        seed_networking_course(db, course)
+        db.commit()
+        first_ids = {lesson.slug: lesson.id for lesson in db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all()}
+        seed_networking_course(db, course)
+        db.commit()
+
+        modules = db.query(CourseModule).filter_by(course_id=course.id).order_by(CourseModule.order_index).all()
+        lessons = db.query(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).order_by(CourseModule.order_index, Lesson.order_index).all()
+        quizzes = db.query(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all()
+        questions = db.query(QuizQuestion).join(LessonQuiz).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all()
+        examples = db.query(CodeExample).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all()
+        exercises = db.query(CodingExercise).join(Lesson).join(CourseModule).filter(CourseModule.course_id == course.id).all()
+
+        assert [module.title for module in modules] == PLANNED_MODULES
+        assert len(lessons) == len(MODULE_ONE) + sum(len(items) for items in MODULE_LESSON_TOPICS.values()) == 203
+        assert {lesson.slug: lesson.id for lesson in lessons} == first_ids
+        assert all(not lesson.published and lesson.status == "draft" for lesson in lessons)
+        assert all("Detailed theory" in lesson.content_en and ("Security best practices" in lesson.content_en or "Security considerations" in lesson.content_en) for lesson in lessons)
+        assert all("အသေးစိတ်သီအိုရီ" in lesson.content_mm and "လုံခြုံရေးအကောင်းဆုံးနည်းလမ်းများ" in lesson.content_mm for lesson in lessons)
+        assert len(quizzes) == 203
+        assert len(questions) == 203 * 4
+        assert len(examples) == 203
+        assert len(exercises) == 203 * 3
+        assert all(question.correct_answer in json.loads(question.options_json) for question in questions)
+        assert all(exercise.status == "draft" and exercise.description_mm for exercise in exercises)
+        assert course.title == "Computer Networking Fundamentals — From Zero to Professional Network Engineer"
+
+    assert client.get("/api/v1/courses/networking-expanded-test").status_code == 404
+
 def test_csharp_curriculum_is_published_and_idempotent(client):
     from app.csharp_course_content import MODULES, MODULE_ONE, seed_csharp_course
     from app.models import CodeExample, Course, CourseCategory, CourseModule, Lesson, LessonQuiz, ProgrammingLanguage, QuizQuestion

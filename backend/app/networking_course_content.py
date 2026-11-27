@@ -4,7 +4,7 @@ import re
 
 from sqlalchemy import select
 
-from .models import CodeExample, CourseModule, Lesson, LessonQuiz, QuizQuestion
+from .models import CodingExercise, CodeExample, CourseModule, Lesson, LessonQuiz, QuizQuestion
 
 PLANNED_MODULES = [
     "Introduction to Computer Networking", "Types of Computer Networks", "Network Topologies", "Network Hardware & Devices",
@@ -69,6 +69,258 @@ MODULE_ONE = [
      "Complete the playground guided challenge: inspect interface, route, DNS, and simulated reachability, then record the likely failing layer.",
      ("Network troubleshooting ၏ ပထမအဆင့်က ဘာလဲ?", ["Define scope, symptoms, and authorized evidence collection", "Scan every address", "Change firewall rules randomly"], "Define scope, symptoms, and authorized evidence collection", "Scope and evidence make troubleshooting safe and repeatable.")),
 ]
+
+MODULE_LESSON_TOPICS = {
+    "Types of Computer Networks": ["LAN, WAN, and MAN", "PAN, CAN, and data-center networks", "Internet and private network boundaries", "Network ownership and failure domains", "Network scope design lab"],
+    "Network Topologies": ["Bus, star, ring, and mesh", "Physical and logical topology", "Hierarchical campus design", "Redundancy and single points of failure", "Topology review lab"],
+    "Network Hardware & Devices": ["Switches and MAC learning", "Routers and forwarding tables", "Firewalls and policy enforcement", "Wireless access points", "Device role selection lab"],
+    "OSI Reference Model": ["Physical and data-link layers", "Network and transport layers", "Session, presentation, and application layers", "Layer-to-protocol mapping", "OSI troubleshooting lab"],
+    "TCP/IP Model": ["Network access layer", "Internet layer and IP", "Transport layer behavior", "Application layer protocols", "TCP/IP mapping lab"],
+    "Network Cables & Media": ["Copper Ethernet media", "Fiber optic links", "Wireless radio media", "Connectors, transceivers, and standards", "Media troubleshooting lab"],
+    "Ethernet Fundamentals": ["Ethernet frames", "MAC addresses and unicast", "Broadcast and multicast", "Duplex, speed, and negotiation", "Ethernet verification lab"],
+    "IPv4 Addressing": ["IPv4 address structure", "Public and private address ranges", "Network, host, and broadcast addresses", "Loopback, link-local, and documentation ranges", "IPv4 planning lab"],
+    "Subnet Masks & CIDR": ["Dotted-decimal subnet masks", "CIDR prefixes", "Network and host bits", "Address capacity calculations", "CIDR planning lab"],
+    "Subnetting Fundamentals": ["Binary subnet calculations", "Equal-size subnetting", "Subnet boundaries", "Address allocation", "Subnetting practice lab"],
+    "Advanced Subnetting & VLSM": ["Variable-length subnet masks", "Route summarization", "Address planning constraints", "VLSM verification", "VLSM design lab"],
+    "IPv6 Fundamentals": ["IPv6 address notation", "Global, link-local, and unique-local addresses", "IPv6 prefixes", "Neighbor discovery", "IPv6 planning lab"],
+    "ARP & Neighbor Discovery": ["ARP requests and replies", "ARP cache behavior", "IPv6 neighbor discovery", "Spoofing risks and protections", "Neighbor troubleshooting lab"],
+    "TCP & UDP": ["TCP connection establishment", "TCP reliability and flow control", "UDP datagrams", "Ports and ephemeral ports", "Transport troubleshooting lab"],
+    "Common Network Protocols": ["HTTP and HTTPS", "SSH and secure administration", "SMTP and email delivery", "FTP, SFTP, and file transfer", "Protocol identification lab"],
+    "DNS Fundamentals": ["DNS names and records", "Recursive and authoritative resolution", "Caching and TTL", "DNS security and split-horizon", "DNS troubleshooting lab"],
+    "DHCP Fundamentals": ["DHCP discovery and leases", "DHCP options", "Reservations and scopes", "DHCP relay", "DHCP troubleshooting lab"],
+    "Switching Fundamentals": ["MAC address tables", "Forwarding and flooding", "Collision and broadcast domains", "Port security", "Switch verification lab"],
+    "VLANs & Trunking": ["VLAN segmentation", "Access ports", "802.1Q trunks", "Native VLAN risks", "VLAN configuration lab"],
+    "Spanning Tree Protocol": ["Layer-two loops", "STP roles and states", "Root bridge selection", "Rapid STP", "STP troubleshooting lab"],
+    "Routing Fundamentals": ["Routing table entries", "Longest-prefix match", "Next hops and interfaces", "Administrative distance", "Routing verification lab"],
+    "Static & Default Routing": ["Static route syntax", "Default routes", "Floating static routes", "Route failure behavior", "Static routing lab"],
+    "Dynamic Routing Fundamentals": ["Routing protocol concepts", "Distance-vector behavior", "Link-state behavior", "Convergence and metrics", "Dynamic routing lab"],
+    "NAT & PAT": ["Private address translation", "Port address translation", "Static NAT", "NAT limitations and logging", "NAT verification lab"],
+    "Wireless Networking": ["Wireless bands and channels", "802.11 association", "Roaming and coverage", "Wireless performance", "Wireless planning lab"],
+    "Wireless Security": ["WPA2 and WPA3", "Enterprise authentication", "Guest network isolation", "Wireless monitoring", "Wireless security review lab"],
+    "Firewalls & Access Control Lists": ["Stateful firewall behavior", "ACL order and matching", "Ingress and egress policy", "Logging denied traffic", "Firewall policy lab"],
+    "VPN & Secure Remote Access": ["VPN tunnel concepts", "Site-to-site VPN", "Remote-access VPN", "Authentication and key exchange", "VPN troubleshooting lab"],
+    "Network Security Fundamentals": ["Network threat models", "Segmentation and zero trust", "Secure management", "Network security monitoring", "Security architecture lab"],
+    "Linux Networking Commands": ["ip and ss commands", "ping, tracepath, and mtr", "dig and resolvectl", "tcpdump for authorized captures", "Linux troubleshooting lab"],
+    "Windows Networking Tools": ["ipconfig and route", "ping and tracert", "nslookup and Resolve-DnsName", "Test-NetConnection", "Windows troubleshooting lab"],
+    "Packet Analysis with Wireshark": ["Capture scope and filters", "Ethernet and ARP packets", "TCP handshake analysis", "DNS and HTTP inspection", "Packet analysis lab"],
+    "Network Troubleshooting": ["Troubleshooting methodology", "Physical and link failures", "Addressing and routing failures", "DNS and transport failures", "Incident troubleshooting lab"],
+    "Network Monitoring & Observability": ["Metrics, logs, and traces", "Availability and latency", "SNMP and telemetry", "Alert design", "Monitoring review lab"],
+    "Cloud Networking Fundamentals": ["Virtual networks and subnets", "Cloud route tables", "Security groups and network ACLs", "Private endpoints and gateways", "Cloud network lab"],
+    "Network Automation with Python": ["Python ipaddress module", "Parsing command output safely", "Network API clients", "Automation idempotency", "Automation lab"],
+    "Network Design & High Availability": ["Requirements and capacity", "Redundant links and devices", "Load balancing", "Disaster recovery", "High-availability design lab"],
+    "Professional Networking Projects": ["Network assessment project", "Campus network project", "Secure branch-office project", "Cloud hybrid network project", "Professional project review"],
+    "Final Network Engineering Capstone": ["Capstone scope and requirements", "Addressing and routing design", "Security and observability design", "Implementation and validation", "Capstone assessment"],
+}
+
+def _generated_code(title: str) -> tuple[str, str]:
+    lower = title.lower()
+    if "python" in lower or "automation" in lower:
+        return ("from ipaddress import ip_network\n\nnetwork = ip_network('192.0.2.0/24')\nprint(network.num_addresses)", "python")
+    if "ipv6" in lower or "neighbor" in lower:
+        return ("printf '2001:db8:1::/64 -> link-local neighbor discovery\\n'", "bash")
+    if "dns" in lower:
+        return ("nslookup academy.invalid # Authorized documentation example", "bash")
+    if "windows" in lower:
+        return ("Test-NetConnection 192.0.2.1 -Port 443", "powershell")
+    if "wireshark" in lower or "packet" in lower or "tcpdump" in lower:
+        return ("tcpdump -ni eth0 'tcp port 443' # Authorized capture only", "bash")
+    if "subnet" in lower or "cidr" in lower or "vlsm" in lower:
+        return ("python -c \"from ipaddress import ip_network; print(list(ip_network('192.0.2.0/28').hosts()))\"", "bash")
+    if "route" in lower or "routing" in lower:
+        return ("ip route show # Read-only inspection in an authorized lab", "bash")
+    if "vlan" in lower or "switch" in lower or "ethernet" in lower:
+        return ("printf 'access-port -> VLAN 10 -> trunk -> routed gateway\\n'", "bash")
+    if "firewall" in lower or "acl" in lower or "security" in lower:
+        return ("printf 'allow documented service -> log decision -> deny everything else\\n'", "bash")
+    if "wireless" in lower or "wifi" in lower:
+        return ("printf 'client -> WPA3 access point -> isolated guest VLAN\\n'", "bash")
+    return ("printf 'scope -> evidence -> layered test -> documented result\\n'", "bash")
+
+def _generated_content(module_title: str, title: str, previous: str, next_title: str) -> str:
+    code, language = _generated_code(title)
+    return f"""Introduction
+{title} is part of the {module_title} module and develops a professional network-engineering skill.
+
+Learning objectives
+- Explain the purpose, scope, and failure modes of {title}.
+- Map the topic to devices, layers, addresses, protocols, and observable evidence.
+- Perform a safe read-only analysis in an isolated or explicitly authorized lab.
+- Document a verified result, a failure path, and a remediation decision.
+
+Prerequisites
+{previous}
+
+Network architecture explanation
+client -> access/link -> switch or access point -> gateway/router -> routed network -> service
+
+Detailed theory
+{title} is useful only when its boundary is clear. Identify which hosts, interfaces, prefixes, ports, names, devices, and administrative owners are involved. Separate physical connectivity, link-layer forwarding, IP routing, transport behavior, application protocol behavior, and security policy. A symptom at one layer does not prove that every higher layer is broken.
+
+For a professional workflow, define the authorized scope first, establish the expected packet path, collect the smallest amount of read-only evidence, compare it with a known-good path, and record the change and verification result. Address plans, route tables, DNS records, firewall rules, logs, captures, and monitoring data should agree with the documented design.
+
+Syntax and progressive examples
+Example 1 — inspect or model the smallest boundary:
+{code}
+
+Example 2 — identify the relevant address or prefix:
+from ipaddress import ip_network
+network = ip_network("192.0.2.0/28")
+print(network.network_address, network.broadcast_address)
+
+Example 3 — describe the packet path:
+client -> gateway -> routed prefix -> service
+
+Example 4 — record a safe verification:
+expected = "authorized scope, expected route, expected response"
+print(expected)
+
+Example 5 — preserve the security boundary:
+print("read-only evidence; no unauthorized scan or configuration change")
+
+Use documentation ranges such as 192.0.2.0/24 and 2001:db8::/32 in examples. Run executable commands only in a disposable lab or network where you have explicit authorization. Real output varies by operating system, device vendor, route, policy, and current state.
+
+Expected output
+The expected result is predefined simulator evidence or a documented local observation: an interface, prefix, route, protocol exchange, policy decision, or captured field. Record the command, scope, timestamp, result, and interpretation. Do not treat an absent ping reply as proof that the service is unavailable.
+
+Step-by-step explanation
+1. Define the authorized network, user impact, and symptom.
+2. Draw the expected path and identify the relevant layer.
+3. Run the smallest read-only test from a known location.
+4. Compare the result with the address plan, route table, policy, DNS, or capture.
+5. Change only a documented lab configuration and verify the change.
+
+Practical lab
+Build a disposable scenario for {title}. Create a diagram, choose documentation addresses, define the expected packet path, collect evidence from two layers, explain one failure case, and write a cleanup note. Add a test or repeatable verification checklist.
+
+Common errors
+- Confusing MAC addresses, IP addresses, ports, prefixes, and DNS names.
+- Testing from the wrong interface, namespace, VLAN, route, or resolver.
+- Changing a firewall, switch, or router before collecting evidence.
+- Scanning public or private systems without authorization.
+
+Troubleshooting
+Check link state, interface configuration, VLAN or wireless association, default route, longest-prefix match, DNS response, transport port, firewall decision, service logs, and monitoring history. Preserve evidence and redact credentials, private addresses, tokens, and customer data before sharing.
+
+Security best practices
+Use least privilege, segmentation, secure management protocols, MFA, key rotation, documented change control, rate limits, logging, safe capture filters, and explicit authorization. Keep management interfaces private, avoid hardcoded secrets, and verify that automation is idempotent before it changes network state.
+
+Exercises
+- Easy: label the devices, layer, identifiers, and expected result in Example 1.
+- Medium: introduce one controlled fault in a disposable lab and identify it with two read-only tests.
+- Advanced: write a verification plan that distinguishes a physical, addressing, routing, transport, DNS, and policy failure.
+
+Homework
+Prepare a network-engineering note for {title} containing the diagram, assumptions, address plan, commands, expected output, observed output, failure analysis, security considerations, test evidence, and cleanup steps.
+
+Quiz
+1. What should be defined before collecting network evidence? The authorized scope, symptom, and expected path.
+2. True or false: a failed ping always proves that an application is down. False.
+3. Which evidence helps distinguish routing from DNS failure? Route/path evidence and a resolver response checked separately.
+4. What should a network automation script do before changing state? Validate scope, inputs, authorization, and idempotent behavior.
+
+Summary
+You can now reason about {title} with layered models, explicit scope, correct identifiers, repeatable evidence, and safe network-engineering practice.
+
+Next lesson
+{next_title}
+
+Safety note
+The Academy simulator uses predefined local state. It does not execute arbitrary commands, scan public targets, access host networking, or connect to private infrastructure.
+"""
+
+def _generated_content_mm(module_title: str, title: str, code: str, previous: str, next_title: str) -> str:
+    return f"""သင်ခန်းစာခေါင်းစဉ် — {title}
+
+နိဒါန်း
+{title} သည် {module_title} module အတွင်းရှိ network engineering အကြောင်းအရာတစ်ခုဖြစ်ပြီး network ကို layer၊ address၊ protocol နှင့် evidence များဖြင့် စနစ်တကျ နားလည်စေရန် လေ့လာခြင်းဖြစ်သည်။
+
+သင်ယူရမည့်ရည်ရွယ်ချက်များ
+- {title} ၏ ရည်ရွယ်ချက်၊ scope နှင့် failure mode များကို ရှင်းပြနိုင်ရန်။
+- Device၊ layer၊ address၊ protocol နှင့် စောင့်ကြည့်နိုင်သော evidence တို့၏ ဆက်နွယ်မှုကို ခွဲခြားနိုင်ရန်။
+- Isolated သို့မဟုတ် ခွင့်ပြုချက်ရှိသော lab ထဲတွင် read-only analysis ပြုလုပ်နိုင်ရန်။
+- Result၊ failure path နှင့် ပြန်လည်ပြင်ဆင်မည့် ဆုံးဖြတ်ချက်ကို document လုပ်နိုင်ရန်။
+
+လိုအပ်သောအခြေခံများ
+{previous}
+Computer၊ IP address၊ HTTP နှင့် command line အခြေခံကို သိထားပါ။ Command တစ်ခုကို လက်တွေ့ run မလုပ်မီ target network သည် ကိုယ်ပိုင် သို့မဟုတ် ခွင့်ပြုချက်ရထားသော lab ဖြစ်ကြောင်း စစ်ပါ။
+
+Network architecture အကြောင်း
+client -> access/link -> switch သို့မဟုတ် access point -> gateway/router -> routed network -> service
+
+အသေးစိတ်သီအိုရီ
+{title} ကို မှန်ကန်စွာအသုံးချရန် boundary ကို အရင်သတ်မှတ်ရသည်။ ပါဝင်သော host၊ interface၊ prefix၊ port၊ name၊ device နှင့် network owner ကို ခွဲခြားပါ။ Physical connection၊ link-layer forwarding၊ IP routing၊ transport behavior၊ application protocol နှင့် security policy တို့ကို သီးခြားစဉ်းစားပါ။ Layer တစ်ခုတွင် symptom ဖြစ်ခြင်းသည် အခြား layer အားလုံးပျက်နေသည်ဟု မဆိုလိုပါ။
+
+Professional workflow တွင် authorized scope ကို အရင်သတ်မှတ်ပါ။ မျှော်မှန်းထားသော packet path ကို ရေးပါ။ Read-only evidence အနည်းဆုံးကို စုပါ။ Known-good path နှင့် နှိုင်းယှဉ်ပါ။ ပြောင်းလဲမှုနှင့် verification result ကို မှတ်တမ်းတင်ပါ။ Address plan၊ route table၊ DNS record၊ firewall rule၊ log၊ capture နှင့် monitoring data တို့သည် documented design နှင့် ကိုက်ညီရမည်။
+
+Syntax နှင့် အဆင့်လိုက်ဥပမာများ
+ဥပမာ ၁ — အနည်းဆုံး boundary ကို စစ်ခြင်း
+{code}
+
+ဥပမာ ၂ — Address သို့မဟုတ် prefix ကို ခွဲခြားခြင်း
+from ipaddress import ip_network
+network = ip_network("192.0.2.0/28")
+print(network.network_address, network.broadcast_address)
+
+ဥပမာ ၃ — Packet path ကို ရေးခြင်း
+client -> gateway -> routed prefix -> service
+
+ဥပမာ ၄ — Safe verification ကို မှတ်တမ်းတင်ခြင်း
+expected = "authorized scope, expected route, expected response"
+print(expected)
+
+ဥပမာ ၅ — Security boundary ကို ထိန်းသိမ်းခြင်း
+print("read-only evidence; no unauthorized scan or configuration change")
+
+ဥပမာများတွင် 192.0.2.0/24 နှင့် 2001:db8::/32 ကဲ့သို့ documentation range များကို သုံးပါ။ Executable command များကို ကိုယ်ပိုင် disposable lab သို့မဟုတ် ခွင့်ပြုချက်ရှိသော network ထဲတွင်သာ run ပါ။ OS၊ device vendor၊ route၊ policy နှင့် လက်ရှိ state ပေါ်မူတည်၍ real output ကွာနိုင်သည်။
+
+မျှော်မှန်းရလဒ်
+Simulator evidence သို့မဟုတ် local observation တစ်ခု ရရမည်။ Interface၊ prefix၊ route၊ protocol exchange၊ policy decision သို့မဟုတ် captured field ကို command၊ scope၊ timestamp၊ result နှင့် interpretation နှင့်အတူ မှတ်တမ်းတင်ပါ။ Ping reply မရခြင်းတစ်ခုတည်းဖြင့် service မရကြောင်း မဆုံးဖြတ်ပါနှင့်။
+
+အဆင့်လိုက်ရှင်းလင်းချက်
+၁။ Authorized network၊ user impact နှင့် symptom ကို သတ်မှတ်ပါ။
+၂။ မျှော်မှန်း packet path ကို ရေးပြီး သက်ဆိုင်ရာ layer ကို ရွေးပါ။
+၃။ Known location မှ read-only test အနည်းဆုံးကို run ပါ။
+၄။ Result ကို address plan၊ route table၊ policy၊ DNS သို့မဟုတ် capture နှင့် နှိုင်းယှဉ်ပါ။
+၅။ Documented lab configuration ကိုသာ ပြောင်းပြီး ပြောင်းလဲမှုကို ပြန်စစ်ပါ။
+
+လက်တွေ့လေ့ကျင့်ခန်း
+{title} အတွက် disposable scenario တစ်ခု တည်ဆောက်ပါ။ Diagram ရေးပါ။ Documentation address များ ရွေးပါ။ မျှော်မှန်း packet path သတ်မှတ်ပါ။ Layer နှစ်ခုမှ evidence စုပါ။ Failure case တစ်ခုကို ရှင်းပြပြီး cleanup note နှင့် repeatable verification checklist ထည့်ပါ။
+
+အဖြစ်များသောအမှားများ
+- MAC address၊ IP address၊ port၊ prefix နှင့် DNS name ကို ရောထွေးခြင်း။
+- Interface၊ namespace၊ VLAN၊ route သို့မဟုတ် resolver မှားနေရာမှ test လုပ်ခြင်း။
+- Evidence မစုမီ firewall၊ switch သို့မဟုတ် router configuration ကို ပြောင်းခြင်း။
+- ခွင့်ပြုချက်မရှိဘဲ public သို့မဟုတ် private system များကို scan လုပ်ခြင်း။
+
+Troubleshooting လမ်းညွှန်
+Link state၊ interface configuration၊ VLAN သို့မဟုတ် wireless association၊ default route၊ longest-prefix match၊ DNS response၊ transport port၊ firewall decision၊ service log နှင့် monitoring history ကို အစဉ်လိုက်စစ်ပါ။ Evidence များကို ထိန်းသိမ်းပြီး credential၊ private address၊ token နှင့် customer data များကို ဖုံးကွယ်ပြီးမှ share လုပ်ပါ။
+
+လုံခြုံရေးအကောင်းဆုံးနည်းလမ်းများ
+Least privilege၊ segmentation၊ secure management protocol၊ MFA၊ key rotation၊ documented change control၊ rate limit၊ logging၊ safe capture filter နှင့် explicit authorization ကို သုံးပါ။ Management interface များကို private ထားပါ။ Secret ကို code ထဲမထည့်ပါနှင့်။ Automation သည် state ကို ပြောင်းမီ idempotent ဖြစ်ကြောင်း စစ်ပါ။
+
+လေ့ကျင့်ခန်းများ
+- လွယ်ကူသောအဆင့်: ဥပမာ ၁ ထဲမှ device၊ layer၊ identifier နှင့် expected result ကို သတ်မှတ်ပါ။
+- အလယ်အလတ်အဆင့်: Disposable lab ထဲတွင် fault တစ်ခုကို ထည့်ပြီး read-only test နှစ်ခုဖြင့် ရှာပါ။
+- အဆင့်မြင့်: Physical၊ addressing၊ routing၊ transport၊ DNS နှင့် policy failure များကို ခွဲခြားနိုင်သော verification plan ရေးပါ။
+
+အိမ်စာ
+{title} အတွက် diagram၊ assumptions၊ address plan၊ commands၊ expected output၊ observed output၊ failure analysis၊ security consideration၊ test evidence နှင့် cleanup step ပါသော network-engineering note တစ်ခု ပြင်ဆင်ပါ။
+
+Quiz
+၁။ Network evidence မစုမီ ဘာကို သတ်မှတ်ရမည်နည်း။ Authorized scope၊ symptom နှင့် expected path ဖြစ်သည်။
+၂။ Ping မအောင်မြင်ခြင်းသည် application down ဖြစ်ကြောင်း အမြဲသက်သေပြသလား။ မပြပါ။
+၃။ Routing failure နှင့် DNS failure ကို ခွဲခြားရန် ဘာ evidence လိုသနည်း။ Route/path evidence နှင့် resolver response ကို သီးခြားစစ်ရမည်။
+၄။ Network automation script သည် state မပြောင်းမီ ဘာကိုစစ်ရမည်နည်း။ Scope၊ input၊ authorization နှင့် idempotent behavior ဖြစ်သည်။
+
+အနှစ်ချုပ်
+ယခု {title} ကို layered model၊ explicit scope၊ မှန်ကန်သော identifier၊ repeatable evidence နှင့် safe network-engineering practice များဖြင့် လေ့လာနိုင်ပြီဖြစ်သည်။
+
+နောက်သင်ခန်းစာ
+{next_title}
+
+လုံခြုံရေးမှတ်ချက်
+Academy simulator သည် predefined local state ကိုသာ အသုံးပြုသည်။ Arbitrary command execute မလုပ်ပါ၊ public target scan မလုပ်ပါ၊ host networking မသုံးပါ၊ private infrastructure နှင့် မချိတ်ဆက်ပါ။
+"""
 
 def _slug(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
@@ -157,53 +409,78 @@ def seed_networking_course(db, course):
     course.title = "Computer Networking Fundamentals — From Zero to Professional Network Engineer"
     course.short_description = "A free, practical path from networking concepts and protocols to routing, security, cloud networking, and automation."
     course.description = "Learn network models, devices, Ethernet, IPv4, subnetting, IPv6, TCP/UDP, DNS, DHCP, switching, VLANs, routing, NAT, wireless, security, troubleshooting, Wireshark concepts, cloud networking, and Python automation."
-    course.level, course.status, course.published = "beginner", "published", True
-    course.duration_minutes = len(MODULE_ONE) * 45
+    course.level, course.status, course.published = "beginner", "draft", False
+    course.duration_minutes = 0
     course.outcomes = "Explain OSI and TCP/IP layers, protocols, devices, addresses, and packet flow|Calculate and reason about IPv4 prefixes, routes, DNS, DHCP, switching, and transport behavior|Troubleshoot authorized networks using layered evidence and safe command workflows|Design secure, observable, resilient network foundations for local and cloud environments"
     course.requirements = "Basic computer use is helpful; no networking experience is required."
-    module = db.scalar(select(CourseModule).where(CourseModule.course_id == course.id, CourseModule.order_index == 1))
-    if not module:
-        module = CourseModule(course_id=course.id, title=PLANNED_MODULES[0], order_index=1)
-        db.add(module)
-        db.flush()
-    module.title = PLANNED_MODULES[0]
-    for position, item in enumerate(MODULE_ONE, 1):
-        title = item[0]
-        slug = f"01-{_slug(title)}"
-        lesson = db.scalar(select(Lesson).where(Lesson.module_id == module.id, Lesson.order_index == position))
-        if not lesson:
-            lesson = Lesson(module_id=module.id, title=title, slug=slug, order_index=position, content_en="", content_mm="")
-            db.add(lesson)
+    for module_index, module_title in enumerate(PLANNED_MODULES, 1):
+        module = db.scalar(select(CourseModule).where(CourseModule.course_id == course.id, CourseModule.order_index == module_index))
+        if not module:
+            module = CourseModule(course_id=course.id, title=module_title, order_index=module_index)
+            db.add(module)
             db.flush()
-        lesson.title, lesson.slug = title, slug
-        lesson.description = item[1]
-        lesson.content_en = _content(position, item)
-        lesson.content_mm = f"{title}\n\n{item[5]}\n\nလေ့ကျင့်ခန်း\n{item[6]}"
-        lesson.duration_minutes, lesson.status, lesson.published = 45, "published", True
-        example = db.scalar(select(CodeExample).where(CodeExample.lesson_id == lesson.id).order_by(CodeExample.position, CodeExample.created_at, CodeExample.id))
-        values = {"title": f"{title} example", "language": item[3], "filename": item[3], "code": item[2], "description": "Safe networking example for an isolated or authorized lab; the Academy does not execute it.", "position": 1}
-        if not example:
-            db.add(CodeExample(lesson_id=lesson.id, **values))
-        else:
-            for key, value in values.items():
-                setattr(example, key, value)
-        quiz = db.scalar(select(LessonQuiz).where(LessonQuiz.lesson_id == lesson.id))
-        if not quiz:
-            quiz = LessonQuiz(lesson_id=lesson.id, title=f"{title} knowledge check", explanation="Review layers, scope, evidence, and safe network boundaries before retrying.", status="published")
-            db.add(quiz)
-            db.flush()
-        questions = [
-            (item[7][0], item[7][1], item[7][2], item[7][3]),
-            ("True or false: the Academy simulator executes arbitrary network commands on the host.", ["True", "False"], "False", "The simulator uses predefined local state and outputs."),
-            ("Which practice makes network troubleshooting safer?", ["Define scope and collect read-only evidence first", "Scan every address", "Change firewall rules randomly"], "Define scope and collect read-only evidence first", "Authorized scope and evidence reduce harm and confusion.")
+        module.title = module_title
+        specs = MODULE_ONE if module_index == 1 else [
+            (lesson_title, lesson_title.lower(), *_generated_code(lesson_title), "", "", "", None)
+            for lesson_title in MODULE_LESSON_TOPICS[module_title]
         ]
-        for q_position, (prompt, choices, answer, explanation) in enumerate(questions, 1):
-            row = db.scalar(select(QuizQuestion).where(QuizQuestion.quiz_id == quiz.id, QuizQuestion.position == q_position))
-            values = {"prompt": prompt, "question_type": "true_false" if choices == ["True", "False"] else "multiple_choice", "options_json": json.dumps(choices), "correct_answer": answer, "explanation": explanation}
-            if not row:
-                db.add(QuizQuestion(quiz_id=quiz.id, position=q_position, **values))
+        for position, item in enumerate(specs, 1):
+            title = item[0]
+            slug = f"{module_index:02d}-{_slug(title)}"
+            lesson = db.scalar(select(Lesson).where(Lesson.module_id == module.id, Lesson.order_index == position))
+            if not lesson:
+                lesson = Lesson(module_id=module.id, title=title, slug=slug, order_index=position, content_en="", content_mm="")
+                db.add(lesson)
+                db.flush()
+            previous = "No networking experience is required; basic computer use helps." if module_index == 1 and position == 1 else f"Complete the previous lesson before starting {title}."
+            next_title = "Continue to the next lesson." if position < len(specs) else (f"Continue to Module {module_index + 1}." if module_index < len(PLANNED_MODULES) else "Complete the final network-engineering capstone.")
+            lesson.title, lesson.slug = title, slug
+            lesson.description = item[1]
+            lesson.content_en = _content(position, item) if module_index == 1 else _generated_content(module_title, title, previous, next_title)
+            lesson.content_mm = _generated_content_mm(
+                module_title,
+                title,
+                item[2],
+                "Networking အတွေ့အကြုံ မလိုအပ်ပါ။ Basic computer use ကို သိထားပါက အထောက်အကူဖြစ်သည်။" if module_index == 1 and position == 1 else f"{title} မစတင်မီ ယခင်သင်ခန်းစာကို ပြီးအောင်လေ့လာပါ။",
+                next_title,
+            )
+            lesson.duration_minutes, lesson.status, lesson.published = 45, "draft", False
+            course.duration_minutes += lesson.duration_minutes
+            example = db.scalar(select(CodeExample).where(CodeExample.lesson_id == lesson.id).order_by(CodeExample.position, CodeExample.created_at, CodeExample.id))
+            values = {"title": f"{title} example", "language": item[3], "filename": item[3], "code": item[2], "description": "Safe networking example for an isolated or authorized lab; the Academy does not execute it.", "position": 1}
+            if not example:
+                db.add(CodeExample(lesson_id=lesson.id, **values))
             else:
                 for key, value in values.items():
-                    setattr(row, key, value)
+                    setattr(example, key, value)
+            quiz = db.scalar(select(LessonQuiz).where(LessonQuiz.lesson_id == lesson.id))
+            if not quiz:
+                quiz = LessonQuiz(lesson_id=lesson.id, title=f"{title} knowledge check", explanation="Review layers, scope, evidence, and safe network boundaries before retrying.", status="draft")
+                db.add(quiz)
+                db.flush()
+            first_question = (item[7][0], item[7][1], item[7][2], item[7][3]) if module_index == 1 else ("Network evidence မစုမီ ဘာကို သတ်မှတ်ရမည်နည်း?", ["Authorized scope and expected path", "Every public address", "A random firewall change"], "Authorized scope and expected path", "Scope and evidence make troubleshooting safe and repeatable.")
+            questions = [
+                first_question,
+                ("True or false: the Academy simulator executes arbitrary network commands on the host.", ["True", "False"], "False", "The simulator uses predefined local state and outputs."),
+                ("Which practice makes network troubleshooting safer?", ["Define scope and collect read-only evidence first", "Scan every address", "Change firewall rules randomly"], "Define scope and collect read-only evidence first", "Authorized scope and evidence reduce harm and confusion."),
+                ("Which evidence should be checked separately when diagnosing a web request?", ["Route/path evidence, DNS response, and transport response", "Only the browser color", "Only a Wi-Fi password"], "Route/path evidence, DNS response, and transport response", "Separate evidence narrows the failing layer.")
+            ]
+            for q_position, (prompt, choices, answer, explanation) in enumerate(questions, 1):
+                row = db.scalar(select(QuizQuestion).where(QuizQuestion.quiz_id == quiz.id, QuizQuestion.position == q_position))
+                values = {"prompt": prompt, "question_type": "true_false" if choices == ["True", "False"] else "multiple_choice", "options_json": json.dumps(choices), "correct_answer": answer, "explanation": explanation}
+                if not row:
+                    db.add(QuizQuestion(quiz_id=quiz.id, position=q_position, **values))
+                else:
+                    for key, value in values.items():
+                        setattr(row, key, value)
+            for difficulty, label in (("beginner", "Easy"), ("intermediate", "Medium"), ("advanced", "Advanced")):
+                exercise_slug = f"{slug}-{difficulty}"
+                exercise = db.scalar(select(CodingExercise).where(CodingExercise.slug == exercise_slug))
+                values = {"lesson_id": lesson.id, "title": f"{title} — {label} exercise", "slug": exercise_slug, "description_en": f"{label} exercise: analyze {title} in an isolated or authorized network lab and document the evidence.", "description_mm": f"{title} ကို ခွင့်ပြုချက်ရှိသော isolated network lab ထဲတွင် {label} အဆင့်ဖြင့် လေ့လာပြီး evidence ကို မှတ်တမ်းတင်ပါ။", "difficulty": difficulty, "language": "networking", "starter_code": "# Record scope, command, expected output, observed output, and cleanup\n", "status": "draft"}
+                if not exercise:
+                    db.add(CodingExercise(**values))
+                else:
+                    for key, value in values.items():
+                        setattr(exercise, key, value)
     db.flush()
 
