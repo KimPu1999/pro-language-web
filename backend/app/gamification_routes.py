@@ -4,22 +4,21 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf
+from .certificate_service import certificate_payload
 from .db import get_db
 from .models import AchievementDefinition, IssuedCertificate, CertificateRevocation, LeaderboardPreference, StudentAchievement, StudentXPBalance, LearningStreak, User
 from .admin_routes import full_admin
 router=APIRouter(prefix="/api/v1/gamification",tags=["gamification"])
 class PreferenceIn(BaseModel): opted_in: bool=False; display_name: str|None=Field(default=None,max_length=120)
-def public_certificate(row): return {"certificate_id":row.public_id,"title":row.title,"student_name":row.student_name,"issuer":row.issuer,"issued_at":row.issued_at,"status":"revoked" if row.revoked_at else "valid","verification_url":f"/verify/{row.public_id}"}
+def public_certificate(row): return certificate_payload(row, include_recipient=True)
 @router.get("/certificates")
 def certificates(user:User=Depends(current_user),db:Session=Depends(get_db)): return {"items":[public_certificate(x) for x in db.scalars(select(IssuedCertificate).where(IssuedCertificate.user_id==user.id,IssuedCertificate.revoked_at.is_(None)).order_by(IssuedCertificate.issued_at.desc())).all()]}
 @router.get("/certificates/{certificate_id}/pdf")
-def certificate_pdf(certificate_id:str,db:Session=Depends(get_db)):
-    row=db.scalar(select(IssuedCertificate).where(IssuedCertificate.public_id==certificate_id));
+def certificate_pdf(certificate_id:str,user:User=Depends(current_user),db:Session=Depends(get_db)):
+    row=db.scalar(select(IssuedCertificate).where(IssuedCertificate.public_id==certificate_id, IssuedCertificate.user_id==user.id))
     if not row: raise HTTPException(404,"Certificate not found")
-    body=f"CodeMaster Academy\\n{row.title}\\nAwarded to {row.student_name}\\nIssued {row.issued_at.date()}\\nCertificate ID {row.public_id}\\nVerify /verify/{row.public_id}"
-    stream="BT /F1 18 Tf 72 500 Td ("+body.replace("\\n", ") Tj 0 -32 Td (").replace("(","\\(").replace(")","\\)")+") Tj ET"
-    pdf=f"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 842 595]/Resources<</Font<</F1 4 0 R>>>>/Contents 5 0 R>>endobj\n4 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\n5 0 obj<</Length {len(stream.encode())}>>stream\n{stream}\nendstream endobj\ntrailer<</Root 1 0 R>>\n%%EOF".encode()
-    return Response(pdf,media_type="application/pdf",headers={"Content-Disposition":f'attachment; filename="certificate-{row.public_id}.pdf"'})
+    from .certificate_routes import _pdf_response
+    return _pdf_response(row)
 @router.get("/certificates/verify/{certificate_id}")
 def verify_certificate(certificate_id:str,db:Session=Depends(get_db)):
     row=db.scalar(select(IssuedCertificate).where(IssuedCertificate.public_id==certificate_id));
