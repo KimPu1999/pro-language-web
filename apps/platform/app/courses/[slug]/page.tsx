@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import CourseDetail from "@/components/course-detail";
 
 type CoursePreview = { title: string; slug: string; description?: string; short_description?: string; seo_title?: string; seo_description?: string; thumbnail?: string | null };
 const apiBase = process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000";
 
 async function getCourse(slug: string): Promise<CoursePreview | null> {
-  try {
-    const response = await fetch(`${apiBase}/api/v1/courses/${encodeURIComponent(slug)}`, { next: { revalidate: 60 } });
-    return response.ok ? response.json() : null;
-  } catch {
-    return null;
-  }
+  const response = await fetch(`${apiBase}/api/v1/courses/${encodeURIComponent(slug)}`, { next: { revalidate: 60 } });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`Course lookup failed (${response.status}).`);
+  return response.json();
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -23,5 +22,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CoursePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  if (!await getCourse(slug)) notFound();
   return <CourseDetail slug={slug} />;
 }
