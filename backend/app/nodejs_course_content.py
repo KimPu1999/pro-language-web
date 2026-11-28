@@ -5,6 +5,7 @@ import re
 from sqlalchemy import select
 
 from .models import CodeExample, CourseModule, Lesson, LessonQuiz, QuizQuestion
+from .nodejs_complete_curriculum import _ensure_exercise, seed_nodejs_additional_curriculum
 
 
 PLANNED_MODULES = [
@@ -156,6 +157,69 @@ Myanmar explanation
 """
 
 
+def _repair_module_one_sections(lesson, item: tuple) -> None:
+    """Append review sections without replacing existing Module 1 content."""
+    theory, code, mm, exercise = item[4], item[2], item[5], item[6]
+    if "## Detailed theory" not in (lesson.content_en or ""):
+        lesson.content_en = (lesson.content_en or "") + f"""
+
+## Detailed theory
+{theory}
+
+## Core concepts
+Runtime behavior, explicit contracts, validation, authorization, observability, and recovery are the core concepts for this lesson.
+
+## Syntax and usage
+```javascript
+{code}
+```
+
+## Expected output
+Inspect the response, order, status, or runtime result and verify it against the contract. Timing can vary by environment.
+
+## Line-by-line explanation
+Read imports and declarations first, trace the input through the Node.js boundary, and compare the result with the expectation. Change one value at a time.
+
+## Common mistakes
+- Forgetting to await promises or trusting client-controlled values.
+- Leaking secrets, stack traces, SQL, or personal data.
+- Blocking the event loop or retrying non-idempotent operations blindly.
+
+## Best practices
+- Use LTS versions, lockfiles, schemas, parameterized queries, least privilege, tests, request IDs, and health checks.
+- Define timeouts, rate limits, redaction, monitoring, and rollback criteria.
+
+## Practical exercises
+{exercise}
+
+## Homework
+Write an implementation note with runtime versions, contract, observed behavior, test evidence, security boundary, and recovery plan.
+
+## Related references
+- Node.js documentation: https://nodejs.org/docs/latest/api/
+- Express documentation: https://expressjs.com/
+- OWASP API Security: https://owasp.org/www-project-api-security/
+
+## Key takeaways
+Reliable Node.js services make contracts, failures, permissions, tests, and observability visible.
+"""
+    if "## အသေးစိတ်သီအိုရီ" not in (lesson.content_mm or ""):
+        lesson.content_mm = (lesson.content_mm or "") + f"""
+
+## အသေးစိတ်သီအိုရီ
+{mm}
+
+## လက်တွေ့လေ့ကျင့်ခန်း
+{exercise}
+
+## အိမ်စာ
+Runtime version၊ contract၊ observed behavior၊ test evidence၊ security boundary နှင့် recovery plan ကို မှတ်တမ်းတင်ပါ။
+
+## ဆက်စပ်ရည်ညွှန်းချက်
+Node.js၊ Express နှင့် OWASP API Security documentation ကို project version နှင့် ကိုက်ညီအောင် ဖတ်ပါ။
+"""
+
+
 def seed_nodejs_course(db, course):
     course.title = "Node.js Backend Development — From Zero to Professional"
     course.short_description = "A free, practical path through Node.js runtime architecture, APIs, databases, authentication, testing, security, and deployment."
@@ -178,11 +242,13 @@ def seed_nodejs_course(db, course):
             lesson = Lesson(module_id=module.id, title=title, slug=slug, order_index=position, content_en="", content_mm="")
             db.add(lesson)
             db.flush()
-        lesson.title, lesson.slug = title, slug
-        lesson.description = item[1]
-        lesson.content_en = _content(position, item)
-        lesson.content_mm = f"{title}\n\n{item[5]}\n\nလေ့ကျင့်ခန်း\n{item[6]}"
-        lesson.duration_minutes, lesson.status, lesson.published = 45, "published", True
+        if not lesson.content_en or not lesson.content_en.strip():
+            lesson.title, lesson.slug = title, slug
+            lesson.description = item[1]
+            lesson.content_en = _content(position, item)
+            lesson.content_mm = f"{title}\n\n{item[5]}\n\nလေ့ကျင့်ခန်း\n{item[6]}"
+            lesson.duration_minutes, lesson.status, lesson.published = 45, "published", True
+        _repair_module_one_sections(lesson, item)
         example = db.scalar(select(CodeExample).where(CodeExample.lesson_id == lesson.id).order_by(CodeExample.position, CodeExample.created_at, CodeExample.id))
         values = {"title": f"{title} example", "language": item[3], "filename": item[3], "code": item[2], "description": "Safe Node.js example for local study; the Academy does not execute arbitrary code.", "position": 1}
         if not example:
@@ -208,4 +274,13 @@ def seed_nodejs_course(db, course):
             else:
                 for key, value in values.items():
                     setattr(row, key, value)
+        _ensure_exercise(db, lesson, title, item[6], f"{item[5]} ကို isolated Node.js project ထဲတွင် လက်တွေ့လေ့ကျင့်ပါ။")
     db.flush()
+    additional_report = seed_nodejs_additional_curriculum(db, course)
+    course.duration_minutes = sum(
+        lesson.duration_minutes or 45
+        for module in db.scalars(select(CourseModule).where(CourseModule.course_id == course.id)).all()
+        for lesson in db.scalars(select(Lesson).where(Lesson.module_id == module.id)).all()
+    )
+    db.flush()
+    return additional_report

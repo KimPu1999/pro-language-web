@@ -5,6 +5,7 @@ import re
 from sqlalchemy import select
 
 from .models import CodeExample, CourseModule, Lesson, LessonQuiz, QuizQuestion
+from .spring_boot_complete_curriculum import _ensure_exercise, seed_spring_boot_additional_curriculum
 
 PLANNED_MODULES = [
     "Introduction to Spring Boot", "Java Fundamentals for Spring Boot", "Development Environment Setup",
@@ -115,6 +116,69 @@ Myanmar explanation
 """
 
 
+def _repair_module_one_sections(lesson, item: tuple) -> None:
+    """Append review sections without replacing existing Module 1 content."""
+    theory, code, mm, exercise = item[4], item[2], item[5], item[6]
+    if "## Detailed theory" not in (lesson.content_en or ""):
+        lesson.content_en = (lesson.content_en or "") + f"""
+
+## Detailed theory
+{theory}
+
+## Core concepts
+IoC boundaries, typed contracts, validation, transactions, authorization, observability, and recovery are the core concepts for this lesson.
+
+## Syntax and usage
+```java
+{code}
+```
+
+## Expected output
+Inspect the type, response, configuration, database, or test result and compare it with the stated contract. Exact runtime output can vary by JDK and dependency version.
+
+## Line-by-line explanation
+Read declarations first, trace input through the Spring boundary, and compare the result with the expectation. Change one value at a time and rerun the focused test.
+
+## Common mistakes
+- Returning entities directly, skipping validation, or trusting frontend-only route guards.
+- Missing transaction boundaries, unbounded queries, or N+1 access.
+- Hardcoding secrets, exposing stack traces, or accepting invalid tokens.
+
+## Best practices
+- Use constructor injection, DTOs, Bean Validation, parameterized queries, pagination, least privilege, tests, and additive migrations.
+- Externalize secrets, emit structured logs, expose safe health checks, and define rollback criteria.
+
+## Practical exercises
+{exercise}
+
+## Homework
+Write a Spring implementation note with JDK/dependency versions, contract, test evidence, security boundary, migration note, and recovery plan.
+
+## Related references
+- Spring Boot documentation: https://docs.spring.io/spring-boot/docs/current/reference/html/
+- Spring Security documentation: https://docs.spring.io/spring-security/reference/
+- OWASP API Security: https://owasp.org/www-project-api-security/
+
+## Key takeaways
+Professional Spring Boot services make dependencies, contracts, authorization, persistence, tests, and recovery visible.
+"""
+    if "## အသေးစိတ်သီအိုရီ" not in (lesson.content_mm or ""):
+        lesson.content_mm = (lesson.content_mm or "") + f"""
+
+## အသေးစိတ်သီအိုရီ
+{mm}
+
+## လက်တွေ့လေ့ကျင့်ခန်း
+{exercise}
+
+## အိမ်စာ
+JDK/dependency version၊ contract၊ test evidence၊ security boundary၊ migration note နှင့် recovery plan ကို မှတ်တမ်းတင်ပါ။
+
+## ဆက်စပ်ရည်ညွှန်းချက်
+Spring Boot၊ Spring Security နှင့် OWASP API Security documentation ကို project version နှင့် ကိုက်ညီအောင် ဖတ်ပါ။
+"""
+
+
 def seed_spring_boot_course(db, course):
     course.title = "Spring Boot — From Zero to Professional Java Backend Developer"
     course.short_description = "A free practical path through Spring Boot, MVC, REST APIs, JPA, PostgreSQL, Security, Redis, testing, microservices, and deployment."
@@ -137,11 +201,13 @@ def seed_spring_boot_course(db, course):
             lesson = Lesson(module_id=module.id, title=title, slug=slug, order_index=position, content_en="", content_mm="")
             db.add(lesson)
             db.flush()
-        lesson.title, lesson.slug = title, slug
-        lesson.description = item[1]
-        lesson.content_en = _content(position, item)
-        lesson.content_mm = f"{title}\n\n{item[5]}\n\nလေ့ကျင့်ခန်း\n{item[6]}"
-        lesson.duration_minutes, lesson.status, lesson.published = 55, "published", True
+        if not lesson.content_en or not lesson.content_en.strip():
+            lesson.title, lesson.slug = title, slug
+            lesson.description = item[1]
+            lesson.content_en = _content(position, item)
+            lesson.content_mm = f"{title}\n\n{item[5]}\n\nလေ့ကျင့်ခန်း\n{item[6]}"
+            lesson.duration_minutes, lesson.status, lesson.published = 55, "published", True
+        _repair_module_one_sections(lesson, item)
         values = {"title": f"{title} example", "language": item[3], "filename": item[3], "code": item[2], "description": "Safe Spring Boot example for local study; the Academy does not execute arbitrary Java.", "position": 1}
         example_row = db.scalar(select(CodeExample).where(CodeExample.lesson_id == lesson.id).order_by(CodeExample.position, CodeExample.created_at, CodeExample.id))
         if not example_row:
@@ -167,4 +233,13 @@ def seed_spring_boot_course(db, course):
             else:
                 for key, value in values.items():
                     setattr(row, key, value)
+        _ensure_exercise(db, lesson, title, item[6], f"{item[5]} ကို disposable Spring Boot project ထဲတွင် လက်တွေ့လေ့ကျင့်ပါ။")
     db.flush()
+    additional_report = seed_spring_boot_additional_curriculum(db, course)
+    course.duration_minutes = sum(
+        lesson.duration_minutes or 50
+        for module in db.scalars(select(CourseModule).where(CourseModule.course_id == course.id)).all()
+        for lesson in db.scalars(select(Lesson).where(Lesson.module_id == module.id)).all()
+    )
+    db.flush()
+    return additional_report

@@ -5,6 +5,7 @@ import re
 from sqlalchemy import select
 
 from .models import CodeExample, CourseModule, Lesson, LessonQuiz, QuizQuestion
+from .python_ai_complete_curriculum import _ensure_exercise, seed_python_ai_additional_curriculum
 
 
 PLANNED_MODULES = [
@@ -158,6 +159,69 @@ Myanmar explanation
 """
 
 
+def _repair_module_one_sections(lesson, item: tuple) -> None:
+    """Append review sections without replacing existing Module 1 content."""
+    theory, code, mm, exercise = item[4], item[2], item[5], item[6]
+    if "## Detailed theory" not in (lesson.content_en or ""):
+        lesson.content_en = (lesson.content_en or "") + f"""
+
+## Detailed theory
+{theory}
+
+## Core concepts
+The input contract, reproducible transformation, evaluation evidence, and responsible-use boundary are the core concepts for this lesson.
+
+## Syntax and usage
+```python
+{code}
+```
+
+## Expected output
+Inspect the command output and verify the stated shape, type, workflow step, or environment result. Exact values can vary by Python and package version.
+
+## Line-by-line explanation
+Read imports and declarations first, trace the input through the transformation or workflow boundary, and compare the returned result with the expectation. Change one value at a time and rerun the focused check.
+
+## Common mistakes
+- Fitting transformations on evaluation data or treating a score as proof of safety.
+- Ignoring types, shapes, missingness, package versions, or access control.
+- Loading untrusted artifacts or placing private records and credentials in notebooks or logs.
+
+## Best practices
+- Use typed functions, explicit data contracts, deterministic seeds, baselines, tests, and model cards.
+- Report limitations, uncertainty, subgroup behavior, privacy, fairness, and rollback criteria.
+
+## Practical exercises
+{exercise}
+
+## Homework
+Create an experiment note with data source, setup versions, expected and observed behavior, evidence, safety boundary, and one limitation.
+
+## Related references
+- Python documentation: https://docs.python.org/3/
+- scikit-learn User Guide: https://scikit-learn.org/stable/user_guide.html
+- PyTorch documentation: https://pytorch.org/docs/stable/
+
+## Key takeaways
+AI results are evidence for a bounded question; reliable work keeps data, evaluation, privacy, and deployment boundaries explicit.
+"""
+    if "## အသေးစိတ်သီအိုရီ" not in (lesson.content_mm or ""):
+        lesson.content_mm = (lesson.content_mm or "") + f"""
+
+## အသေးစိတ်သီအိုရီ
+{mm}
+
+## လက်တွေ့လေ့ကျင့်ခန်း
+{exercise}
+
+## အိမ်စာ
+Data source၊ setup version၊ expected/observed result၊ evidence၊ safety boundary နှင့် limitation ပါသော experiment note တစ်စောင်ရေးပါ။
+
+## ဆက်စပ်ရည်ညွှန်းချက်
+Python၊ scikit-learn နှင့် PyTorch documentation ကို project version နှင့် ကိုက်ညီအောင် ဖတ်ပါ။
+"""
+
+
 def seed_python_ai_course(db, course):
     course.title = "Python for Artificial Intelligence — From Zero to AI Engineer"
     course.short_description = "A free practical path from Python and data foundations to machine learning, deep learning, GenAI, and responsible AI deployment."
@@ -180,11 +244,13 @@ def seed_python_ai_course(db, course):
             lesson = Lesson(module_id=module.id, title=title, slug=slug, order_index=position, content_en="", content_mm="")
             db.add(lesson)
             db.flush()
-        lesson.title, lesson.slug = title, slug
-        lesson.description = item[1]
-        lesson.content_en = _content(position, item)
-        lesson.content_mm = f"{title}\n\n{item[5]}\n\nလေ့ကျင့်ခန်း\n{item[6]}"
-        lesson.duration_minutes, lesson.status, lesson.published = 55, "published", True
+        if not lesson.content_en or not lesson.content_en.strip():
+            lesson.title, lesson.slug = title, slug
+            lesson.description = item[1]
+            lesson.content_en = _content(position, item)
+            lesson.content_mm = f"{title}\n\n{item[5]}\n\nလေ့ကျင့်ခန်း\n{item[6]}"
+            lesson.duration_minutes, lesson.status, lesson.published = 55, "published", True
+        _repair_module_one_sections(lesson, item)
         example_row = db.scalar(select(CodeExample).where(CodeExample.lesson_id == lesson.id).order_by(CodeExample.position, CodeExample.created_at, CodeExample.id))
         values = {"title": f"{title} example", "language": item[3], "filename": item[3], "code": item[2], "description": "Safe synthetic-data AI example; the Academy does not execute arbitrary code or load untrusted artifacts.", "position": 1}
         if not example_row:
@@ -210,4 +276,13 @@ def seed_python_ai_course(db, course):
             else:
                 for key, value in values.items():
                     setattr(row, key, value)
+        _ensure_exercise(db, lesson, title, item[6], f"{item[5]} ကို isolated Python AI project ထဲတွင် လက်တွေ့လေ့ကျင့်ပါ။")
     db.flush()
+    additional_report = seed_python_ai_additional_curriculum(db, course)
+    course.duration_minutes = sum(
+        lesson.duration_minutes or 50
+        for module in db.scalars(select(CourseModule).where(CourseModule.course_id == course.id)).all()
+        for lesson in db.scalars(select(Lesson).where(Lesson.module_id == module.id)).all()
+    )
+    db.flush()
+    return additional_report

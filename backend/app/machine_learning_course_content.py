@@ -5,6 +5,7 @@ import re
 from sqlalchemy import select
 
 from .models import CodeExample, CourseModule, Lesson, LessonQuiz, QuizQuestion
+from .machine_learning_complete_curriculum import _ensure_exercise, seed_machine_learning_additional_curriculum
 
 PLANNED_MODULES = [
     "Introduction to Machine Learning", "Python for Machine Learning", "Development Environment & Tools", "Mathematics for ML",
@@ -112,6 +113,69 @@ Safety note
 The Academy displays Python/ML examples and does not execute untrusted code or load untrusted model artifacts.
 """
 
+
+def _repair_module_one_sections(lesson, item: tuple) -> None:
+    """Append review sections without replacing existing Module 1 content."""
+    theory, code, mm, exercise = item[4], item[2], item[5], item[6]
+    if "## Detailed theory" not in (lesson.content_en or ""):
+        lesson.content_en = (lesson.content_en or "") + f"""
+
+## Detailed theory
+{theory}
+
+## Core concepts
+The model boundary, data contract, evaluation evidence, and responsible-use boundary are the core concepts for this lesson.
+
+## Syntax and usage
+```python
+{code}
+```
+
+## Expected output
+Inspect the command output and verify the stated shape, workflow step, or environment result. Exact values may vary by Python and package version.
+
+## Line-by-line explanation
+Read imports and declarations first, then trace the input through the transformation or workflow step, and finally compare the returned output with the expectation. Change one value at a time and rerun the focused check.
+
+## Common mistakes
+- Fitting transformations on evaluation data or treating a score as proof of safety.
+- Ignoring shapes, dtypes, missingness, class balance, or package versions.
+- Loading untrusted artifacts or placing private records in notebooks and logs.
+
+## Best practices
+- Use explicit data contracts, reproducible seeds, baselines, pipelines, and task-appropriate metrics.
+- Report limitations, uncertainty, subgroup behavior, privacy, fairness, and rollback criteria.
+
+## Practical exercises
+{exercise}
+
+## Homework
+Create a short experiment note with the data source, assumptions, setup versions, expected and observed behavior, evidence, and one limitation.
+
+## Related references
+- scikit-learn User Guide: https://scikit-learn.org/stable/user_guide.html
+- NumPy documentation: https://numpy.org/doc/
+- pandas documentation: https://pandas.pydata.org/docs/
+
+## Key takeaways
+ML results are evidence for a bounded question; reliable work keeps data, evaluation, privacy, and deployment boundaries explicit.
+"""
+    if "## အသေးစိတ်သီအိုရီ" not in (lesson.content_mm or ""):
+        lesson.content_mm = (lesson.content_mm or "") + f"""
+
+## အသေးစိတ်သီအိုရီ
+{mm}
+
+## လက်တွေ့လေ့ကျင့်ခန်း
+{exercise}
+
+## အိမ်စာ
+Data source၊ setup version၊ expected/observed result၊ evidence နှင့် limitation ပါသော experiment note တစ်စောင်ရေးပါ။
+
+## ဆက်စပ်ရည်ညွှန်းချက်
+scikit-learn၊ NumPy နှင့် pandas documentation ကို project version နှင့် ကိုက်ညီအောင် ပြန်လည်ဖတ်ပါ။
+"""
+
 def seed_machine_learning_course(db, course):
     course.title = "Machine Learning with Python — From Zero to Professional AI & Machine Learning Engineer"
     course.short_description = "A free, practical path from Python data workflows to responsible modeling, deployment, and MLOps."
@@ -134,11 +198,13 @@ def seed_machine_learning_course(db, course):
             lesson = Lesson(module_id=module.id, title=title, slug=slug, order_index=position, content_en="", content_mm="")
             db.add(lesson)
             db.flush()
-        lesson.title, lesson.slug = title, slug
-        lesson.description = item[1]
-        lesson.content_en = _content(position, item)
-        lesson.content_mm = f"{title}\n\n{item[5]}\n\nလေ့ကျင့်ခန်း\n{item[6]}"
-        lesson.duration_minutes, lesson.status, lesson.published = 40, "published", True
+        if not lesson.content_en or not lesson.content_en.strip():
+            lesson.title, lesson.slug = title, slug
+            lesson.description = item[1]
+            lesson.content_en = _content(position, item)
+            lesson.content_mm = f"{title}\n\n{item[5]}\n\nလေ့ကျင့်ခန်း\n{item[6]}"
+            lesson.duration_minutes, lesson.status, lesson.published = 40, "published", True
+        _repair_module_one_sections(lesson, item)
         example = db.scalar(select(CodeExample).where(CodeExample.lesson_id == lesson.id).order_by(CodeExample.position, CodeExample.created_at, CodeExample.id))
         values = {"title": f"{title} example", "language": "python" if item[3] == "python" else "bash", "filename": item[3], "code": item[2], "description": "Read-only ML example. Use synthetic data and an isolated environment; the Academy does not execute code on its host.", "position": 1}
         if not example:
@@ -160,4 +226,13 @@ def seed_machine_learning_course(db, course):
             else:
                 for key, value in values.items():
                     setattr(row, key, value)
+        _ensure_exercise(db, lesson, title, item[6], f"{item[5]} ကို isolated Python project ထဲတွင် လက်တွေ့လေ့ကျင့်ပါ။")
     db.flush()
+    additional_report = seed_machine_learning_additional_curriculum(db, course)
+    course.duration_minutes = sum(
+        lesson.duration_minutes or 40
+        for module in db.scalars(select(CourseModule).where(CourseModule.course_id == course.id)).all()
+        for lesson in db.scalars(select(Lesson).where(Lesson.module_id == module.id)).all()
+    )
+    db.flush()
+    return additional_report
