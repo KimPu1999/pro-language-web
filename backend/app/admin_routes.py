@@ -172,7 +172,7 @@ def record_lesson_revision(db, lesson, user, summary=""):
 def require_lesson_version(lesson, expected_version):
     if expected_version is not None and lesson.content_version != expected_version: raise HTTPException(409,"This lesson was updated by another administrator. Reload it before saving.")
 def curriculum_payload(course):
-    return [{"id":m.id,"title":m.title,"position":m.order_index,"lessons":[lesson_payload(l) for l in m.lessons]} for m in course.modules]
+    return [{"id":m.id,"title":m.title,"title_mm":m.title_mm or "","description":m.description or "","description_mm":m.description_mm or "","learning_objectives":m.learning_objectives or "","learning_objectives_mm":m.learning_objectives_mm or "","position":m.order_index,"lessons":[lesson_payload(l) for l in m.lessons]} for m in course.modules]
 def reorder_structure(course, payload, db):
     modules={module.id:module for module in course.modules}; requested={item.id for item in payload.modules}
     if requested != set(modules): raise HTTPException(422,"Curriculum must include every course module exactly once")

@@ -12,6 +12,7 @@ import re
 from sqlalchemy import select
 
 from .models import CodeExample, CodingExercise, CourseModule, Lesson, LessonQuiz, QuizQuestion
+from .django_module_two_content import seed_python_foundations_module
 
 
 MODULES = {
@@ -657,7 +658,12 @@ def seed_django_additional_curriculum(db, course):
     created_modules = 0
     created_lessons = 0
     preserved_lessons = 0
+    module_two_report = None
     for module_number, module_title in MODULES.items():
+        if module_number == 2:
+            module_two_report = seed_python_foundations_module(db, course)
+            created_lessons += module_two_report["created_lessons"]
+            continue
         module = db.scalar(select(CourseModule).where(CourseModule.course_id == course.id, CourseModule.order_index == module_number))
         if not module:
             module = CourseModule(course_id=course.id, title=module_title, order_index=module_number)
@@ -693,4 +699,4 @@ def seed_django_additional_curriculum(db, course):
             _ensure_quiz(db, lesson, item)
             _ensure_exercise(db, lesson, item["title"], item["exercise"], f"{item['mm']} ကို isolated Django project ထဲတွင် လက်တွေ့လေ့ကျင့်ပါ။")
     db.flush()
-    return {"created_modules": created_modules, "created_lessons": created_lessons, "preserved_lessons": preserved_lessons, "draft_modules": len(MODULES), "draft_lessons": sum(len(items) for items in LESSONS.values())}
+    return {"created_modules": created_modules, "created_lessons": created_lessons, "preserved_lessons": preserved_lessons, "draft_modules": len(MODULES), "draft_lessons": sum(len(items) for items in LESSONS.values()) - len(LESSONS[2]) + (module_two_report["lesson_count"] if module_two_report else 0), "module_two": {"created_lessons": module_two_report["created_lessons"], "lesson_count": module_two_report["lesson_count"], "assessment_questions": module_two_report["assessment_questions"], "project_id": str(module_two_report["project"].id)} if module_two_report else None}

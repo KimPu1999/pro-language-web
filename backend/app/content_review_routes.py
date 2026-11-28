@@ -115,7 +115,7 @@ def preview_content(db: Session, content_type: str, record) -> dict:
         return {"title": record.title, "description": record.description, "short_description": record.short_description, "status": record.status, "published": record.published, "thumbnail": record.thumbnail, "modules": [{"id": module.id, "title": module.title, "lessons": [{"id": lesson.id, "title": lesson.title, "status": lesson.status} for lesson in module.lessons]} for module in db.scalars(select(CourseModule).where(CourseModule.course_id == record.id).order_by(CourseModule.order_index)).all()]}
     if content_type == "module":
         lessons = db.scalars(select(Lesson).where(Lesson.module_id == record.id).order_by(Lesson.order_index)).all()
-        return {"title": record.title, "course_id": record.course_id, "lessons": [{"id": lesson.id, "title": lesson.title, "content": lesson.content_en, "status": lesson.status} for lesson in lessons]}
+        return {"title": record.title, "title_mm": record.title_mm or "", "description": record.description or "", "description_mm": record.description_mm or "", "learning_objectives": record.learning_objectives or "", "learning_objectives_mm": record.learning_objectives_mm or "", "course_id": record.course_id, "lessons": [{"id": lesson.id, "title": lesson.title, "content": lesson.content_en, "status": lesson.status} for lesson in lessons]}
     if content_type == "lesson":
         examples = [{"title": item.title, "language": item.language, "code": item.code, "description": item.description} for item in record.code_examples]
         return {"title": record.title, "description": record.description, "content_en": record.content_en, "content_mm": record.content_mm, "status": record.status, "code_examples": examples}
