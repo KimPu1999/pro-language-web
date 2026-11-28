@@ -11,17 +11,38 @@ class ExampleOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; language: str; code: str
 class SyntaxReferenceExampleOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    id: UUID; example_number: int; title: str; code: str; language: str; expected_output: str; explanation: str
+    id: UUID; example_number: int; title: str; code: str; language: str; difficulty: str = "beginner"; description: str = ""; setup: str = ""; sample_input: str = ""; expected_output: str = ""; explanation: str = ""; common_mistakes: str = ""; verification_steps: str = ""; translation_status: str = "missing"
 class SyntaxReferenceOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    id: UUID; course_id: UUID; title: str; slug: str; category: str; description: str; basic_syntax: str; when_to_use: str; important_notes: str; status: str; display_order: int; examples: list[SyntaxReferenceExampleOut] = Field(default_factory=list)
+    id: UUID; course_id: UUID; title: str; slug: str; category: str; reference_type: str = "language_syntax"; difficulty: str = "beginner"; description: str = ""; basic_syntax: str = ""; when_to_use: str = ""; important_notes: str = ""; purpose: str = ""; syntax_format: str = ""; parameters: str = ""; return_value: str = ""; version_compatibility: str = ""; input_output: str = ""; common_mistakes: str = ""; best_practices: str = ""; practice_exercises: str = ""; further_reading: str = ""; minimum_examples: int = 5; status: str; display_order: int; requested_locale: Literal["en", "my"] = "en"; resolved_locale: Literal["en", "my"] = "en"; translation_status: Literal["available", "missing", "partial"] = "missing"; examples: list[SyntaxReferenceExampleOut] = Field(default_factory=list)
 class SyntaxReferenceExampleIn(BaseModel):
     example_number: int = Field(ge=1, le=5)
     title: str = Field(min_length=2, max_length=180)
     code: str = Field(min_length=1, max_length=30000)
     language: str = Field(min_length=1, max_length=50)
+    difficulty: str = Field(default="beginner", pattern=r"^(beginner|intermediate|advanced|professional)$")
+    description: str = Field(default="", max_length=2000)
+    setup: str = Field(default="", max_length=5000)
+    sample_input: str = Field(default="", max_length=10000)
     expected_output: str = Field(default="", max_length=10000)
     explanation: str = Field(min_length=10, max_length=5000)
+    common_mistakes: str = Field(default="", max_length=3000)
+    verification_steps: str = Field(default="", max_length=3000)
+class SyntaxReferenceTranslationIn(BaseModel):
+    locale: Literal["en", "my"]
+    title: str = Field(default="", max_length=180)
+    description: str = Field(default="", max_length=2000)
+    purpose: str = Field(default="", max_length=5000)
+    syntax_format: str = Field(default="", max_length=10000)
+    parameters: str = Field(default="", max_length=10000)
+    return_value: str = Field(default="", max_length=5000)
+    version_compatibility: str = Field(default="", max_length=2000)
+    input_output: str = Field(default="", max_length=10000)
+    common_mistakes: str = Field(default="", max_length=5000)
+    best_practices: str = Field(default="", max_length=5000)
+    practice_exercises: str = Field(default="", max_length=5000)
+    further_reading: str = Field(default="", max_length=5000)
+    status: Literal["draft", "in_review", "approved", "published"] = "draft"
 class SyntaxReferenceIn(BaseModel):
     title: str = Field(min_length=2, max_length=180)
     slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=180)
@@ -30,6 +51,20 @@ class SyntaxReferenceIn(BaseModel):
     basic_syntax: str = Field(min_length=1, max_length=10000)
     when_to_use: str = Field(min_length=10, max_length=2000)
     important_notes: str = Field(min_length=10, max_length=3000)
+    reference_type: str = Field(default="language_syntax", min_length=2, max_length=60)
+    difficulty: str = Field(default="beginner", pattern=r"^(beginner|intermediate|advanced|professional)$")
+    purpose: str = Field(default="", max_length=5000)
+    syntax_format: str = Field(default="", max_length=10000)
+    parameters: str = Field(default="", max_length=10000)
+    return_value: str = Field(default="", max_length=5000)
+    version_compatibility: str = Field(default="", max_length=2000)
+    input_output: str = Field(default="", max_length=10000)
+    common_mistakes: str = Field(default="", max_length=5000)
+    best_practices: str = Field(default="", max_length=5000)
+    practice_exercises: str = Field(default="", max_length=5000)
+    further_reading: str = Field(default="", max_length=5000)
+    minimum_examples: int = Field(default=5, ge=1, le=5)
+    translations: list[SyntaxReferenceTranslationIn] = Field(default_factory=list, max_length=2)
     display_order: int = Field(default=0, ge=0, le=10000)
     examples: list[SyntaxReferenceExampleIn] = Field(default_factory=list, max_length=5)
 
@@ -38,6 +73,8 @@ class SyntaxReferenceIn(BaseModel):
         numbers = [item.example_number for item in self.examples]
         if len(numbers) != len(set(numbers)):
             raise ValueError("Example numbers must be unique")
+        if self.minimum_examples > 1 and len(numbers) < self.minimum_examples:
+            raise ValueError(f"At least {self.minimum_examples} examples are required")
         return self
 class LessonSyntaxReferencesIn(BaseModel):
     reference_ids: list[UUID] = Field(default_factory=list, max_length=20)

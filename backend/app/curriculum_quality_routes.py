@@ -86,7 +86,7 @@ def _admin(user: User = Depends(current_user)) -> User:
 @router.get("/translation-coverage")
 def translation_coverage(user: User = Depends(_admin), db: Session = Depends(get_db)):
     """Report stored Burmese coverage without treating English fallback as a translation."""
-    courses = db.scalars(select(Course).options(selectinload(Course.modules).selectinload(CourseModule.lessons), selectinload(Course.syntax_references).selectinload(SyntaxReference.examples)).order_by(Course.title)).all()
+    courses = db.scalars(select(Course).options(selectinload(Course.modules).selectinload(CourseModule.lessons), selectinload(Course.syntax_references).selectinload(SyntaxReference.examples), selectinload(Course.syntax_references).selectinload(SyntaxReference.translations)).order_by(Course.title)).all()
     challenges = db.scalars(select(Challenge).order_by(Challenge.title)).all()
     projects = db.scalars(select(ProjectTemplate).order_by(ProjectTemplate.title)).all()
     items = []
@@ -96,7 +96,9 @@ def translation_coverage(user: User = Depends(_admin), db: Session = Depends(get
             state = _translation_state(lesson.content_mm, lesson.content_en)
             items.append({"source_type": "lesson", "source_id": str(lesson.id), "course_id": str(course.id), "title": lesson.title, "status": lesson.status, "published": lesson.published, "has_burmese": state == "available", "translation_state": state, "edit_url": f"/admin/courses/{course.id}/builder"})
         for reference in course.syntax_references:
-            items.append({"source_type": "syntax_reference", "source_id": str(reference.id), "course_id": str(course.id), "title": reference.title, "status": reference.status, "published": reference.status == "published", "has_burmese": False, "translation_state": "missing", "edit_url": "/admin/translations"})
+            burmese = next((translation for translation in reference.translations if translation.locale == "my"), None)
+            has_burmese = bool(burmese and burmese.status in {"approved", "published"} and burmese.title.strip() and burmese.description.strip())
+            items.append({"source_type": "syntax_reference", "source_id": str(reference.id), "course_id": str(course.id), "title": reference.title, "status": reference.status, "published": reference.status == "published", "has_burmese": has_burmese, "translation_state": "available" if has_burmese else "missing", "edit_url": "/admin/syntax"})
     for challenge in challenges:
         state = _translation_state(challenge.description_mm, challenge.description)
         items.append({"source_type": "challenge", "source_id": str(challenge.id), "title": challenge.title, "status": challenge.status, "published": challenge.published, "has_burmese": state == "available", "translation_state": state, "edit_url": "/platform/challenges"})
