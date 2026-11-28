@@ -1,0 +1,4192 @@
+{
+  "phase": "01",
+  "mode": "audit_only",
+  "data_source": "live PostgreSQL",
+  "summary": {
+    "total_courses": 56,
+    "published_courses": 50,
+    "draft_courses": 2,
+    "archived_courses": 4,
+    "complete_courses": [],
+    "partially_complete_courses": [
+      "networking-fundamentals",
+      "laravel"
+    ],
+    "introduction_only_courses": [
+      "docker",
+      "express-js",
+      "fastapi",
+      "flutter",
+      "git",
+      "github",
+      "go",
+      "kotlin",
+      "linux",
+      "microsoft-azure",
+      "mongodb",
+      "mysql",
+      "next-js",
+      "owasp-top-10",
+      "postgresql",
+      "react-native",
+      "react",
+      "redis",
+      "rust",
+      "secure-coding",
+      "sql",
+      "sqlite",
+      "tailwind-css",
+      "web-security"
+    ],
+    "missing_curriculum_courses": [],
+    "archived_empty_records": [
+      "csharp-legacy-dec2a9f5",
+      "cpp-programming-legacy-092680f9",
+      "demo-one",
+      "demo-one-copy"
+    ],
+    "missing_translation_courses": [
+      "advanced-java",
+      "algorithms",
+      "aws",
+      "bootstrap",
+      "csharp",
+      "cpp-programming",
+      "ci-cd",
+      "css",
+      "cybersecurity-fundamentals",
+      "dart",
+      "data-analysis",
+      "data-structures",
+      "django",
+      "html",
+      "java",
+      "javascript",
+      "jquery",
+      "machine-learning",
+      "node-js",
+      "operating-systems",
+      "php",
+      "python-for-ai",
+      "python",
+      "spring-boot"
+    ],
+    "technical_repair_courses": [
+      "c-programming",
+      "typescript"
+    ],
+    "priority_1": [
+      "docker",
+      "express-js",
+      "fastapi",
+      "flutter",
+      "git",
+      "github",
+      "go",
+      "kotlin",
+      "linux",
+      "microsoft-azure",
+      "mongodb",
+      "mysql",
+      "next-js",
+      "owasp-top-10",
+      "postgresql",
+      "react-native",
+      "react",
+      "redis",
+      "rust",
+      "secure-coding",
+      "sql",
+      "sqlite",
+      "tailwind-css",
+      "web-security"
+    ],
+    "priority_2": [
+      "aws",
+      "bootstrap",
+      "c-programming",
+      "cpp-programming",
+      "ci-cd",
+      "networking-fundamentals",
+      "css",
+      "cybersecurity-fundamentals",
+      "data-analysis",
+      "data-structures",
+      "django",
+      "html",
+      "java",
+      "javascript",
+      "jquery",
+      "laravel",
+      "machine-learning",
+      "operating-systems",
+      "php",
+      "python-for-ai",
+      "spring-boot",
+      "typescript"
+    ],
+    "priority_3": [],
+    "priority_4": [
+      "advanced-java",
+      "algorithms",
+      "csharp",
+      "dart",
+      "node-js",
+      "python"
+    ],
+    "priority_5": [],
+    "first_incomplete_course": "docker",
+    "criteria": {
+      "complete_requires": "all four level evidence groups, substantive EN/MM lessons, no audit gaps, per-lesson quizzes/exercises, syntax references, and at least one published course-linked project",
+      "translation_policy": "only persisted Burmese lesson content counts; empty or English fallback is not complete",
+      "project_policy": "only published ProjectCourseLink records count; technology-stack text alone is not treated as a course project link"
+    }
+  },
+  "first_course_plan": {
+    "preserve": [
+      "course/module/lesson IDs",
+      "published Module 1 content",
+      "lesson progress, enrollments, quiz attempts, and project submissions",
+      "existing EN/MM content and publication versions"
+    ],
+    "missing_modules": [
+      "Containers vs Virtual Machines",
+      "Docker Installation & Setup",
+      "Docker Architecture",
+      "Docker CLI Fundamentals",
+      "Container Lifecycle",
+      "Docker Images",
+      "Dockerfile Fundamentals",
+      "Advanced Dockerfile",
+      "Docker Build & BuildKit",
+      "Multi-Stage Builds",
+      "Docker Networking Fundamentals",
+      "Advanced Container Networking",
+      "Docker Volumes",
+      "Bind Mounts & Storage",
+      "Environment Variables & Configuration",
+      "Docker Compose Fundamentals",
+      "Advanced Docker Compose",
+      "Dockerizing Python Applications",
+      "Dockerizing Django Applications",
+      "Dockerizing Node.js & React",
+      "Dockerizing Laravel & PHP",
+      "Docker Hub & Registries",
+      "Image Versioning & Publishing",
+      "Docker Security Fundamentals",
+      "Image Scanning & Supply Chain",
+      "Secrets & Runtime Security",
+      "Rootless Docker & Hardening",
+      "Container Logs & Monitoring",
+      "Container Resource Management",
+      "Docker Performance Optimization",
+      "Backup & Recovery",
+      "Docker in Production",
+      "Docker CI/CD Pipelines",
+      "Cloud Container Deployment",
+      "Docker & Kubernetes Fundamentals",
+      "Docker Troubleshooting",
+      "Professional Docker Architecture",
+      "Real-World Docker Projects",
+      "Final Docker Capstone & Assessment"
+    ],
+    "required_content_per_lesson": [
+      "Introduction",
+      "Learning objectives",
+      "Prerequisites",
+      "Detailed theory",
+      "Core concepts",
+      "Syntax/API usage",
+      "Code examples",
+      "Expected output",
+      "Step-by-step explanation",
+      "Common mistakes",
+      "Best practices",
+      "Exercises",
+      "Homework",
+      "Quiz",
+      "Mini project where applicable",
+      "Lesson summary"
+    ],
+    "required_assessments": [
+      "one practical exercise per substantive lesson",
+      "one quiz with answer explanations per lesson",
+      "at least one linked published project after review",
+      "syntax references linked to relevant lessons"
+    ],
+    "translation_gaps": {
+      "english": "Missing",
+      "burmese": "Partial",
+      "lesson_level": [
+        "intermediate",
+        "professional"
+      ]
+    },
+    "recommended_batches": [
+      "Batch 1: Module 2-5 foundations and runtime/CLI labs",
+      "Batch 2: Module 6-12 images, Dockerfiles, networking, storage, Compose, and security",
+      "Batch 3: production, CI/CD, Kubernetes, troubleshooting, projects, and capstone",
+      "Review EN/MM, assessments, syntax links, project links, then submit for publication review"
+    ]
+  },
+  "courses": [
+    {
+      "course_id": "4e0e4352-c2f2-4683-ac0e-969619aeeabb",
+      "slug": "advanced-java",
+      "course": "Advanced Java — Enterprise Backend Engineering",
+      "status": "published",
+      "published_course": true,
+      "module_count": 36,
+      "lesson_count": 42,
+      "published_lesson_count": 42,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 42,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 42,
+      "code_example_count": 42,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "JVM Internals & Performance",
+          "Jakarta Servlet Fundamentals",
+          "Spring Boot Fundamentals",
+          "Spring Security Fundamentals",
+          "Kubernetes & Cloud Fundamentals"
+        ],
+        "intermediate": [
+          "Spring Core & Dependency Injection"
+        ],
+        "advanced": [
+          "Advanced Java Overview",
+          "Advanced OOP & Design Principles",
+          "JVM Internals & Performance",
+          "Enterprise Architecture Patterns",
+          "Spring Security Fundamentals",
+          "Microservices Architecture",
+          "Event-Driven Architecture",
+          "Advanced Testing & Testcontainers",
+          "Application Security & OWASP",
+          "Database Optimization",
+          "Real-World Enterprise Projects",
+          "Final Enterprise Capstone"
+        ],
+        "professional": [
+          "Advanced Java Overview",
+          "Enterprise Architecture Patterns",
+          "Kubernetes & Cloud Fundamentals",
+          "CI/CD & Production Deployment",
+          "Real-World Enterprise Projects",
+          "Production Readiness & Operations",
+          "Final Enterprise Capstone"
+        ]
+      },
+      "missing_levels": [],
+      "missing_lesson_sections": {
+        "syntax_api": 42,
+        "code_examples": 42,
+        "homework": 42
+      },
+      "missing_topics": [],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 42,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 4
+    },
+    {
+      "course_id": "847da177-6d5a-4a2f-aa1c-546e18d24cc2",
+      "slug": "algorithms",
+      "course": "Algorithms — From Zero to Advanced",
+      "status": "published",
+      "published_course": true,
+      "module_count": 40,
+      "lesson_count": 46,
+      "published_lesson_count": 46,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 46,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 46,
+      "code_example_count": 184,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Algorithms",
+          "Recursion Fundamentals",
+          "Dynamic Programming Fundamentals",
+          "Graph Fundamentals"
+        ],
+        "intermediate": [
+          "Intermediate Dynamic Programming"
+        ],
+        "advanced": [
+          "Advanced Dynamic Programming",
+          "Graph Fundamentals",
+          "Advanced Graph Algorithms",
+          "String Hashing & Advanced Matching",
+          "Advanced Data Structure Algorithms",
+          "Algorithm Correctness & Optimization",
+          "Final Algorithms Capstone"
+        ],
+        "professional": [
+          "Final Algorithms Capstone"
+        ]
+      },
+      "missing_levels": [],
+      "missing_lesson_sections": {
+        "core_concepts": 46,
+        "syntax_api": 46,
+        "code_examples": 46,
+        "homework": 46
+      },
+      "missing_topics": [
+        "error handling",
+        "testing"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 46,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 4
+    },
+    {
+      "course_id": "4e80b865-6652-451d-9b18-3c38b699e682",
+      "slug": "aws",
+      "course": "AWS Cloud Computing & Architecture — Zero to Advanced",
+      "status": "published",
+      "published_course": true,
+      "module_count": 40,
+      "lesson_count": 46,
+      "published_lesson_count": 46,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 46,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 46,
+      "code_example_count": 46,
+      "published_project_count": 0,
+      "syntax_reference_count": 4,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Cloud Computing",
+          "IAM Fundamentals",
+          "Amazon EC2 Fundamentals",
+          "Amazon S3 Fundamentals",
+          "Amazon VPC Fundamentals",
+          "AWS Lambda Fundamentals",
+          "Docker Fundamentals for AWS"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Introduction to Cloud Computing",
+          "Advanced IAM & Organizations",
+          "EC2 Scaling & Load Balancing",
+          "Advanced AWS Storage",
+          "Advanced VPC Networking",
+          "AWS Networking Security",
+          "Amazon Aurora & Database Scaling",
+          "Event-Driven AWS Architecture",
+          "Security Operations & Threat Detection",
+          "AWS Solution Architecture",
+          "High Availability & Performance",
+          "AWS Cost Optimization & FinOps"
+        ],
+        "professional": [
+          "AWS CI/CD & Deployment",
+          "Security Operations & Threat Detection",
+          "Final AWS Cloud Capstone"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "detailed_theory": 46,
+        "core_concepts": 46,
+        "syntax_api": 46,
+        "code_examples": 46,
+        "expected_output": 46,
+        "explanation": 46,
+        "common_mistakes": 46,
+        "best_practices": 46,
+        "homework": 46
+      },
+      "missing_topics": [
+        "practical project",
+        "professional workflow"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 46,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "015c3c08-4b9d-4a01-938d-2d47086c8a00",
+      "slug": "bootstrap",
+      "course": "Bootstrap 5 — From Zero to Professional Responsive Web Design",
+      "status": "published",
+      "published_course": true,
+      "module_count": 28,
+      "lesson_count": 34,
+      "published_lesson_count": 34,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 34,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 34,
+      "code_example_count": 34,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Bootstrap"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Performance & Optimization",
+          "Real-World Bootstrap Projects"
+        ],
+        "professional": [
+          "Final Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 34,
+        "syntax_api": 34,
+        "code_examples": 34,
+        "expected_output": 34,
+        "homework": 34
+      },
+      "missing_topics": [
+        "fundamentals",
+        "practical project",
+        "testing",
+        "security",
+        "professional workflow"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 34,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "61c60042-efda-4276-a17c-12c18b637ec7",
+      "slug": "c-programming",
+      "course": "C Programming",
+      "status": "published",
+      "published_course": true,
+      "module_count": 21,
+      "lesson_count": 76,
+      "published_lesson_count": 75,
+      "draft_lesson_count": 1,
+      "empty_lesson_count": 1,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 75,
+      "burmese_missing_count": 1,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 75,
+      "code_example_count": 76,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "01 Introduction to Programming & C",
+          "03 Your First C Program & C Syntax Fundamentals"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "detailed_theory": 66,
+        "core_concepts": 76,
+        "syntax_api": 76,
+        "code_examples": 76,
+        "common_mistakes": 66,
+        "best_practices": 76,
+        "homework": 76,
+        "quiz": 76,
+        "introduction": 1,
+        "learning_objectives": 1,
+        "prerequisites": 1,
+        "expected_output": 1,
+        "explanation": 1,
+        "exercises": 1,
+        "summary": 1
+      },
+      "missing_topics": [
+        "data structures"
+      ],
+      "audit_gaps": [
+        "module_order",
+        "lesson_order_or_empty_module",
+        "incomplete_lesson_sections",
+        "missing_code_examples",
+        "missing_quizzes",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [
+        "lesson_order_or_empty_module",
+        "missing_code_examples",
+        "missing_quizzes",
+        "module_order"
+      ],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 75,
+        "draft_lessons": 1,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Needs Technical Repair",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "733285d0-bbdf-48db-9aeb-f711ad2c7b99",
+      "slug": "csharp",
+      "course": "C# Programming — From Zero to Advanced",
+      "status": "published",
+      "published_course": true,
+      "module_count": 36,
+      "lesson_count": 42,
+      "published_lesson_count": 42,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 42,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 42,
+      "code_example_count": 42,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to C# & .NET",
+          "LINQ Fundamentals",
+          "ASP.NET Core Fundamentals"
+        ],
+        "intermediate": [
+          "Entity Framework Core",
+          "ASP.NET Core Fundamentals"
+        ],
+        "advanced": [
+          "Advanced OOP & Design Patterns",
+          "Advanced LINQ & Query Optimization",
+          "Testing, Security & Performance",
+          "Architecture & Clean Code",
+          "Real-World C# Projects"
+        ],
+        "professional": [
+          "Docker, CI/CD & Deployment",
+          "Real-World C# Projects",
+          "Final C# Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [],
+      "missing_lesson_sections": {
+        "core_concepts": 42,
+        "syntax_api": 42,
+        "code_examples": 42,
+        "homework": 42
+      },
+      "missing_topics": [
+        "functions",
+        "error handling"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 42,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 4
+    },
+    {
+      "course_id": "dec2a9f5-00e0-48f1-b4c2-5662502a1ce6",
+      "slug": "csharp-legacy-dec2a9f5",
+      "course": "C# Programming — From Zero to Advanced",
+      "status": "archived",
+      "published_course": false,
+      "module_count": 0,
+      "lesson_count": 0,
+      "published_lesson_count": 0,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 0,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Missing",
+      "exercise_count": 0,
+      "quiz_count": 0,
+      "code_example_count": 0,
+      "published_project_count": 0,
+      "syntax_reference_count": 0,
+      "level_evidence": {
+        "beginner": [],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "beginner",
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {},
+      "missing_topics": [
+        "fundamentals",
+        "functions",
+        "data structures",
+        "error handling",
+        "testing",
+        "project"
+      ],
+      "audit_gaps": [
+        "incomplete_course_metadata",
+        "missing_modules",
+        "module_order",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [
+        "module_order"
+      ],
+      "missing_assessment_or_reference": false,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "archived",
+        "course_published": false,
+        "published_lessons": 0,
+        "draft_lessons": 0,
+        "quality_audit": "draft_with_gaps"
+      },
+      "classification": "Missing Curriculum",
+      "recommended_priority": null
+    },
+    {
+      "course_id": "092680f9-5bc5-4f2f-b646-b605da8ab4f2",
+      "slug": "cpp-programming-legacy-092680f9",
+      "course": "C++ Programming — Beginner to Professional Foundations",
+      "status": "archived",
+      "published_course": false,
+      "module_count": 0,
+      "lesson_count": 0,
+      "published_lesson_count": 0,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 0,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Missing",
+      "exercise_count": 0,
+      "quiz_count": 0,
+      "code_example_count": 0,
+      "published_project_count": 0,
+      "syntax_reference_count": 0,
+      "level_evidence": {
+        "beginner": [],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "beginner",
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {},
+      "missing_topics": [
+        "fundamentals",
+        "functions",
+        "data structures",
+        "error handling",
+        "testing",
+        "project"
+      ],
+      "audit_gaps": [
+        "incomplete_course_metadata",
+        "missing_modules",
+        "module_order",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [
+        "module_order"
+      ],
+      "missing_assessment_or_reference": false,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "archived",
+        "course_published": false,
+        "published_lessons": 0,
+        "draft_lessons": 0,
+        "quality_audit": "draft_with_gaps"
+      },
+      "classification": "Missing Curriculum",
+      "recommended_priority": null
+    },
+    {
+      "course_id": "b14aecb7-3f40-4df2-876d-ac97c19e223d",
+      "slug": "cpp-programming",
+      "course": "C++ Programming — From Zero to Modern C++",
+      "status": "published",
+      "published_course": true,
+      "module_count": 24,
+      "lesson_count": 63,
+      "published_lesson_count": 63,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 63,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 63,
+      "code_example_count": 64,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to C++ Programming",
+          "Debugging, Testing & Build Tools"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Final Capstone & Assessment"
+        ],
+        "professional": [
+          "Guided Mini Projects",
+          "Final Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 63,
+        "syntax_api": 63,
+        "code_examples": 63,
+        "common_mistakes": 63,
+        "best_practices": 63,
+        "homework": 63,
+        "quiz": 63
+      },
+      "missing_topics": [
+        "stl",
+        "concurrency"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 63,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "bc7b90d7-42cc-4032-895e-16514ea299c7",
+      "slug": "ci-cd",
+      "course": "CI/CD & DevOps Engineering — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 40,
+      "lesson_count": 46,
+      "published_lesson_count": 46,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 46,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 46,
+      "code_example_count": 46,
+      "published_project_count": 0,
+      "syntax_reference_count": 4,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to CI/CD & DevOps",
+          "Git Fundamentals",
+          "CI Pipeline Fundamentals",
+          "GitHub Actions Fundamentals",
+          "GitLab CI/CD Fundamentals",
+          "Jenkins Fundamentals",
+          "Docker Fundamentals",
+          "Continuous Delivery Fundamentals",
+          "AWS CI/CD Fundamentals",
+          "Kubernetes Fundamentals"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Advanced GitHub Actions",
+          "Advanced GitLab Pipelines",
+          "Advanced Jenkins Automation",
+          "Docker Build Optimization",
+          "DevSecOps & Security Scanning",
+          "Software Supply Chain Security",
+          "Performance & Cost Optimization",
+          "Enterprise Pipeline Architecture"
+        ],
+        "professional": [
+          "GitHub & Collaboration",
+          "Deployment Strategies",
+          "AWS Application Deployment",
+          "Enterprise Pipeline Architecture",
+          "Final CI/CD Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 46,
+        "syntax_api": 46,
+        "code_examples": 46,
+        "expected_output": 46,
+        "homework": 46
+      },
+      "missing_topics": [
+        "practical project",
+        "professional workflow"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 46,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "37ee8d69-22b8-44e7-b772-405b13f4eb89",
+      "slug": "networking-fundamentals",
+      "course": "Computer Networking Fundamentals — From Zero to Professional Network Engineer",
+      "status": "draft",
+      "published_course": false,
+      "module_count": 40,
+      "lesson_count": 203,
+      "published_lesson_count": 0,
+      "draft_lesson_count": 203,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 203,
+      "burmese_partial_count": 0,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Complete",
+      "exercise_count": 609,
+      "quiz_count": 203,
+      "code_example_count": 203,
+      "published_project_count": 0,
+      "syntax_reference_count": 0,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Computer Networking",
+          "Ethernet Fundamentals",
+          "Subnetting Fundamentals",
+          "IPv6 Fundamentals",
+          "DNS Fundamentals",
+          "DHCP Fundamentals",
+          "Switching Fundamentals",
+          "Routing Fundamentals",
+          "Dynamic Routing Fundamentals",
+          "Network Security Fundamentals",
+          "Cloud Networking Fundamentals"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Advanced Subnetting & VLSM",
+          "DNS Fundamentals",
+          "Switching Fundamentals",
+          "Wireless Networking",
+          "Wireless Security",
+          "Network Security Fundamentals",
+          "Cloud Networking Fundamentals",
+          "Final Network Engineering Capstone"
+        ],
+        "professional": [
+          "Wireless Security",
+          "Professional Networking Projects",
+          "Final Network Engineering Capstone"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 203,
+        "syntax_api": 203,
+        "code_examples": 203,
+        "common_mistakes": 203,
+        "homework": 8,
+        "best_practices": 195
+      },
+      "missing_topics": [
+        "practical project"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "draft",
+        "course_published": false,
+        "published_lessons": 0,
+        "draft_lessons": 203,
+        "quality_audit": "draft_with_gaps"
+      },
+      "classification": "Partially Complete",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "692406f2-a0c1-4d0d-a2e9-4eec15c6f5d4",
+      "slug": "css",
+      "course": "CSS — From Zero to Professional Web Design",
+      "status": "published",
+      "published_course": true,
+      "module_count": 24,
+      "lesson_count": 44,
+      "published_lesson_count": 44,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 44,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 44,
+      "code_example_count": 88,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to CSS"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Advanced Selectors & Cascade",
+          "CSS Architecture & Performance"
+        ],
+        "professional": [
+          "Real-World CSS Projects",
+          "Final CSS Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 44,
+        "syntax_api": 44,
+        "code_examples": 44,
+        "expected_output": 44,
+        "homework": 44,
+        "quiz": 44
+      },
+      "missing_topics": [],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 44,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "d018edd7-15c4-4a52-b794-d6796eee1c42",
+      "slug": "cybersecurity-fundamentals",
+      "course": "Cybersecurity Fundamentals — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 40,
+      "lesson_count": 46,
+      "published_lesson_count": 46,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 46,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 46,
+      "code_example_count": 46,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Cybersecurity",
+          "CIA Triad & Security Principles",
+          "Computer Networking Fundamentals",
+          "Network Security Fundamentals",
+          "Linux Fundamentals for Security",
+          "Windows Security Fundamentals",
+          "Cryptography Fundamentals",
+          "OWASP Top 10 Fundamentals",
+          "Secure Coding Fundamentals",
+          "API Security Fundamentals",
+          "SOC Fundamentals",
+          "SIEM Fundamentals",
+          "Incident Response Fundamentals",
+          "Digital Forensics Fundamentals",
+          "Cloud Security Fundamentals",
+          "AWS Security Fundamentals",
+          "DevSecOps Fundamentals"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Introduction to Cybersecurity",
+          "CIA Triad & Security Principles",
+          "Security Risk Management",
+          "Security Policies, Ethics & Governance",
+          "Network Security Fundamentals",
+          "Linux Fundamentals for Security",
+          "Linux Security & Hardening",
+          "Windows Security Fundamentals",
+          "Web Application Security",
+          "API Security Fundamentals",
+          "Database Security",
+          "Endpoint & Device Security",
+          "Security Logging & Monitoring",
+          "Cloud Security Fundamentals",
+          "AWS Security Fundamentals",
+          "Container & Kubernetes Security",
+          "Zero Trust & Security Architecture",
+          "Security Testing Ethics & Methodology",
+          "Defensive Security Testing Labs",
+          "Security Frameworks & Compliance",
+          "Security Career & Certification Preparation"
+        ],
+        "professional": [
+          "SOC Fundamentals",
+          "Final Cybersecurity Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 46,
+        "syntax_api": 46,
+        "code_examples": 46,
+        "expected_output": 46,
+        "homework": 46
+      },
+      "missing_topics": [
+        "practical project",
+        "professional workflow"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 46,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "97738811-1481-4cea-9000-d3a6164842eb",
+      "slug": "dart",
+      "course": "Dart Programming — From Zero to Advanced",
+      "status": "published",
+      "published_course": true,
+      "module_count": 32,
+      "lesson_count": 38,
+      "published_lesson_count": 38,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 38,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 38,
+      "code_example_count": 38,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Dart",
+          "Flutter Fundamentals with Dart"
+        ],
+        "intermediate": [
+          "Introduction to Dart"
+        ],
+        "advanced": [
+          "Real-World Dart Projects"
+        ],
+        "professional": [
+          "Final Dart Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [],
+      "missing_lesson_sections": {
+        "core_concepts": 38,
+        "syntax_api": 38,
+        "code_examples": 38,
+        "homework": 38
+      },
+      "missing_topics": [],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 38,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 4
+    },
+    {
+      "course_id": "09f518a8-cdf5-46a7-b1e8-829e0e9688a0",
+      "slug": "data-analysis",
+      "course": "Data Analysis — From Zero to Professional Data Analyst",
+      "status": "published",
+      "published_course": true,
+      "module_count": 36,
+      "lesson_count": 42,
+      "published_lesson_count": 42,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 42,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 42,
+      "code_example_count": 42,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Data Analysis",
+          "Excel Fundamentals",
+          "SQL Fundamentals",
+          "SQL Aggregations",
+          "Python Fundamentals for Analysts",
+          "NumPy Fundamentals",
+          "Pandas Fundamentals",
+          "Probability Fundamentals",
+          "Power BI Fundamentals"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Advanced Excel Analysis",
+          "Advanced SQL Queries"
+        ],
+        "professional": [
+          "Final Data Analyst Capstone"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 42,
+        "syntax_api": 42,
+        "code_examples": 42,
+        "expected_output": 42,
+        "homework": 42
+      },
+      "missing_topics": [
+        "data structures",
+        "error handling"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 42,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "df2a75a2-8f07-4b08-af20-47d271b711e0",
+      "slug": "data-structures",
+      "course": "Data Structures — From Zero to Advanced",
+      "status": "published",
+      "published_course": true,
+      "module_count": 36,
+      "lesson_count": 42,
+      "published_lesson_count": 42,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 42,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 42,
+      "code_example_count": 168,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Data Structures",
+          "Tree Fundamentals",
+          "Graph Fundamentals"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Advanced Tries & Persistent Structures",
+          "Performance & Memory Optimization",
+          "Real-World Data Structure Projects",
+          "Final Capstone & Assessment"
+        ],
+        "professional": [
+          "Strings & Character Data",
+          "Queues & Circular Queues",
+          "Deques & Priority Queues",
+          "Heaps & Heap Operations",
+          "Final Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 42,
+        "syntax_api": 42,
+        "code_examples": 42,
+        "homework": 42
+      },
+      "missing_topics": [
+        "functions",
+        "error handling"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 42,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "689411b4-6185-4727-a659-da2b4c9532e7",
+      "slug": "demo-one",
+      "course": "Demo One",
+      "status": "archived",
+      "published_course": false,
+      "module_count": 0,
+      "lesson_count": 0,
+      "published_lesson_count": 0,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 0,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Missing",
+      "exercise_count": 0,
+      "quiz_count": 0,
+      "code_example_count": 0,
+      "published_project_count": 0,
+      "syntax_reference_count": 0,
+      "level_evidence": {
+        "beginner": [],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "beginner",
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {},
+      "missing_topics": [
+        "fundamentals",
+        "functions",
+        "data structures",
+        "error handling",
+        "testing",
+        "project"
+      ],
+      "audit_gaps": [
+        "missing_modules",
+        "module_order",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [
+        "module_order"
+      ],
+      "missing_assessment_or_reference": false,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "archived",
+        "course_published": false,
+        "published_lessons": 0,
+        "draft_lessons": 0,
+        "quality_audit": "draft_with_gaps"
+      },
+      "classification": "Missing Curriculum",
+      "recommended_priority": null
+    },
+    {
+      "course_id": "a63bbbd3-961d-463e-a604-3ec290bfdbfa",
+      "slug": "demo-one-copy",
+      "course": "Demo One Copy",
+      "status": "archived",
+      "published_course": false,
+      "module_count": 0,
+      "lesson_count": 0,
+      "published_lesson_count": 0,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 0,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Missing",
+      "exercise_count": 0,
+      "quiz_count": 0,
+      "code_example_count": 0,
+      "published_project_count": 0,
+      "syntax_reference_count": 0,
+      "level_evidence": {
+        "beginner": [],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "beginner",
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {},
+      "missing_topics": [
+        "fundamentals",
+        "functions",
+        "data structures",
+        "error handling",
+        "testing",
+        "project"
+      ],
+      "audit_gaps": [
+        "missing_modules",
+        "module_order",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [
+        "module_order"
+      ],
+      "missing_assessment_or_reference": false,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "archived",
+        "course_published": false,
+        "published_lessons": 0,
+        "draft_lessons": 0,
+        "quality_audit": "draft_with_gaps"
+      },
+      "classification": "Missing Curriculum",
+      "recommended_priority": null
+    },
+    {
+      "course_id": "5a7d5d12-b9d2-47f9-954a-837535457202",
+      "slug": "django",
+      "course": "Django Web Development — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 10,
+      "lesson_count": 56,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 48,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 48,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 56,
+      "quiz_count": 56,
+      "code_example_count": 56,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Django",
+          "Django Fundamentals"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Introduction to Django",
+          "Django Fundamentals",
+          "Database and Models",
+          "Authentication",
+          "Advanced Django",
+          "Django REST APIs",
+          "Security and Testing"
+        ],
+        "professional": [
+          "Production Engineering"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "quiz": 8,
+        "syntax_api": 48,
+        "code_examples": 48
+      },
+      "missing_topics": [],
+      "audit_gaps": [],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 48,
+        "quality_audit": "published_ready_for_review"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "73b0e7ab-0035-4012-92a6-7fbfe6fdfa1f",
+      "slug": "docker",
+      "course": "Docker & Containerization — From Zero to Professional DevOps",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Docker"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Introduction to Docker"
+        ],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1,
+      "recommended_plan": {
+        "preserve": [
+          "course/module/lesson IDs",
+          "published Module 1 content",
+          "lesson progress, enrollments, quiz attempts, and project submissions",
+          "existing EN/MM content and publication versions"
+        ],
+        "missing_modules": [
+          "Containers vs Virtual Machines",
+          "Docker Installation & Setup",
+          "Docker Architecture",
+          "Docker CLI Fundamentals",
+          "Container Lifecycle",
+          "Docker Images",
+          "Dockerfile Fundamentals",
+          "Advanced Dockerfile",
+          "Docker Build & BuildKit",
+          "Multi-Stage Builds",
+          "Docker Networking Fundamentals",
+          "Advanced Container Networking",
+          "Docker Volumes",
+          "Bind Mounts & Storage",
+          "Environment Variables & Configuration",
+          "Docker Compose Fundamentals",
+          "Advanced Docker Compose",
+          "Dockerizing Python Applications",
+          "Dockerizing Django Applications",
+          "Dockerizing Node.js & React",
+          "Dockerizing Laravel & PHP",
+          "Docker Hub & Registries",
+          "Image Versioning & Publishing",
+          "Docker Security Fundamentals",
+          "Image Scanning & Supply Chain",
+          "Secrets & Runtime Security",
+          "Rootless Docker & Hardening",
+          "Container Logs & Monitoring",
+          "Container Resource Management",
+          "Docker Performance Optimization",
+          "Backup & Recovery",
+          "Docker in Production",
+          "Docker CI/CD Pipelines",
+          "Cloud Container Deployment",
+          "Docker & Kubernetes Fundamentals",
+          "Docker Troubleshooting",
+          "Professional Docker Architecture",
+          "Real-World Docker Projects",
+          "Final Docker Capstone & Assessment"
+        ],
+        "required_content_per_lesson": [
+          "Introduction",
+          "Learning objectives",
+          "Prerequisites",
+          "Detailed theory",
+          "Core concepts",
+          "Syntax/API usage",
+          "Code examples",
+          "Expected output",
+          "Step-by-step explanation",
+          "Common mistakes",
+          "Best practices",
+          "Exercises",
+          "Homework",
+          "Quiz",
+          "Mini project where applicable",
+          "Lesson summary"
+        ],
+        "required_assessments": [
+          "one practical exercise per substantive lesson",
+          "one quiz with answer explanations per lesson",
+          "at least one linked published project after review",
+          "syntax references linked to relevant lessons"
+        ],
+        "translation_gaps": {
+          "english": "Missing",
+          "burmese": "Partial",
+          "lesson_level": [
+            "intermediate",
+            "professional"
+          ]
+        },
+        "recommended_batches": [
+          "Batch 1: Module 2-5 foundations and runtime/CLI labs",
+          "Batch 2: Module 6-12 images, Dockerfiles, networking, storage, Compose, and security",
+          "Batch 3: production, CI/CD, Kubernetes, troubleshooting, projects, and capstone",
+          "Review EN/MM, assessments, syntax links, project links, then submit for publication review"
+        ]
+      }
+    },
+    {
+      "course_id": "1c18a459-779e-4e1e-8713-973bf152260b",
+      "slug": "express-js",
+      "course": "Express.js Backend Development — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Express.js"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "syntax_api": 8,
+        "code_examples": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "error handling",
+        "testing"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "a214dd4e-d2ce-40ba-9926-ca8adc7ceb5a",
+      "slug": "fastapi",
+      "course": "FastAPI Backend Development — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to FastAPI"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": [
+          "Introduction to FastAPI"
+        ]
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced"
+      ],
+      "missing_lesson_sections": {
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "routing",
+        "testing"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "aa6c2ca8-629a-4412-8872-915e70b5ba43",
+      "slug": "flutter",
+      "course": "Flutter & Dart Development — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Flutter"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "layouts",
+        "testing"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "d1512394-2ff1-4028-ab82-5760c84830b4",
+      "slug": "git",
+      "course": "Git & Version Control — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Version Control"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "c1787388-ab90-4523-bf69-fd86867127a1",
+      "slug": "github",
+      "course": "GitHub & Collaborative Development — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to GitHub"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "fundamentals",
+        "practical project",
+        "testing",
+        "professional workflow"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "686cf74e-cde4-4953-bc46-e68dd444e7fe",
+      "slug": "go",
+      "course": "Go Programming — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Go"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "fundamentals",
+        "data structures",
+        "error handling",
+        "testing"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "e38ea9a1-76ac-41b4-88be-b12b7fa387be",
+      "slug": "html",
+      "course": "HTML — From Zero to Web Development Foundations",
+      "status": "published",
+      "published_course": true,
+      "module_count": 20,
+      "lesson_count": 53,
+      "published_lesson_count": 53,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 53,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 53,
+      "code_example_count": 53,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to HTML",
+          "HTML Forms — Fundamentals",
+          "Responsive HTML Foundations"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "HTML Forms — Advanced",
+          "HTML Best Practices & Security",
+          "Final HTML Capstone Project"
+        ],
+        "professional": [
+          "Final HTML Capstone Project"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 53,
+        "syntax_api": 53,
+        "expected_output": 53,
+        "homework": 53,
+        "quiz": 53
+      },
+      "missing_topics": [],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 53,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "bdea1576-be60-42a3-83a6-07ac7b8dfa6e",
+      "slug": "java",
+      "course": "Java Programming — From Zero to Advanced",
+      "status": "published",
+      "published_course": true,
+      "module_count": 32,
+      "lesson_count": 58,
+      "published_lesson_count": 58,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 58,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 58,
+      "code_example_count": 58,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Java",
+          "Spring Boot Fundamentals",
+          "Real-World Java Projects"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Advanced OOP",
+          "Security, Performance & Deployment",
+          "Final Capstone & Assessment"
+        ],
+        "professional": [
+          "Security, Performance & Deployment",
+          "Real-World Java Projects",
+          "Final Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 58,
+        "syntax_api": 58,
+        "homework": 58,
+        "quiz": 58
+      },
+      "missing_topics": [],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 58,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "eaa8f03b-6704-4d53-b218-3504ad6eed8b",
+      "slug": "javascript",
+      "course": "JavaScript Programming — From Zero to Advanced",
+      "status": "published",
+      "published_course": true,
+      "module_count": 30,
+      "lesson_count": 78,
+      "published_lesson_count": 78,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 78,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 78,
+      "code_example_count": 78,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to JavaScript",
+          "DOM Fundamentals",
+          "Fetch API & HTTP"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Advanced JavaScript Concepts",
+          "Web Security & Best Practices",
+          "Testing & Performance",
+          "Final Capstone & Assessment"
+        ],
+        "professional": [
+          "Final Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 78,
+        "syntax_api": 78,
+        "homework": 78,
+        "quiz": 78
+      },
+      "missing_topics": [],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 78,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "f46c375e-80c6-4ea3-bc72-45e99248cf1e",
+      "slug": "jquery",
+      "course": "jQuery — From Zero to Advanced",
+      "status": "published",
+      "published_course": true,
+      "module_count": 24,
+      "lesson_count": 30,
+      "published_lesson_count": 30,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 30,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 30,
+      "code_example_count": 30,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to jQuery",
+          "AJAX Fundamentals"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Security & Best Practices",
+          "Performance & Debugging",
+          "Real-World jQuery Projects"
+        ],
+        "professional": [
+          "Final Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 30,
+        "syntax_api": 30,
+        "code_examples": 30,
+        "expected_output": 30,
+        "homework": 30
+      },
+      "missing_topics": [
+        "functions",
+        "data structures"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 30,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "7ae5683c-d65b-49b5-9ecc-a901d4a4c4dd",
+      "slug": "kotlin",
+      "course": "Kotlin Programming & Android Development — Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Kotlin"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "fundamentals",
+        "data structures",
+        "error handling",
+        "testing"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "deee5d63-d36a-4d2e-82c1-87ceccf78771",
+      "slug": "laravel",
+      "course": "Laravel & PHP Full-Stack Development — From Zero to Professional",
+      "status": "draft",
+      "published_course": false,
+      "module_count": 40,
+      "lesson_count": 203,
+      "published_lesson_count": 0,
+      "draft_lesson_count": 203,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 203,
+      "burmese_partial_count": 0,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Complete",
+      "exercise_count": 606,
+      "quiz_count": 203,
+      "code_example_count": 203,
+      "published_project_count": 0,
+      "syntax_reference_count": 0,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Laravel",
+          "Modern PHP Fundamentals",
+          "Routing Fundamentals",
+          "Database Fundamentals",
+          "Eloquent ORM Fundamentals",
+          "Authentication Fundamentals",
+          "Laravel Testing Fundamentals"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Modern PHP Fundamentals",
+          "Laravel MVC Architecture",
+          "Advanced Eloquent",
+          "Authentication Fundamentals",
+          "Advanced API & Database Testing",
+          "Laravel Security Best Practices",
+          "Performance Optimization",
+          "Application Architecture & Patterns",
+          "Professional Laravel Projects",
+          "Final Laravel Capstone"
+        ],
+        "professional": [
+          "CI/CD, Deployment & Monitoring",
+          "Professional Laravel Projects",
+          "Final Laravel Capstone"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 203,
+        "syntax_api": 203,
+        "code_examples": 203,
+        "common_mistakes": 203,
+        "homework": 8,
+        "best_practices": 195
+      },
+      "missing_topics": [],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "draft",
+        "course_published": false,
+        "published_lessons": 0,
+        "draft_lessons": 203,
+        "quality_audit": "draft_with_gaps"
+      },
+      "classification": "Partially Complete",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "1451296d-97d4-43d0-8e41-50e8870ee40b",
+      "slug": "linux",
+      "course": "Linux Fundamentals, System Administration & DevOps — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Linux"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "processes",
+        "networking",
+        "diagnostics"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "44ca02a8-0525-49bb-93b8-cfa2ef84aa86",
+      "slug": "machine-learning",
+      "course": "Machine Learning with Python — From Zero to Professional AI & Machine Learning Engineer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 12,
+      "lesson_count": 61,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 53,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 53,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 61,
+      "quiz_count": 61,
+      "code_example_count": 61,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Machine Learning",
+          "Mathematics Foundations",
+          "Professional ML Engineering"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Mathematics Foundations",
+          "Data Preparation",
+          "Advanced Machine Learning"
+        ],
+        "professional": [
+          "Professional ML Engineering"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "syntax_api": 61,
+        "code_examples": 61
+      },
+      "missing_topics": [],
+      "audit_gaps": [],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 53,
+        "quality_audit": "published_ready_for_review"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "fe9742ca-8a97-44ff-84e2-da8f1bd5dfbd",
+      "slug": "microsoft-azure",
+      "course": "Microsoft Azure — From Zero to Professional Cloud & DevOps Engineer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 4,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Cloud Computing"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "practical project",
+        "testing",
+        "professional workflow"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "f4e411ae-3c04-4673-a24c-81073a4c3507",
+      "slug": "mongodb",
+      "course": "MongoDB — From Zero to Professional NoSQL Database Developer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 1,
+      "burmese_partial_count": 7,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to MongoDB"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "indexing"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "d78ff483-a10f-434d-878a-894e86ebaa5d",
+      "slug": "mysql",
+      "course": "MySQL Database Development — From Zero to Professional Database Developer & Administrator",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to MySQL"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "data modeling"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "7891a002-714a-4a4b-b256-9bc8af8efa4d",
+      "slug": "next-js",
+      "course": "Next.js Full-Stack Development — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Next.js"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "data structures",
+        "error handling",
+        "testing"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "7acb5c82-6a5d-4e45-87ab-015dabb89004",
+      "slug": "node-js",
+      "course": "Node.js Backend Development — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 9,
+      "lesson_count": 41,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 33,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 33,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 41,
+      "quiz_count": 41,
+      "code_example_count": 41,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Node.js",
+          "JavaScript and Node Runtime Foundations",
+          "HTTP, Express and REST APIs"
+        ],
+        "intermediate": [
+          "Introduction to Node.js",
+          "Modules, npm and Core APIs"
+        ],
+        "advanced": [
+          "Testing, Security and Observability",
+          "Performance, Caching and Real-Time Services"
+        ],
+        "professional": [
+          "TypeScript, Docker and Production Deployment"
+        ]
+      },
+      "missing_levels": [],
+      "missing_lesson_sections": {
+        "syntax_api": 41,
+        "code_examples": 41
+      },
+      "missing_topics": [],
+      "audit_gaps": [],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 33,
+        "quality_audit": "published_ready_for_review"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 4
+    },
+    {
+      "course_id": "6e299619-b439-4d94-829b-a200586b5809",
+      "slug": "operating-systems",
+      "course": "Operating Systems — From Zero to Advanced Systems Engineering",
+      "status": "published",
+      "published_course": true,
+      "module_count": 40,
+      "lesson_count": 200,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 192,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 200,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 200,
+      "quiz_count": 200,
+      "code_example_count": 200,
+      "published_project_count": 0,
+      "syntax_reference_count": 8,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Operating Systems",
+          "Computer System Foundations",
+          "Linux Fundamentals",
+          "Distributed Systems Foundations"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Kernel Architecture",
+          "Operating System Security",
+          "Performance Engineering",
+          "Advanced Kernel Concurrency",
+          "Advanced Virtual Memory",
+          "System Security Engineering",
+          "Systems Performance and Reliability",
+          "OS Engineering Capstone",
+          "Advanced File Systems",
+          "Operating System Security Engineering",
+          "Performance and Tracing",
+          "Advanced Scheduling",
+          "Advanced Storage Engineering",
+          "Systems Security Engineering",
+          "Final Systems Engineering Capstone"
+        ],
+        "professional": [
+          "Systems Performance and Reliability",
+          "OS Engineering Capstone",
+          "Production Linux Engineering",
+          "Final Systems Engineering Capstone"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 200,
+        "code_examples": 200
+      },
+      "missing_topics": [],
+      "audit_gaps": [],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 192,
+        "quality_audit": "published_ready_for_review"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "cce8ea49-ea10-49b6-9010-024d51b4f6d7",
+      "slug": "owasp-top-10",
+      "course": "OWASP Top 10 — Web Application Security & Secure Development",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Web Security"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Introduction to Web Security"
+        ],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "fundamentals",
+        "practical project",
+        "professional workflow"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "1d956c85-7877-4059-9516-a606d9c2e3c0",
+      "slug": "php",
+      "course": "PHP Programming — From Zero to Advanced",
+      "status": "published",
+      "published_course": true,
+      "module_count": 36,
+      "lesson_count": 42,
+      "published_lesson_count": 42,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 42,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 42,
+      "code_example_count": 42,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to PHP",
+          "Database Fundamentals & SQL",
+          "Laravel Framework Fundamentals"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Advanced OOP & Design Patterns",
+          "Web Security & OWASP",
+          "PHP Architecture & Best Practices",
+          "Performance, Deployment & DevOps",
+          "Real-World PHP Projects"
+        ],
+        "professional": [
+          "Performance, Deployment & DevOps",
+          "Final PHP Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 42,
+        "syntax_api": 42,
+        "code_examples": 42,
+        "homework": 42
+      },
+      "missing_topics": [
+        "data structures"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 42,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "76b5f34c-1495-415d-8126-2da1ac198412",
+      "slug": "postgresql",
+      "course": "PostgreSQL Database Development — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to PostgreSQL"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Introduction to PostgreSQL"
+        ],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "data modeling",
+        "indexing"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "8c4bffbe-4048-4aa4-9ec8-ee73332e9633",
+      "slug": "python-for-ai",
+      "course": "Python for Artificial Intelligence — From Zero to AI Engineer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 12,
+      "lesson_count": 65,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 57,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 57,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 65,
+      "quiz_count": 65,
+      "code_example_count": 65,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Python for AI",
+          "Python Foundations for AI",
+          "Supervised Machine Learning",
+          "Deep Learning with PyTorch"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Data Preparation and Machine Learning Workflow",
+          "Unsupervised Learning and Optimization"
+        ],
+        "professional": [
+          "AI Applications, MLOps and Capstone"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "syntax_api": 65,
+        "code_examples": 65
+      },
+      "missing_topics": [],
+      "audit_gaps": [],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 57,
+        "quality_audit": "published_ready_for_review"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "f5ab8891-28ee-46a8-9879-5bad83d2f661",
+      "slug": "python",
+      "course": "Python Programming — From Zero to Advanced",
+      "status": "published",
+      "published_course": true,
+      "module_count": 32,
+      "lesson_count": 87,
+      "published_lesson_count": 87,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 87,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 87,
+      "code_example_count": 87,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Python",
+          "Data Analysis Foundations",
+          "Real-World Python Projects"
+        ],
+        "intermediate": [
+          "Working with APIs & HTTP"
+        ],
+        "advanced": [
+          "Advanced OOP",
+          "Security & Performance",
+          "Final Capstone & Assessment"
+        ],
+        "professional": [
+          "Real-World Python Projects",
+          "Final Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [],
+      "missing_lesson_sections": {
+        "core_concepts": 87,
+        "syntax_api": 87,
+        "homework": 87,
+        "quiz": 87,
+        "code_examples": 2
+      },
+      "missing_topics": [],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 87,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 4
+    },
+    {
+      "course_id": "7841759d-f08a-4601-a0b3-1bbf09c5b909",
+      "slug": "react-native",
+      "course": "React Native — From Zero to Professional Mobile App Developer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 9,
+      "published_lesson_count": 9,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 9,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 9,
+      "code_example_count": 9,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to React Native"
+        ],
+        "intermediate": [
+          "Introduction to React Native"
+        ],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 9,
+        "syntax_api": 9,
+        "code_examples": 9,
+        "expected_output": 9,
+        "explanation": 9,
+        "common_mistakes": 9,
+        "homework": 9
+      },
+      "missing_topics": [
+        "fundamentals",
+        "functions",
+        "data structures",
+        "error handling"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 9,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "1196e956-446f-4530-a0f4-7b4a94901f0d",
+      "slug": "react",
+      "course": "React.js — From Zero to Professional Frontend Developer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to React"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "routing",
+        "data fetching",
+        "testing",
+        "performance"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "10fca519-9a50-47cc-8941-ac706a45c63d",
+      "slug": "redis",
+      "course": "Redis — From Zero to Professional",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Redis"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Introduction to Redis"
+        ],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "data modeling",
+        "queries",
+        "indexing",
+        "transactions"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "de0dbba0-edc3-4baa-a58f-777a71cb14c6",
+      "slug": "rust",
+      "course": "Rust Programming — From Zero to Professional Systems Developer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Rust"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "data structures"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "7543bd45-01e5-4127-89c8-873357ebd1ea",
+      "slug": "secure-coding",
+      "course": "Secure Coding — From Zero to Professional Secure Software Developer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Secure Coding"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Introduction to Secure Coding"
+        ],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "fundamentals",
+        "practical project",
+        "professional workflow"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "e76f8188-5def-4408-82f9-dd6ae85fe0e8",
+      "slug": "spring-boot",
+      "course": "Spring Boot — From Zero to Professional Java Backend Developer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 9,
+      "lesson_count": 41,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 33,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 33,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 41,
+      "quiz_count": 41,
+      "code_example_count": 41,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Spring Boot",
+          "Java and Spring Boot Foundations"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Introduction to Spring Boot",
+          "Validation, Transactions and Security",
+          "Performance, Observability and Deployment"
+        ],
+        "professional": [
+          "Performance, Observability and Deployment",
+          "Professional Spring Boot Capstone"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "syntax_api": 41,
+        "code_examples": 41
+      },
+      "missing_topics": [],
+      "audit_gaps": [],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 33,
+        "quality_audit": "published_ready_for_review"
+      },
+      "classification": "Missing Translations",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "e8940576-9c4b-42d0-84ef-1eecd0fe7eda",
+      "slug": "sql",
+      "course": "SQL — From Zero to Professional Database Developer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to SQL"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "c6187137-7d5f-45cd-93f7-4bc62c81e317",
+      "slug": "sqlite",
+      "course": "SQLite — From Zero to Professional Database Developer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to SQLite"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "data modeling",
+        "indexing"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "2ada7d19-0837-48c6-9b3e-f6e2734e2cfa",
+      "slug": "tailwind-css",
+      "course": "Tailwind CSS — From Zero to Professional Frontend UI Developer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 1,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Tailwind CSS"
+        ],
+        "intermediate": [],
+        "advanced": [],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "advanced",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "common_mistakes": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "fundamentals",
+        "practical project",
+        "testing",
+        "security"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    },
+    {
+      "course_id": "aa8a10cd-d89b-4d1c-adb4-edead48f6447",
+      "slug": "typescript",
+      "course": "TypeScript Programming — From Zero to Advanced",
+      "status": "published",
+      "published_course": true,
+      "module_count": 32,
+      "lesson_count": 39,
+      "published_lesson_count": 38,
+      "draft_lesson_count": 1,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 38,
+      "burmese_missing_count": 1,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 38,
+      "code_example_count": 38,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to TypeScript",
+          "Generics Fundamentals"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Advanced Generics",
+          "Security, Performance & Best Practices",
+          "Real-World TypeScript Projects",
+          "Final Capstone & Assessment"
+        ],
+        "professional": [
+          "Async TypeScript & APIs",
+          "Final Capstone & Assessment"
+        ]
+      },
+      "missing_levels": [
+        "intermediate"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 39,
+        "syntax_api": 39,
+        "code_examples": 39,
+        "homework": 39,
+        "prerequisites": 1,
+        "detailed_theory": 1,
+        "expected_output": 1,
+        "explanation": 1,
+        "common_mistakes": 1,
+        "best_practices": 1,
+        "exercises": 1,
+        "quiz": 1,
+        "summary": 1
+      },
+      "missing_topics": [
+        "tooling"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_code_examples",
+        "missing_quizzes",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [
+        "missing_code_examples",
+        "missing_quizzes"
+      ],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 38,
+        "draft_lessons": 1,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Needs Technical Repair",
+      "recommended_priority": 2
+    },
+    {
+      "course_id": "c1126e3f-4e15-4fea-b865-3b54bdcd5dbe",
+      "slug": "web-security",
+      "course": "Web Application Security — From Zero to Professional Web Security Engineer",
+      "status": "published",
+      "published_course": true,
+      "module_count": 1,
+      "lesson_count": 8,
+      "published_lesson_count": 8,
+      "draft_lesson_count": 0,
+      "empty_lesson_count": 0,
+      "english_complete_count": 0,
+      "english_completeness": "Missing",
+      "burmese_complete_count": 0,
+      "burmese_partial_count": 8,
+      "burmese_missing_count": 0,
+      "mm_completeness": "Partial",
+      "exercise_count": 0,
+      "quiz_count": 8,
+      "code_example_count": 8,
+      "published_project_count": 0,
+      "syntax_reference_count": 3,
+      "level_evidence": {
+        "beginner": [
+          "Introduction to Web Security"
+        ],
+        "intermediate": [],
+        "advanced": [
+          "Introduction to Web Security"
+        ],
+        "professional": []
+      },
+      "missing_levels": [
+        "intermediate",
+        "professional"
+      ],
+      "missing_lesson_sections": {
+        "core_concepts": 8,
+        "syntax_api": 8,
+        "code_examples": 8,
+        "expected_output": 8,
+        "explanation": 8,
+        "homework": 8
+      },
+      "missing_topics": [
+        "fundamentals",
+        "practical project",
+        "professional workflow"
+      ],
+      "audit_gaps": [
+        "incomplete_lesson_sections",
+        "missing_exercises",
+        "missing_expected_topics"
+      ],
+      "technical_repairs": [],
+      "missing_assessment_or_reference": true,
+      "strict_complete": false,
+      "publication_status": {
+        "course_status": "published",
+        "course_published": true,
+        "published_lessons": 8,
+        "draft_lessons": 0,
+        "quality_audit": "published_with_gaps"
+      },
+      "classification": "Introduction Only",
+      "recommended_priority": 1
+    }
+  ]
+}
