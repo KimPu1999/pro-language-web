@@ -107,6 +107,12 @@ def translation_coverage(user: User = Depends(_admin), db: Session = Depends(get
     return {"items": items, "summary": {"total": len(items), "available": sum(1 for item in items if item["has_burmese"]), "missing": sum(1 for item in items if not item["has_burmese"]), "published_total": len(published), "published_missing": sum(1 for item in published if not item["has_burmese"]), "data_source": "database"}}
 
 
+@router.get("/translations")
+def translations(user: User = Depends(_admin), db: Session = Depends(get_db)):
+    """Compatibility alias for the existing Admin translations screen."""
+    return translation_coverage(user=user, db=db)
+
+
 def _tokens(course: Course) -> str:
     parts = [course.slug, course.title, getattr(course.language, "name", "")]
     modules = getattr(course, "modules", [])

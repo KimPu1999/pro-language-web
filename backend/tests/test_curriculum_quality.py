@@ -45,3 +45,18 @@ def test_quality_detail_and_review_submission_are_additive(client):
     repeated = client.post(f"/api/v1/admin/curriculum-quality/courses/{item['id']}/submit-review", headers={"X-CSRF-Token": csrf})
     assert repeated.status_code == 201
     assert repeated.json()["created"] is False
+
+
+def test_translation_coverage_reports_stored_burmese_content(client):
+    assert client.get("/api/v1/admin/curriculum-quality/translation-coverage").status_code == 401
+    admin_login(client, "translation-admin@example.com")
+    response = client.get("/api/v1/admin/curriculum-quality/translation-coverage")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["summary"]["data_source"] == "database"
+    lesson = next(item for item in body["items"] if item["source_type"] == "lesson")
+    assert lesson["translation_state"] in {"partial", "available"}
+    assert lesson["has_burmese"] is False
+    alias = client.get("/api/v1/admin/curriculum-quality/translations")
+    assert alias.status_code == 200
+    assert alias.json()["summary"]["data_source"] == "database"
