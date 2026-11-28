@@ -8,7 +8,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 from .config import settings
 from .db import get_db
-from .models import CareerRoadmap, ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, Lesson, PlatformSetting, ProgrammingLanguage, StudentChallengeProgress, User, UserProfile
+from .models import CareerRoadmap, ChallengeCategory, ChallengeSubmission, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, Lesson, MediaAsset, PlatformSetting, ProgrammingLanguage, StudentChallengeProgress, User, UserProfile
 from .schemas import BrandingSettings, CategoryOut, CourseDetailOut, CourseLearningOut, ExampleOut, FooterSettings, HomepageSettings, LanguageOut, LessonOut, ModuleOut, NavigationSettings, PageOut, PathOut, PlatformPageOut
 from .footer_config import read_footer
 from .navigation_config import NAVIGATION_PUBLISHED_KEY, read_navigation
@@ -205,8 +205,13 @@ def categories(db: Session=Depends(get_db)): return db.scalars(select(CourseCate
 def course_query(): return select(Course).options(selectinload(Course.language),selectinload(Course.category)).where(Course.published.is_(True))
 def pipe_values(value):
     return [item.strip() for item in (value or "").split("|") if item.strip()]
-def course_payload(course, module_count=0, lesson_count=0, modules=None, instructors=None, related_courses=None):
-    payload={"id":course.id,"title":course.title,"slug":course.slug,"description":course.description,"short_description":course.short_description or "","thumbnail":course.thumbnail,"level":course.level,"duration_minutes":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"module_count":module_count,"lesson_count":lesson_count,"outcomes":course.outcomes,"requirements":course.requirements,"language":course.language,"category":course.category}
+def media_url(asset):
+    return f"/media/{asset.storage_key}" if asset and asset.status == "active" and asset.visibility == "public" else None
+def course_payload(course, module_count=0, lesson_count=0, modules=None, instructors=None, related_courses=None, assets=None):
+    assets = assets or {}
+    logo = assets.get(course.card_logo_asset_id)
+    cover = assets.get(course.card_cover_asset_id)
+    payload={"id":course.id,"title":course.title,"display_title":course.display_title or course.title,"slug":course.slug,"description":course.description,"short_description":course.short_description or "","card_short_description":course.card_short_description or course.short_description or "","technology_name":course.technology_name or (course.language.name if course.language else ""),"card_logo_url":media_url(logo),"card_cover_url":media_url(cover) or course.thumbnail,"card_image_alt":course.card_image_alt or course.title,"show_rating":course.show_rating,"rating_average":None,"rating_count":0,"thumbnail":course.thumbnail,"level":course.level,"duration_minutes":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"module_count":module_count,"lesson_count":lesson_count,"outcomes":course.outcomes,"requirements":course.requirements,"language":course.language,"category":course.category}
     if modules is not None:
         payload["target_audience"] = course.target_audience or ""
         payload["technologies"] = pipe_values(course.technologies)
@@ -251,7 +256,8 @@ def courses(search: str|None=None, language: str|None=None, technology: str|None
     course_ids=[row.id for row in rows]
     module_counts=dict(db.execute(select(CourseModule.course_id,func.count(CourseModule.id)).where(CourseModule.course_id.in_(course_ids)).group_by(CourseModule.course_id)).all()) if course_ids else {}
     lesson_counts=dict(db.execute(select(CourseModule.course_id,func.count(Lesson.id)).join(Lesson,Lesson.module_id==CourseModule.id).where(CourseModule.course_id.in_(course_ids),Lesson.published.is_(True)).group_by(CourseModule.course_id)).all()) if course_ids else {}
-    return {"items":[course_payload(row,module_counts.get(row.id,0),lesson_counts.get(row.id,0)) for row in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+    asset_ids={asset_id for row in rows for asset_id in (row.card_logo_asset_id,row.card_cover_asset_id) if asset_id}; assets={asset.id:asset for asset in db.scalars(select(MediaAsset).where(MediaAsset.id.in_(asset_ids))).all()} if asset_ids else {}
+    return {"items":[course_payload(row,module_counts.get(row.id,0),lesson_counts.get(row.id,0),assets=assets) for row in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
 @app.get("/api/v1/courses/{slug}",response_model=CourseDetailOut)
 def course(slug: str, db: Session=Depends(get_db)):
     row=db.scalar(course_query().options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples),selectinload(Course.faqs)).where(Course.slug==slug))
@@ -259,7 +265,8 @@ def course(slug: str, db: Session=Depends(get_db)):
     modules=public_modules(row.modules)
     instructor_rows=db.execute(select(User,UserProfile).join(CourseInstructor,CourseInstructor.user_id==User.id).outerjoin(UserProfile,UserProfile.user_id==User.id).where(CourseInstructor.course_id==row.id,User.role=="instructor",User.account_status=="active").order_by(User.display_name)).all()
     instructors=[{"id":user.id,"name":user.display_name,"avatar_url":profile.avatar_url if profile else None,"bio":profile.bio if profile else None} for user,profile in instructor_rows]
-    return course_payload(row, len(modules), sum(len(module["lessons"]) for module in modules), modules, instructors, [])
+    asset_ids={asset_id for asset_id in (row.card_logo_asset_id,row.card_cover_asset_id) if asset_id}; assets={asset.id:asset for asset in db.scalars(select(MediaAsset).where(MediaAsset.id.in_(asset_ids))).all()} if asset_ids else {}
+    return course_payload(row, len(modules), sum(len(module["lessons"]) for module in modules), modules, instructors, [], assets)
 @app.get("/api/v1/courses/{slug}/learning",response_model=CourseLearningOut)
 def course_learning(slug: str, db: Session=Depends(get_db)):
     """Return course structure without downloading all lesson bodies."""

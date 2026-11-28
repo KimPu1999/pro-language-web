@@ -56,7 +56,7 @@ class LessonSummaryOut(BaseModel):
 class LearningModuleOut(BaseModel):
     model_config=ConfigDict(from_attributes=True); id: UUID; title: str; order_index: int; lessons: list[LessonSummaryOut]=Field(default_factory=list)
 class CourseOut(BaseModel):
-    model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; description: str; short_description: str = ""; thumbnail: str|None = None; level: str; duration_minutes: int; status: str; module_count: int = 0; lesson_count: int = 0; outcomes: list[str]=Field(default_factory=list); requirements: list[str]=Field(default_factory=list); language: LanguageOut; category: CategoryOut
+    model_config=ConfigDict(from_attributes=True); id: UUID; title: str; display_title: str = ""; slug: str; description: str; short_description: str = ""; card_short_description: str = ""; technology_name: str = ""; card_logo_url: str|None = None; card_cover_url: str|None = None; card_image_alt: str = ""; show_rating: bool = True; rating_average: float|None = None; rating_count: int = 0; thumbnail: str|None = None; level: str; duration_minutes: int; status: str; module_count: int = 0; lesson_count: int = 0; outcomes: list[str]=Field(default_factory=list); requirements: list[str]=Field(default_factory=list); language: LanguageOut; category: CategoryOut
     @field_validator("outcomes", mode="before")
     @classmethod
     def split_outcomes(cls, value): return value.split("|") if isinstance(value, str) else value
@@ -239,7 +239,7 @@ class AdminLanguageIn(BaseModel):
 class AdminCategoryIn(BaseModel):
     name: str = Field(min_length=2,max_length=100); slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=100); description: str=""; status: str="active"; display_order: int=0
 class AdminCourseIn(BaseModel):
-    title: str = Field(min_length=3,max_length=180); slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=180); short_description: str=""; description: str=""; target_audience: str=""; technologies: list[str]=Field(default_factory=list); seo_title: str=""; seo_description: str=""; language_id: UUID; category_id: UUID; level: str="beginner"; thumbnail: str|None=None; estimated_duration: int=Field(default=0,ge=0); status: str="draft"; outcomes: list[str]=Field(default_factory=list); requirements: list[str]=Field(default_factory=list)
+    title: str = Field(min_length=3,max_length=180); slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",max_length=180); short_description: str=""; description: str=""; target_audience: str=""; technologies: list[str]=Field(default_factory=list); seo_title: str=""; seo_description: str=""; language_id: UUID; category_id: UUID; level: str="beginner"; thumbnail: str|None=None; estimated_duration: int=Field(default=0,ge=0); status: str="draft"; outcomes: list[str]=Field(default_factory=list); requirements: list[str]=Field(default_factory=list); display_title: str=""; technology_name: str=""; card_short_description: str=""; card_image_alt: str=""; card_logo_asset_id: UUID|None=None; card_cover_asset_id: UUID|None=None; show_rating: bool=True; is_featured: bool=False; card_sort_order: int=Field(default=0,ge=0)
 class AdminCourseFAQIn(BaseModel):
     question: str = Field(min_length=3, max_length=500); answer: str = Field(min_length=1, max_length=10000); position: int = Field(default=0, ge=0); status: str = Field(default="published", pattern=r"^(draft|published|archived)$")
 class AdminModuleIn(BaseModel): title: str=Field(min_length=2,max_length=180); position: int=Field(ge=0); description: str=""
@@ -250,7 +250,7 @@ class CurriculumLessonOrder(BaseModel): id: UUID; position: int=Field(ge=0)
 class CurriculumModuleOrder(BaseModel): id: UUID; position: int=Field(ge=0); lesson_ids: list[UUID]=Field(default_factory=list)
 class CurriculumOrderIn(BaseModel): modules: list[CurriculumModuleOrder]=Field(default_factory=list)
 class AdminCourseOut(BaseModel):
-    model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; short_description: str; description: str; target_audience: str = ""; technologies: list[str]=Field(default_factory=list); seo_title: str = ""; seo_description: str = ""; language_id: UUID; category_id: UUID; level: str; thumbnail: str|None; estimated_duration: int; status: str; published: bool; outcomes: list[str]=Field(default_factory=list); requirements: list[str]=Field(default_factory=list)
+    model_config=ConfigDict(from_attributes=True); id: UUID; title: str; slug: str; short_description: str; description: str; target_audience: str = ""; technologies: list[str]=Field(default_factory=list); seo_title: str = ""; seo_description: str = ""; language_id: UUID; category_id: UUID; level: str; thumbnail: str|None; estimated_duration: int; status: str; published: bool; outcomes: list[str]=Field(default_factory=list); requirements: list[str]=Field(default_factory=list); display_title: str=""; technology_name: str=""; card_short_description: str=""; card_image_alt: str=""; card_logo_asset_id: UUID|None=None; card_cover_asset_id: UUID|None=None; show_rating: bool=True; is_featured: bool=False; card_sort_order: int=0
     @field_validator("outcomes","requirements","technologies",mode="before")
     @classmethod
     def split_values(cls,v): return v.split("|") if isinstance(v,str) and v else (v or [])
