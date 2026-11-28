@@ -10,6 +10,7 @@ import re
 from sqlalchemy import select
 
 from .models import CodeExample, CourseModule, Lesson, LessonQuiz, QuizQuestion
+from .django_complete_curriculum import _ensure_exercise, seed_django_additional_curriculum
 
 
 PLANNED_MODULES = [
@@ -226,8 +227,68 @@ Next lesson
 """
 
 
+def _repair_module_one_sections(lesson, item):
+    """Append missing review sections without replacing authored Module 1 text."""
+    if "## Detailed theory" not in lesson.content_en:
+        lesson.content_en += f"""
+
+## Detailed theory
+{item['theory']}
+
+## Core concepts
+The request boundary, explicit validation, and server-side authorization are the core concepts for this lesson.
+
+## Syntax and usage
+```python
+{item['code']}
+```
+
+## Expected output
+{item['output']}
+
+## Line-by-line explanation
+Read the imports and declarations first, then trace the request or command into the application call, and finally compare the returned response with the expected output. Change one value at a time and rerun the focused check.
+
+## Common mistakes
+- Skipping the virtual environment or using the wrong project directory.
+- Trusting client input or putting secrets in a tutorial example.
+
+## Best practices
+- Use named routes, focused tests, explicit validation, and secure defaults.
+- Keep the example small and record the expected behavior before changing it.
+
+## Practical exercises
+{item['exercise']}
+
+## Homework
+Extend the example with one focused test and document the input, output, and security boundary.
+
+## Related references
+- Django documentation: https://docs.djangoproject.com/
+- Django security topics: https://docs.djangoproject.com/en/stable/topics/security/
+
+## Key takeaways
+The example is a starting point for a production-minded Django workflow; verify behavior with tests before adding complexity.
+"""
+    if "## အသေးစိတ်သီအိုရီ" not in (lesson.content_mm or ""):
+        lesson.content_mm = (lesson.content_mm or "") + f"""
+
+## အသေးစိတ်သီအိုရီ
+{item['mm']}
+
+## လက်တွေ့လေ့ကျင့်ခန်း
+{item['exercise']}
+
+## အိမ်စာ
+ဥပမာကို focused test တစ်ခုဖြင့် စစ်ပြီး input၊ output နှင့် security boundary ကို မှတ်တမ်းတင်ပါ။
+
+## ဆက်စပ်ရည်ညွှန်းချက်
+Django documentation နှင့် Django security topics ကို project version နှင့် ကိုက်ညီအောင် ပြန်လည်ဖတ်ပါ။
+"""
+
+
 def seed_django_course(db, course):
-    """Create/update only the reviewed Django Module 1 vertical slice."""
+    """Preserve Module 1 and add the reviewable Django curriculum batch."""
     course.title = "Django Web Development — From Zero to Professional"
     course.short_description = "A free, practical Django path from Python web foundations to secure production applications."
     course.description = "Learn Django from first principles through MVT architecture, project setup, URL routing, views, templates, databases, APIs, testing, security, and professional deployment patterns."
@@ -250,14 +311,16 @@ def seed_django_course(db, course):
             lesson = Lesson(module_id=module.id, title=item["title"], slug=slug, order_index=position, content_en="", content_mm="")
             db.add(lesson)
             db.flush()
-        lesson.title = item["title"]
-        lesson.slug = slug
-        lesson.description = item["topic"]
-        lesson.content_en = _content(position, item)
-        lesson.content_mm = f"{item['title']}\n\n{item['mm']}\n\nလေ့ကျင့်ခန်း\n{item['exercise']}"
-        lesson.duration_minutes = 35
-        lesson.status = "published"
-        lesson.published = True
+        if not lesson.content_en or not lesson.content_en.strip():
+            lesson.title = item["title"]
+            lesson.slug = lesson.slug or slug
+            lesson.description = item["topic"]
+            lesson.content_en = _content(position, item)
+            lesson.content_mm = f"{item['title']}\n\n{item['mm']}\n\nလေ့ကျင့်ခန်း\n{item['exercise']}"
+            lesson.duration_minutes = 35
+            lesson.status = "published"
+            lesson.published = True
+        _repair_module_one_sections(lesson, item)
 
         example = db.scalar(select(CodeExample).where(CodeExample.lesson_id == lesson.id).order_by(CodeExample.position, CodeExample.created_at, CodeExample.id))
         values = {
@@ -283,5 +346,15 @@ def seed_django_course(db, course):
             else:
                 for key, value in values.items():
                     setattr(question, key, value)
+        _ensure_exercise(db, lesson, item["title"], item["exercise"], f"{item['mm']} ကို isolated Django project ထဲတွင် လက်တွေ့လေ့ကျင့်ပါ။")
     db.flush()
+    additional_report = seed_django_additional_curriculum(db, course)
+    db.flush()
+    course.duration_minutes = sum(
+        lesson.duration_minutes or 35
+        for module in db.scalars(select(CourseModule).where(CourseModule.course_id == course.id)).all()
+        for lesson in db.scalars(select(Lesson).where(Lesson.module_id == module.id)).all()
+    )
+    db.flush()
+    return additional_report
 
