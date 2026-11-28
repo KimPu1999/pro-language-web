@@ -710,6 +710,16 @@ def list_courses(search:str|None=None,language_id:UUID|None=None,category_id:UUI
     for row in rows:
         value=course_out(row); value.update({"category_name":row.category.name if row.category else "","language_name":row.language.name if row.language else "","module_count":db.scalar(select(func.count(CourseModule.id)).where(CourseModule.course_id==row.id)) or 0,"lesson_count":db.scalar(select(func.count(Lesson.id)).join(CourseModule).where(CourseModule.course_id==row.id)) or 0}); items.append(value)
     return {"items":items,"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+@router.get("/search")
+def admin_global_search(q: str = Query(..., min_length=2, max_length=120), user: User = Depends(admin_user), db: Session = Depends(get_db)):
+    term = f"%{q.strip()}%"
+    courses = db.scalars(select(Course).where(Course.title.ilike(term) | Course.slug.ilike(term)).order_by(Course.updated_at.desc()).limit(5)).all()
+    lessons = db.execute(select(Lesson, CourseModule, Course).join(CourseModule, Lesson.module_id == CourseModule.id).join(Course, CourseModule.course_id == Course.id).where(Lesson.title.ilike(term) | Lesson.slug.ilike(term) | Course.title.ilike(term)).order_by(Lesson.updated_at.desc()).limit(5)).all()
+    projects = db.scalars(select(ProjectTemplate).where(ProjectTemplate.title.ilike(term) | ProjectTemplate.slug.ilike(term)).order_by(ProjectTemplate.updated_at.desc()).limit(5)).all()
+    challenges = db.scalars(select(Challenge).where(Challenge.title.ilike(term) | Challenge.slug.ilike(term)).order_by(Challenge.updated_at.desc()).limit(5)).all()
+    paths = db.scalars(select(CareerRoadmap).where(CareerRoadmap.title.ilike(term) | CareerRoadmap.slug.ilike(term)).order_by(CareerRoadmap.updated_at.desc()).limit(5)).all()
+    results = {"courses": [{"id": row.id, "title": row.display_title or row.title, "detail": row.slug, "href": f"/courses/{row.id}"} for row in courses], "lessons": [{"id": lesson.id, "title": lesson.title, "detail": f"{course.title} · {module.title}", "href": f"/courses/{course.id}/lessons/{lesson.id}"} for lesson, module, course in lessons], "projects": [{"id": row.id, "title": row.title, "detail": row.slug, "href": f"/projects/{row.id}"} for row in projects], "challenges": [{"id": row.id, "title": row.title, "detail": row.slug, "href": f"/challenges/{row.id}"} for row in challenges], "learning_paths": [{"id": row.id, "title": row.title, "detail": row.slug, "href": f"/career-paths/{row.id}"} for row in paths]}
+    return {"query": q.strip(), "results": results, "total": sum(len(items) for items in results.values())}
 @router.get("/courses/overview")
 def courses_overview(user:User=Depends(admin_user),db:Session=Depends(get_db)):
     courses=db.scalars(select(Course).order_by(Course.updated_at.desc())).all()
