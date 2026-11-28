@@ -7,9 +7,9 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, normalize_email, now, require_csrf, verify_password
 from .db import get_db
-from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeExample, ContentReviewEvent, ContentReviewItem, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, ExternalResourceLink, Lesson, LessonProgress, LessonQuiz, LessonRevision, MediaAsset, MediaAuditEvent, MediaFolder, MediaReference, PlatformSetting, ProgrammingLanguage, ProjectTemplate, PublishingReview, QuizAttempt, QuizQuestion, User
+from .models import AdminAuditLog, AuthSession, CareerRoadmap, Challenge, CodeExample, ContentReviewEvent, ContentReviewItem, Course, CourseCategory, CourseFAQ, CourseInstructor, CourseModule, CourseRevision, Enrollment, ExternalResourceLink, Lesson, LessonContentDraft, LessonProgress, LessonQuiz, LessonRevision, MediaAsset, MediaAuditEvent, MediaFolder, MediaReference, ModuleQuizDraft, PlatformSetting, ProgrammingLanguage, ProjectTemplate, PublishingReview, QuizAttempt, QuizQuestion, User
 from .rbac import CONTENT_ADMIN_ROLES, PLATFORM_ADMIN_ROLES, require_platform_admin
-from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonIn, AdminModuleIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, MediaMetadataIn, NavigationSettings, PlatformFeatureSettings, PlatformGeneralSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
+from .schemas import AdminCategoryIn, AdminCodeExampleIn, AdminCourseFAQIn, AdminCourseIn, AdminCourseOut, AdminLanguageIn, AdminLessonDraftIn, AdminLessonIn, AdminModuleIn, AdminModuleQuizDraftIn, AdminPageOut, AdminQuizQuestionIn, BrandingSettings, CurriculumOrderIn, FooterSettings, HomepageAnnouncement, HomepageSectionsIn, HomepageSettings, LoginIn, MediaMetadataIn, NavigationSettings, PlatformFeatureSettings, PlatformGeneralSettings, PlatformPageIn, PlatformPageOut, PublishDecisionIn
 from .footer_config import FOOTER_DRAFT_KEY, FOOTER_KEY, read_footer, validate_footer
 from .media_storage import ALLOWED_MIME_TYPES, ensure_media_root, normalize_filename, remove_file_if_safe, safe_media_path, save_course_image, save_media_upload, sha256_file, storage_status
 from .navigation_config import NAVIGATION_DRAFT_KEY, NAVIGATION_KEY, NAVIGATION_PUBLISHED_KEY, read_admin_navigation, read_navigation, save_navigation, validate_navigation
@@ -188,6 +188,13 @@ def reorder_structure(course, payload, db):
     db.flush()
 def quiz_question_out(row):
     return {"id": row.id, "prompt": row.prompt, "question_type": row.question_type, "options": json.loads(row.options_json or "[]"), "correct_answer": row.correct_answer, "explanation": row.explanation, "position": row.position}
+def lesson_draft_payload(draft):
+    if not draft: return None
+    return {"id":draft.id,"lesson_id":draft.lesson_id,"base_content_version":draft.base_content_version,"draft_version":draft.draft_version,"title":draft.title,"slug":draft.slug,"description":draft.description or "","content_en":draft.content_en or "","content_mm":draft.content_mm,"duration_minutes":draft.duration_minutes,"status":draft.status,"change_summary":draft.change_summary,"updated_at":draft.updated_at}
+def module_quiz_draft_payload(row):
+    if not row: return None
+    questions=json.loads(row.questions_json or "[]")
+    return {"id":row.id,"module_id":row.module_id,"title_en":row.title_en,"title_mm":row.title_mm,"questions":questions,"pass_percent":row.pass_percent,"status":row.status,"draft_version":row.draft_version,"updated_at":row.updated_at}
 def lesson_for_edit(lesson_id, user, db):
     lesson=db.get(Lesson, lesson_id)
     if not lesson: raise HTTPException(404,"Lesson not found")
@@ -867,6 +874,63 @@ def create_lesson(module_id:UUID,payload:AdminLessonIn,user:User=Depends(admin_u
 @router.get("/lessons/{lesson_id}")
 def admin_lesson(lesson_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
     lesson=lesson_for_edit(lesson_id,user,db); return admin_lesson_payload(lesson,db)
+@router.get("/lessons/{lesson_id}/draft")
+def admin_lesson_draft(lesson_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    lesson=lesson_for_edit(lesson_id,user,db)
+    draft=db.scalar(select(LessonContentDraft).where(LessonContentDraft.lesson_id==lesson.id))
+    return {"published":admin_lesson_payload(lesson,db),"draft":lesson_draft_payload(draft)}
+@router.put("/lessons/{lesson_id}/draft")
+def save_lesson_draft(lesson_id:UUID,payload:AdminLessonDraftIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    lesson=lesson_for_edit(lesson_id,user,db)
+    module=db.get(CourseModule,lesson.module_id); course=require_edit(module.course_id,user,db)
+    duplicate=db.scalar(select(Lesson).join(CourseModule).where(CourseModule.course_id==course.id,Lesson.slug==payload.slug,Lesson.id!=lesson.id))
+    if duplicate: raise HTTPException(409,"Lesson slug already exists in this course")
+    draft=db.scalar(select(LessonContentDraft).where(LessonContentDraft.lesson_id==lesson.id))
+    if draft and payload.expected_draft_version is not None and draft.draft_version != payload.expected_draft_version:
+        raise HTTPException(409,"This lesson draft was updated by another administrator. Reload it before saving.")
+    if draft and draft.base_content_version != lesson.content_version and draft.status in {"draft","in_review"}:
+        raise HTTPException(409,"The published lesson changed after this draft was started. Reload and reconcile it before saving.")
+    if not draft:
+        draft=LessonContentDraft(lesson_id=lesson.id,base_content_version=lesson.content_version,draft_version=1,created_by=user.id)
+        db.add(draft)
+    else:
+        draft.draft_version += 1
+    draft.title=payload.title; draft.slug=payload.slug; draft.description=payload.description; draft.content_en=payload.content_en; draft.content_mm=payload.content_mm; draft.duration_minutes=payload.duration_minutes; draft.status=payload.status; draft.change_summary=payload.change_summary or "Inline curriculum draft save"; draft.updated_by=user.id
+    audit(db,user,"lesson_draft_saved","lesson",lesson.id); db.commit(); db.refresh(draft)
+    return {"published":admin_lesson_payload(lesson,db),"draft":lesson_draft_payload(draft)}
+@router.post("/lessons/{lesson_id}/draft/submit",status_code=201)
+def submit_lesson_draft(lesson_id:UUID,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    lesson=lesson_for_edit(lesson_id,user,db); draft=db.scalar(select(LessonContentDraft).where(LessonContentDraft.lesson_id==lesson.id))
+    if not draft: raise HTTPException(404,"Save a lesson draft before submitting it for review")
+    if not draft.content_en.strip() or not draft.content_mm or not draft.content_mm.strip(): raise HTTPException(422,"Both English and Burmese draft content are required")
+    active=db.scalar(select(ContentReviewItem).where(ContentReviewItem.content_type=="lesson",ContentReviewItem.content_key==str(lesson.id),ContentReviewItem.status.in_(("submitted","in_review"))))
+    if active: raise HTTPException(409,"This lesson draft already has an active review")
+    latest=db.scalar(select(func.max(ContentReviewItem.version)).where(ContentReviewItem.content_type=="lesson",ContentReviewItem.content_key==str(lesson.id))) or 0
+    draft.status="in_review"
+    review=ContentReviewItem(content_type="lesson",content_key=str(lesson.id),draft_id=draft.id,title=draft.title,submitted_by=user.id,version=latest+1,status="submitted")
+    db.add(review); db.flush(); db.add(ContentReviewEvent(review_item_id=review.id,actor_id=user.id,to_status="submitted",comment="Lesson draft submitted for review.")); audit(db,user,"lesson_draft_submitted","lesson",lesson.id); db.commit(); db.refresh(review)
+    return {"review_id":review.id,"draft":lesson_draft_payload(draft),"status":review.status}
+@router.get("/modules/{module_id}/quiz-draft")
+def admin_module_quiz_draft(module_id:UUID,user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    module=db.get(CourseModule,module_id)
+    if not module: raise HTTPException(404,"Module not found")
+    require_edit(module.course_id,user,db)
+    return module_quiz_draft_payload(db.scalar(select(ModuleQuizDraft).where(ModuleQuizDraft.module_id==module.id)))
+@router.put("/modules/{module_id}/quiz-draft")
+def save_module_quiz_draft(module_id:UUID,payload:AdminModuleQuizDraftIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
+    module=db.get(CourseModule,module_id)
+    if not module: raise HTTPException(404,"Module not found")
+    require_edit(module.course_id,user,db)
+    for question in payload.questions:
+        options=question.get("options")
+        if not isinstance(question.get("prompt"),str) or not question["prompt"].strip() or not isinstance(options,list) or len(options)<2 or question.get("correct_answer") not in options or not str(question.get("explanation","")).strip():
+            raise HTTPException(422,"Each module quiz question needs a prompt, options, correct answer, and explanation")
+    row=db.scalar(select(ModuleQuizDraft).where(ModuleQuizDraft.module_id==module.id))
+    if row and payload.expected_draft_version is not None and row.draft_version != payload.expected_draft_version: raise HTTPException(409,"This module quiz draft was updated by another administrator. Reload it before saving.")
+    if not row: row=ModuleQuizDraft(module_id=module.id,created_by=user.id); db.add(row)
+    else: row.draft_version += 1
+    row.title_en=payload.title_en; row.title_mm=payload.title_mm; row.questions_json=json.dumps(payload.questions,ensure_ascii=False); row.pass_percent=payload.pass_percent; row.status="draft"; row.updated_by=user.id
+    audit(db,user,"module_quiz_draft_saved","course_module",module.id); db.commit(); db.refresh(row); return module_quiz_draft_payload(row)
 @router.patch("/lessons/{lesson_id}")
 def update_lesson(lesson_id:UUID,payload:AdminLessonIn,user:User=Depends(admin_user),_:None=Depends(require_csrf),db:Session=Depends(get_db)):
     row=db.get(Lesson,lesson_id)

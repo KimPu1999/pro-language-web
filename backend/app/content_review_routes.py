@@ -19,6 +19,8 @@ from .models import (
     Course,
     CourseModule,
     Lesson,
+    LessonContentDraft,
+    LessonRevision,
     LegalDocumentVersion,
     Organization,
     PlatformSetting,
@@ -141,7 +143,7 @@ def organization_summary(db: Session, organization_id: UUID | None) -> dict | No
 
 
 def item_summary(db: Session, row: ContentReviewItem) -> dict:
-    return {"id": row.id, "content_type": row.content_type, "content_key": row.content_key, "title": row.title, "organization_id": row.organization_id, "organization": organization_summary(db, row.organization_id), "version": row.version, "status": row.status, "submitted_by": user_summary(db, row.submitted_by), "reviewer": user_summary(db, row.reviewer_id), "submitted_at": row.submitted_at, "reviewed_at": row.reviewed_at, "published_at": row.published_at, "updated_at": row.updated_at}
+    return {"id": row.id, "content_type": row.content_type, "content_key": row.content_key, "draft_id": row.draft_id, "title": row.title, "organization_id": row.organization_id, "organization": organization_summary(db, row.organization_id), "version": row.version, "status": row.status, "submitted_by": user_summary(db, row.submitted_by), "reviewer": user_summary(db, row.reviewer_id), "submitted_at": row.submitted_at, "reviewed_at": row.reviewed_at, "published_at": row.published_at, "updated_at": row.updated_at}
 
 
 def get_item(db: Session, review_id: UUID, lock: bool = False) -> ContentReviewItem:
@@ -238,9 +240,11 @@ def submit(payload: ReviewSubmitIn, user: User = Depends(require_platform_admin)
 def detail(review_id: UUID, user: User = Depends(require_platform_admin), db: Session = Depends(get_db)):
     row = get_item(db, review_id)
     record = content_record(db, row.content_type, row.content_key)
+    draft = db.get(LessonContentDraft, row.draft_id) if row.draft_id else None
     comments = db.scalars(select(ContentReviewComment).where(ContentReviewComment.review_item_id == row.id).order_by(ContentReviewComment.created_at.asc())).all()
     events = db.scalars(select(ContentReviewEvent).where(ContentReviewEvent.review_item_id == row.id).order_by(ContentReviewEvent.created_at.asc())).all()
-    return {**item_summary(db, row), "preview": preview_content(db, row.content_type, record) if record else None, "comments": [{"id": item.id, "author": user_summary(db, item.author_id), "review_version": item.review_version, "comment_type": item.comment_type, "body": item.body, "created_at": item.created_at} for item in comments], "history": [{"id": item.id, "actor": user_summary(db, item.actor_id), "from_status": item.from_status, "to_status": item.to_status, "comment": item.comment, "created_at": item.created_at} for item in events]}
+    preview = {"title": draft.title, "description": draft.description, "content_en": draft.content_en, "content_mm": draft.content_mm, "status": draft.status, "draft_version": draft.draft_version} if draft else (preview_content(db, row.content_type, record) if record else None)
+    return {**item_summary(db, row), "preview": preview, "comments": [{"id": item.id, "author": user_summary(db, item.author_id), "review_version": item.review_version, "comment_type": item.comment_type, "body": item.body, "created_at": item.created_at} for item in comments], "history": [{"id": item.id, "actor": user_summary(db, item.actor_id), "from_status": item.from_status, "to_status": item.to_status, "comment": item.comment, "created_at": item.created_at} for item in events]}
 
 
 @router.patch("/{review_id}/assignment")
@@ -281,7 +285,15 @@ def publish(review_id: UUID, user: User = Depends(require_platform_admin), _: No
     if row.status != "approved": raise HTTPException(status.HTTP_409_CONFLICT, "Only approved content can be published")
     record = content_record(db, row.content_type, row.content_key)
     if not record: raise HTTPException(status.HTTP_404_NOT_FOUND, "Content record not found")
-    if row.content_type in {"course", "challenge", "project", "career_path"}:
+    if row.content_type == "lesson" and row.draft_id:
+        draft = db.get(LessonContentDraft, row.draft_id)
+        if not draft or draft.status not in {"in_review", "approved"} or str(draft.lesson_id) != row.content_key:
+            raise HTTPException(status.HTTP_409_CONFLICT, "The submitted lesson draft is no longer available")
+        lesson = record
+        latest = db.scalar(select(func.max(LessonRevision.revision_number)).where(LessonRevision.lesson_id == lesson.id)) or 0
+        db.add(LessonRevision(lesson_id=lesson.id, changed_by=user.id, revision_number=latest + 1, content_snapshot=json.dumps({"title": lesson.title, "slug": lesson.slug, "description": lesson.description, "content_en": lesson.content_en, "content_mm": lesson.content_mm, "position": lesson.order_index, "duration_minutes": lesson.duration_minutes, "status": lesson.status, "published": lesson.published}, default=str), change_summary="Before publishing reviewed lesson draft"))
+        lesson.title=draft.title; lesson.slug=draft.slug; lesson.description=draft.description; lesson.content_en=draft.content_en; lesson.content_mm=draft.content_mm; lesson.duration_minutes=draft.duration_minutes; lesson.status="published"; lesson.published=True; lesson.content_version += 1; draft.status="published"
+    elif row.content_type in {"course", "challenge", "project", "career_path"}:
         record.status = "published"; record.published = True
     elif row.content_type == "lesson":
         record.status = "published"; record.published = True
