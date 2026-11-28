@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .auth import current_user, require_csrf
+from .achievement_service import award_payload, definition_payload, evaluate_definition
 from .certificate_service import certificate_payload
 from .db import get_db
 from .models import AchievementDefinition, IssuedCertificate, CertificateRevocation, LeaderboardPreference, StudentAchievement, StudentXPBalance, LearningStreak, User
@@ -30,9 +31,9 @@ def summary(user:User=Depends(current_user),db:Session=Depends(get_db)):
     return {"total_xp":balance.total_xp if balance else 0,"level":balance.current_level if balance else 1,"current_streak":streak.current_streak if streak else 0,"longest_streak":streak.longest_streak if streak else 0,"badges":earned}
 @router.get("/achievements")
 def achievements(user:User=Depends(current_user),db:Session=Depends(get_db)):
-    earned={row.achievement_id:row.awarded_at for row in db.scalars(select(StudentAchievement).where(StudentAchievement.user_id==user.id)).all()}
-    definitions=db.scalars(select(AchievementDefinition).order_by(AchievementDefinition.created_at)).all()
-    return {"items":[{"id":row.id,"slug":row.slug,"title":row.title,"description":row.description,"threshold":row.threshold,"earned":row.id in earned,"awarded_at":earned.get(row.id)} for row in definitions]}
+    earned={row.achievement_id:row for row in db.scalars(select(StudentAchievement).where(StudentAchievement.user_id==user.id)).all()}
+    definitions=db.scalars(select(AchievementDefinition).where(AchievementDefinition.status=="published",AchievementDefinition.visibility=="public").order_by(AchievementDefinition.display_order,AchievementDefinition.created_at)).all()
+    return {"items":[{**definition_payload(row),"earned":row.id in earned and earned[row.id].status=="active","state":"earned" if row.id in earned and earned[row.id].status=="active" else ("eligible" if (evaluation:=evaluate_definition(db,user.id,row)).get("available") and (evaluation.get("current") or 0)>=evaluation.get("target",1) else "in_progress"),"award":award_payload(db,earned[row.id]) if row.id in earned else None} for row in definitions],"source":"verified_platform_records"}
 @router.get("/leaderboard")
 def leaderboard(period:str=Query("all_time",pattern="^(weekly|monthly|all_time)$"),page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=50),db:Session=Depends(get_db)):
     rows=db.execute(select(User.display_name,StudentXPBalance.total_xp).join(StudentXPBalance,StudentXPBalance.user_id==User.id).join(LeaderboardPreference,LeaderboardPreference.user_id==User.id).where(LeaderboardPreference.opted_in.is_(True)).order_by(StudentXPBalance.total_xp.desc()).offset((page-1)*page_size).limit(page_size)).all()

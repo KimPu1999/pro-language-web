@@ -2,7 +2,7 @@
 from alembic import op
 import sqlalchemy as sa
 
-revision = "0069_verified_certificate_library"
+revision = "0069_verified_certificates"
 down_revision = "0068_card_display_defaults"
 branch_labels = None
 depends_on = None

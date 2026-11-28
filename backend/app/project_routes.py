@@ -12,6 +12,7 @@ from .auth import current_user, require_csrf, verified_user
 from .db import get_db
 from .models import (CareerRoadmap, Course, CourseModule, Lesson, PortfolioProject, ProjectAuditLog, ProjectBookmark, ProjectCategory, ProjectCourseLink, ProjectMilestone, ProjectPathLink, ProjectRequirement, ProjectResource, ProjectReview, ProjectReviewScore, ProjectRubricCriterion, ProjectSubmission, ProjectTask, ProjectTemplate, ProjectVersion, ProjectSkill, StudentPortfolio, StudentProject, StudentProjectMilestone, VerifiedProjectSkill, User)
 from .admin_routes import admin_user, audit
+from .achievement_service import award_verified_achievements
 from .media_storage import remove_file_if_safe, safe_media_path, save_project_image, save_project_submission_archive
 
 router=APIRouter(prefix="/api/v1",tags=["projects"])
@@ -256,7 +257,10 @@ def review_submission(submission_id:UUID,payload:ReviewIn,user:User=Depends(admi
     if payload.decision=="approved":
         for skill in db.scalars(select(ProjectSkill).where(ProjectSkill.project_id==project.project_id)).all():
             if not db.scalar(select(VerifiedProjectSkill).where(VerifiedProjectSkill.user_id==project.user_id,VerifiedProjectSkill.skill_id==skill.skill_id,VerifiedProjectSkill.student_project_id==project.id)):db.add(VerifiedProjectSkill(user_id=project.user_id,skill_id=skill.skill_id,student_project_id=project.id,review_id=review.id))
-    db.commit();return {"id":review.id,"decision":review.decision,"total_score":review.total_score}
+    db.commit()
+    earned_achievements = award_verified_achievements(db, project.user_id, "approved_project", project.id) if payload.decision == "approved" else []
+    db.commit()
+    return {"id":review.id,"decision":review.decision,"total_score":review.total_score,"achievements_earned":[str(row.public_id) for row in earned_achievements]}
 @router.get("/me/portfolio")
 def get_portfolio(user:User=Depends(current_user),db:Session=Depends(get_db)):
     row=db.scalar(select(StudentPortfolio).where(StudentPortfolio.user_id==user.id))

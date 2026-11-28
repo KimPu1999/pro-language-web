@@ -6,6 +6,7 @@ from .auth import SESSION_COOKIE, current_user, require_csrf, verified_user, has
 from .db import get_db
 from .models import AuthSession, Course, CourseModule, Enrollment, IssuedCertificate, LearningStreak, Lesson, LessonBookmark, LessonProgress, LessonQuiz, QuizAttempt, QuizQuestion, User, UserProfile
 from .certificate_service import certificate_payload, issue_course_certificate
+from .achievement_service import award_verified_achievements
 from .schemas import DashboardOut, EnrollmentOut, LocaleIn, ProfileIn, ProgressIn, QuizAnswerIn, QuizOut, UserOut
 router=APIRouter(prefix="/api/v1/me", tags=["student"])
 def course_base(): return select(Course).options(selectinload(Course.language),selectinload(Course.category)).where(Course.published.is_(True))
@@ -98,12 +99,17 @@ def update_progress(lesson_id, payload: ProgressIn, user: User=Depends(verified_
     if not enrollment: raise HTTPException(403,"Enroll in this course first")
     progress=db.scalar(select(LessonProgress).where(LessonProgress.user_id==user.id,LessonProgress.lesson_id==lesson_id)) or LessonProgress(user_id=user.id,lesson_id=lesson_id); progress.completed=payload.completed; progress.last_visited_at=now(); db.add(progress); db.commit()
     certificate = None
+    earned_achievements = []
     if payload.completed:
         course = db.scalar(select(Course).where(Course.id == course_id))
         if course:
             certificate = issue_course_certificate(db, user, course, (db.scalar(select(UserProfile.preferred_language).where(UserProfile.user_id == user.id)) or "en"))
             db.commit()
-    return {"lesson_id":lesson_id,"completed":progress.completed,"certificate_earned":certificate_payload(certificate) if certificate else None}
+            earned_achievements.extend(award_verified_achievements(db, user.id, "lesson_completed", lesson.id))
+            if certificate:
+                earned_achievements.extend(award_verified_achievements(db, user.id, "course_verified_completion", course.id))
+            db.commit()
+    return {"lesson_id":lesson_id,"completed":progress.completed,"certificate_earned":certificate_payload(certificate) if certificate else None,"achievements_earned":[str(row.public_id) for row in earned_achievements]}
 @router.post("/lessons/{lesson_id}/visit")
 def visit_lesson(lesson_id, user: User=Depends(verified_user), __: None=Depends(require_csrf), db: Session=Depends(get_db)):
     """Record last-visited time without changing completion state."""
@@ -158,7 +164,9 @@ def submit_lesson_quiz(lesson_id, payload: QuizAnswerIn, user: User=Depends(veri
         if course:
             certificate = issue_course_certificate(db, user, course, (db.scalar(select(UserProfile.preferred_language).where(UserProfile.user_id == user.id)) or "en"))
             db.commit()
-    return {"attempt_id":attempt.id,"score":correct,"total":len(questions),"passed":bool(questions) and correct==len(questions),"certificate_earned":certificate_payload(certificate) if certificate else None,"feedback":[{"question_id":q.id,"correct":answers.get(str(q.id))==q.correct_answer,"explanation":q.explanation} for q in questions]}
+    earned_achievements = award_verified_achievements(db, user.id, "quiz_passed", attempt.id) if bool(questions) and correct == len(questions) else []
+    db.commit()
+    return {"attempt_id":attempt.id,"score":correct,"total":len(questions),"passed":bool(questions) and correct==len(questions),"certificate_earned":certificate_payload(certificate) if certificate else None,"achievements_earned":[str(row.public_id) for row in earned_achievements],"feedback":[{"question_id":q.id,"correct":answers.get(str(q.id))==q.correct_answer,"explanation":q.explanation} for q in questions]}
 @router.post("/lessons/{lesson_id}/bookmark")
 def toggle_bookmark(lesson_id, user: User=Depends(verified_user), __: None=Depends(require_csrf), db: Session=Depends(get_db)):
     lesson=db.scalar(select(Lesson).join(CourseModule).join(Course).where(Lesson.id==lesson_id,Lesson.published.is_(True),Course.published.is_(True)))

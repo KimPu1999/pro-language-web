@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .auth import check_rate_limit, current_user, require_csrf, verified_user
+from .achievement_service import award_verified_achievements
 from .db import get_db
 from .models import (
     AssessmentAppeal, AssessmentAttempt, AssessmentAttemptAnswer, AssessmentAttemptEvent,
@@ -216,7 +217,10 @@ def finalize_attempt(attempt_id: UUID, payload: FinalizeIn, user: User = Depends
         qv = db.scalar(select(AssessmentQuestionVersion).where(AssessmentQuestionVersion.question_id == answer.question_id).order_by(AssessmentQuestionVersion.version.desc()))
         if qv and qv.answer_hash and qv.answer_hash == answer_hash(json.loads(answer.answer_json)): earned += next((q.points for q in questions if q.id == answer.question_id), 0)
     attempt.status = "submitted"; attempt.submitted_at = datetime.now(timezone.utc); attempt.score = round(earned / total * 100); attempt.finalized_key = payload.idempotency_key
-    db.add(AssessmentAttemptEvent(attempt_id=attempt.id, actor_id=user.id, event_type="submitted")); db.add(AssessmentGradingJob(attempt_id=attempt.id, job_key=payload.idempotency_key, status="complete")); db.add(AssessmentGradingResult(attempt_id=attempt.id, score=attempt.score, passed=attempt.score >= 70, result_json=json.dumps({"source": "deterministic_answer_keys"}))); audit(db, user, "assessment_submitted", "assessment_attempt", attempt.id); db.commit(); return {"id": attempt.id, "status": attempt.status, "score": attempt.score, "passed": attempt.score >= 70, "grading": "deterministic"}
+    db.add(AssessmentAttemptEvent(attempt_id=attempt.id, actor_id=user.id, event_type="submitted")); db.add(AssessmentGradingJob(attempt_id=attempt.id, job_key=payload.idempotency_key, status="complete")); db.add(AssessmentGradingResult(attempt_id=attempt.id, score=attempt.score, passed=attempt.score >= 70, result_json=json.dumps({"source": "deterministic_answer_keys"}))); audit(db, user, "assessment_submitted", "assessment_attempt", attempt.id); db.commit()
+    earned_achievements = award_verified_achievements(db, user.id, "quiz_passed", attempt.id) if attempt.score >= 70 else []
+    db.commit()
+    return {"id": attempt.id, "status": attempt.status, "score": attempt.score, "passed": attempt.score >= 70, "grading": "deterministic", "achievements_earned": [str(row.public_id) for row in earned_achievements]}
 
 
 @router.post("/attempts/{attempt_id}/appeals", status_code=201)

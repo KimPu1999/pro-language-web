@@ -400,9 +400,88 @@ class StudentChallengeProgress(TimestampMixin, Base):
 class StudentSkillStatistic(TimestampMixin, Base):
     __tablename__="student_skill_statistics"; __table_args__=(UniqueConstraint("user_id","topic_id"),); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); user_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id",ondelete="CASCADE")); topic_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("challenge_topics.id",ondelete="CASCADE")); attempts: Mapped[int]=mapped_column(Integer,default=0); solved: Mapped[int]=mapped_column(Integer,default=0)
 class AchievementDefinition(TimestampMixin, Base):
-    __tablename__="achievement_definitions"; id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); slug: Mapped[str]=mapped_column(String(100),unique=True); title: Mapped[str]=mapped_column(String(160)); description: Mapped[str]=mapped_column(Text); threshold: Mapped[int]=mapped_column(Integer,default=1)
+    __tablename__ = "achievement_definitions"
+    __table_args__ = (
+        Index("ix_achievement_definitions_public_status", "status", "visibility", "display_order"),
+        Index("ix_achievement_definitions_rule_type", "rule_type", "status"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    # slug is the existing stable achievement code and remains immutable after publication.
+    slug: Mapped[str] = mapped_column(String(100), unique=True)
+    title: Mapped[str] = mapped_column(String(160))
+    title_mm: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    description: Mapped[str] = mapped_column(Text)
+    description_mm: Mapped[str | None] = mapped_column(Text, nullable=True)
+    criteria_description: Mapped[str] = mapped_column(Text, default="")
+    criteria_description_mm: Mapped[str | None] = mapped_column(Text, nullable=True)
+    category: Mapped[str] = mapped_column(String(40), default="learning")
+    threshold: Mapped[int] = mapped_column(Integer, default=1)
+    rule_type: Mapped[str] = mapped_column(String(60), default="lesson_completion_count")
+    rule_json: Mapped[str] = mapped_column(Text, default="{}")
+    rule_version: Mapped[int] = mapped_column(Integer, default=1)
+    badge_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    icon_name: Mapped[str] = mapped_column(String(50), default="Award")
+    tier: Mapped[str] = mapped_column(String(30), default="standard")
+    related_course_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("courses.id", ondelete="SET NULL"), nullable=True, index=True)
+    related_path_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("career_roadmaps.id", ondelete="SET NULL"), nullable=True, index=True)
+    repeatable: Mapped[bool] = mapped_column(Boolean, default=False)
+    visibility: Mapped[str] = mapped_column(String(20), default="public")
+    status: Mapped[str] = mapped_column(String(20), default="draft")
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AchievementRuleVersion(TimestampMixin, Base):
+    __tablename__ = "achievement_rule_versions"
+    __table_args__ = (UniqueConstraint("achievement_id", "version"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    achievement_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("achievement_definitions.id", ondelete="CASCADE"))
+    version: Mapped[int] = mapped_column(Integer)
+    rule_type: Mapped[str] = mapped_column(String(60))
+    rule_json: Mapped[str] = mapped_column(Text, default="{}")
+    status: Mapped[str] = mapped_column(String(20), default="draft")
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+
 class StudentAchievement(TimestampMixin, Base):
-    __tablename__="student_achievements"; __table_args__=(UniqueConstraint("user_id","achievement_id"),); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); user_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("users.id",ondelete="CASCADE")); achievement_id: Mapped[uuid.UUID]=mapped_column(ForeignKey("achievement_definitions.id",ondelete="CASCADE")); awarded_at: Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now())
+    __tablename__ = "student_achievements"
+    __table_args__ = (
+        UniqueConstraint("user_id", "achievement_id"),
+        Index("ix_student_achievements_user_status", "user_id", "status", "awarded_at"),
+        Index("ix_student_achievements_public_id", "public_id"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    achievement_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("achievement_definitions.id", ondelete="CASCADE"))
+    public_id: Mapped[str] = mapped_column(String(80), unique=True, default=lambda: uuid.uuid4().hex)
+    criteria_version: Mapped[int] = mapped_column(Integer, default=1)
+    evidence_json: Mapped[str] = mapped_column(Text, default="{}")
+    status: Mapped[str] = mapped_column(String(20), default="active")
+    awarded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revocation_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class AchievementAwardEvidence(TimestampMixin, Base):
+    __tablename__ = "achievement_award_evidence"
+    __table_args__ = (UniqueConstraint("award_id", "evidence_type", "evidence_id"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    award_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("student_achievements.id", ondelete="CASCADE"))
+    evidence_type: Mapped[str] = mapped_column(String(60))
+    evidence_id: Mapped[uuid.UUID] = mapped_column(UUIDType)
+    evidence_summary: Mapped[str] = mapped_column(Text, default="")
+
+
+class AchievementAuditEvent(TimestampMixin, Base):
+    __tablename__ = "achievement_audit_events"
+    __table_args__ = (Index("ix_achievement_audit_events_resource", "resource_type", "resource_id", "created_at"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    actor_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    action: Mapped[str] = mapped_column(String(80))
+    resource_type: Mapped[str] = mapped_column(String(60))
+    resource_id: Mapped[uuid.UUID | None] = mapped_column(UUIDType, nullable=True)
+    metadata_json: Mapped[str] = mapped_column(Text, default="{}")
 class CareerRoadmap(TimestampMixin, Base):
     __tablename__="career_roadmaps"; __table_args__=(Index("ix_career_roadmaps_published","published"),); id: Mapped[uuid.UUID]=mapped_column(UUIDType,primary_key=True,default=uuid.uuid4); title: Mapped[str]=mapped_column(String(180)); title_mm: Mapped[str|None]=mapped_column(String(180),nullable=True); slug: Mapped[str]=mapped_column(String(180),unique=True); career_category: Mapped[str]=mapped_column(String(80)); description_en: Mapped[str]=mapped_column(Text); description_mm: Mapped[str|None]=mapped_column(Text,nullable=True); prerequisites_en: Mapped[str]=mapped_column(Text,default=""); prerequisites_mm: Mapped[str|None]=mapped_column(Text,nullable=True); outcomes_en: Mapped[str]=mapped_column(Text,default=""); outcomes_mm: Mapped[str|None]=mapped_column(Text,nullable=True); estimated_hours: Mapped[int]=mapped_column(Integer,default=0); cover_image: Mapped[str|None]=mapped_column(String(500),nullable=True); goals_json: Mapped[str]=mapped_column(Text,default="[]"); skills_json: Mapped[str]=mapped_column(Text,default="[]"); completion_rules_json: Mapped[str]=mapped_column(Text,default="{}"); status: Mapped[str]=mapped_column(String(20),default="draft"); published: Mapped[bool]=mapped_column(Boolean,default=False); created_by: Mapped[uuid.UUID|None]=mapped_column(ForeignKey("users.id",ondelete="SET NULL"),nullable=True)
 class RoadmapStage(TimestampMixin, Base):
