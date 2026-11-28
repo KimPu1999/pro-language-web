@@ -9,7 +9,7 @@ import { ThemeSwitcher } from "@/components/theme-provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useI18n } from "@/lib/i18n";
 
-const fallbackLinks = [{ id: "courses", label: "Courses", href: "/courses", enabled: true, position: 0, area: "header" as const, link_type: "internal" as const }, { id: "projects", label: "Projects", href: "/projects", enabled: true, position: 1, area: "header" as const, link_type: "internal" as const }, { id: "challenges", label: "Challenges", href: "/challenges", enabled: true, position: 2, area: "header" as const, link_type: "internal" as const }, { id: "careers", label: "Careers", href: "/careers", enabled: true, position: 3, area: "header" as const, link_type: "internal" as const }, { id: "tools", label: "Developer Tools", href: "/tools", enabled: true, position: 4, area: "header" as const, link_type: "internal" as const }];
+const fallbackLinks = [{ id: "courses", label: "Courses", href: "/courses", enabled: true, position: 0, area: "header" as const, link_type: "internal" as const }, { id: "categories", label: "Categories", href: "/categories", enabled: true, position: 1, area: "header" as const, link_type: "internal" as const }, { id: "projects", label: "Projects", href: "/projects", enabled: true, position: 2, area: "header" as const, link_type: "internal" as const }, { id: "challenges", label: "Challenges", href: "/challenges", enabled: true, position: 3, area: "header" as const, link_type: "internal" as const }, { id: "careers", label: "Careers", href: "/careers", enabled: true, position: 4, area: "header" as const, link_type: "internal" as const }, { id: "tools", label: "Developer Tools", href: "/tools", enabled: true, position: 5, area: "header" as const, link_type: "internal" as const }];
 const requiredPublicLinks: PublicLink[] = [{ id: "about", label: "About", href: "/about", enabled: true, position: 90, area: "header", link_type: "internal", parent_id: null }, { id: "contact", label: "Contact", href: "/contact", enabled: true, position: 91, area: "header", link_type: "internal", parent_id: null }];
 type PublicLink = { id: string; label: string; href: string; enabled: boolean; position: number; area: "header" | "footer"; link_type?: "internal" | "external"; external_url?: string | null; parent_id?: string | null; target_blank?: boolean };
 type Branding = { website_name: string; logo_url: string };
@@ -18,6 +18,7 @@ type AuthUser = { full_name: string; email: string; role: string };
 const iconByRoute: Record<string, LucideIcon> = {
   "/": House,
   "/courses": BookOpen,
+  "/categories": BookOpen,
   "/projects": FolderCode,
   "/challenges": Code2,
   "/careers": BriefcaseBusiness,
@@ -100,7 +101,7 @@ export function PlatformNav() {
   }
 
   function destination(link: PublicLink) { return link.link_type === "external" ? (link.external_url || link.href) : link.href; }
-  function labelFor(label: string) { const key = ({ Home: "home", Courses: "courses", Projects: "projects", Challenges: "challenges", Careers: "careers", Tools: "tools", "Developer Tools": "tools", About: "about", Contact: "contact" } as Record<string, string>)[label]; return key ? t(key) : label; }
+  function labelFor(label: string) { const key = ({ Home: "home", Courses: "courses", Categories: "categories", Projects: "projects", Challenges: "challenges", Careers: "careers", Tools: "tools", "Developer Tools": "tools", About: "about", Contact: "contact" } as Record<string, string>)[label]; return key ? t(key) : label; }
 
   function linkView(link: PublicLink, className: string, child = false, Icon?: LucideIcon, active = false, ref?: Ref<HTMLAnchorElement>) {
     const href = destination(link); const props = { className, target: link.target_blank ? "_blank" : undefined, rel: link.target_blank ? "noopener noreferrer" : undefined, onClick: closeMenu, "aria-current": active ? "page" as const : undefined, ref };

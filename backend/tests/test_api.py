@@ -54,6 +54,20 @@ def test_course_filters_sort_and_published_scope(client):
 
     assert client.get("/api/v1/courses?difficulty=beginner&level=advanced").status_code == 422
 
+def test_category_discovery_returns_real_published_counts_and_courses(client):
+    categories = client.get("/api/v1/categories")
+    assert categories.status_code == 200
+    fundamentals = next(item for item in categories.json() if item["slug"] == "fundamentals")
+    assert fundamentals["published_course_count"] == 1
+    detail = client.get("/api/v1/categories/fundamentals")
+    assert detail.status_code == 200
+    assert detail.json()["published_course_count"] == 1
+    courses = client.get("/api/v1/categories/fundamentals/courses?difficulty=beginner")
+    assert courses.status_code == 200
+    assert courses.json()["total"] == 1
+    assert courses.json()["items"][0]["slug"] == "python-foundations"
+    assert client.get("/api/v1/categories/does-not-exist").status_code == 404
+
 def test_c_curriculum_seed_is_complete_and_idempotent(client):
     from app.c_course_content import seed_c_curriculum
     from app.c_module_three import MODULE_THREE_LESSONS, MODULE_THREE_SECTION_HEADINGS

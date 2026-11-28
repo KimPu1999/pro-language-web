@@ -199,9 +199,38 @@ def my_challenge_progress(user: User=Depends(current_user), db: Session=Depends(
     attempts=db.scalar(select(func.count(ChallengeSubmission.id)).where(ChallengeSubmission.user_id==user.id)) or 0
     solved=db.scalar(select(func.count(StudentChallengeProgress.id)).where(StudentChallengeProgress.user_id==user.id,StudentChallengeProgress.solved.is_(True))) or 0
     return {"attempts":attempts,"solved":solved,"acceptance_rate":round(solved / attempts * 100, 2) if attempts else 0}
-@app.get("/api/v1/categories",response_model=list[CategoryOut])
-@app.get("/api/v1/course-categories",response_model=list[CategoryOut])
-def categories(db: Session=Depends(get_db)): return db.scalars(select(CourseCategory).where(CourseCategory.status=="active").order_by(CourseCategory.display_order, CourseCategory.name)).all()
+@app.get("/api/v1/categories")
+@app.get("/api/v1/course-categories")
+def categories(db: Session=Depends(get_db)):
+    rows = db.scalars(select(CourseCategory).where(CourseCategory.status == "active").order_by(CourseCategory.display_order, CourseCategory.name)).all()
+    counts = dict(db.execute(select(Course.category_id, func.count(func.distinct(Course.id))).where(Course.published.is_(True)).group_by(Course.category_id)).all())
+    return [{"id": row.id, "name": row.name, "slug": row.slug, "description": row.description or "", "published_course_count": counts.get(row.id, 0)} for row in rows]
+
+def public_category_payload(row: CourseCategory, db: Session):
+    count = db.scalar(select(func.count(func.distinct(Course.id))).where(Course.category_id == row.id, Course.published.is_(True))) or 0
+    return {"id": row.id, "name": row.name, "slug": row.slug, "description": row.description or "", "status": row.status, "published_course_count": count}
+
+@app.get("/api/v1/categories/{slug}")
+def category_detail(slug: str, db: Session = Depends(get_db)):
+    row = db.scalar(select(CourseCategory).where(CourseCategory.slug == slug, CourseCategory.status == "active"))
+    if not row: raise HTTPException(404, "Category not found")
+    return public_category_payload(row, db)
+
+@app.get("/api/v1/categories/{slug}/courses", response_model=PageOut)
+def category_courses(slug: str, search: str | None = None, difficulty: str | None = None, technology: str | None = None, sort: str = Query("title_asc", pattern=r"^(title_asc|title_desc|newest)$"), page: int = Query(1, ge=1), page_size: int = Query(12, ge=1, le=50), db: Session = Depends(get_db)):
+    category = db.scalar(select(CourseCategory).where(CourseCategory.slug == slug, CourseCategory.status == "active"))
+    if not category: raise HTTPException(404, "Category not found")
+    filters = [Course.category_id == category.id, Course.published.is_(True)]
+    if search:
+        pattern = f"%{search.strip()}%"; filters.append(or_(Course.title.ilike(pattern), Course.display_title.ilike(pattern), Course.description.ilike(pattern), Course.short_description.ilike(pattern)))
+    if difficulty: filters.append(Course.level.ilike(difficulty))
+    if technology: filters.append(Course.language.has(ProgrammingLanguage.slug == technology))
+    query = course_query().where(*filters); total = db.scalar(select(func.count(func.distinct(Course.id))).select_from(Course).where(*filters)) or 0
+    ordering = {"title_asc": (Course.title.asc(), Course.id.asc()), "title_desc": (Course.title.desc(), Course.id.asc()), "newest": (Course.created_at.desc(), Course.id.desc())}[sort]
+    rows = db.scalars(query.order_by(*ordering).offset((page - 1) * page_size).limit(page_size)).all(); ids = [row.id for row in rows]
+    lesson_counts = dict(db.execute(select(CourseModule.course_id, func.count(Lesson.id)).join(Lesson, Lesson.module_id == CourseModule.id).where(CourseModule.course_id.in_(ids), Lesson.published.is_(True)).group_by(CourseModule.course_id)).all()) if ids else {}
+    asset_ids = {asset_id for row in rows for asset_id in (row.card_logo_asset_id, row.card_cover_asset_id) if asset_id}; assets = {asset.id: asset for asset in db.scalars(select(MediaAsset).where(MediaAsset.id.in_(asset_ids))).all()} if asset_ids else {}
+    return {"items": [course_payload(row, lesson_count=lesson_counts.get(row.id, 0), assets=assets) for row in rows], "page": page, "page_size": page_size, "total": total, "pages": math.ceil(total / page_size) if total else 0}
 def course_query(): return select(Course).options(selectinload(Course.language),selectinload(Course.category)).where(Course.published.is_(True))
 def pipe_values(value):
     return [item.strip() for item in (value or "").split("|") if item.strip()]
