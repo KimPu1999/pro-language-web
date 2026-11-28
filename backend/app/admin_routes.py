@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from urllib.parse import urlparse
 from fastapi import APIRouter, Cookie, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 from .auth import SESSION_COOKIE, check_rate_limit, clear_auth_cookies, create_session, current_user, hash_token, normalize_email, now, require_csrf, verify_password
 from .db import get_db
@@ -145,6 +145,7 @@ def public_homepage(db):
     settings=homepage_value(db,HOMEPAGE_PUBLISHED_KEY)
     return {**settings.model_dump(mode="json"),**public_records(db,settings)}
 def course_out(course): return {"id":course.id,"title":course.title,"slug":course.slug,"short_description":course.short_description or "","description":course.description,"target_audience":course.target_audience or "","technologies":course.technologies or "","seo_title":course.seo_title or "","seo_description":course.seo_description or "","language_id":course.language_id,"category_id":course.category_id,"level":course.level,"thumbnail":course.thumbnail,"estimated_duration":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"published":course.published,"outcomes":course.outcomes,"requirements":course.requirements,"display_title":course.display_title or course.title,"technology_name":course.technology_name or "","card_short_description":course.card_short_description or course.short_description or "","card_image_alt":course.card_image_alt or course.title,"card_logo_asset_id":course.card_logo_asset_id,"card_cover_asset_id":course.card_cover_asset_id,"show_rating":course.show_rating,"is_featured":course.is_featured,"card_sort_order":course.card_sort_order,"updated_at":course.updated_at}
+def admin_media_url(asset): return f"/media/{asset.storage_key}" if asset and asset.status == "active" and asset.visibility == "public" else None
 def load_course(db, course_id): return db.scalar(select(Course).options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples)).where(Course.id==course_id))
 def can_edit(course, user, db):
     if user.role in ADMIN: return True
@@ -697,18 +698,29 @@ def archive_category(category_id:UUID,user:User=Depends(full_admin),_:None=Depen
     if not row: raise HTTPException(404,"Category not found")
     row.status="archived"; audit(db,user,"category_archived","category",row.id); db.commit(); return row
 @router.get("/courses",response_model=AdminPageOut)
-def list_courses(search:str|None=None,language_id:UUID|None=None,category_id:UUID|None=None,level:str|None=None,status:str|None=None,sort:str=Query("updated",pattern="^(updated|title)$"),page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100),user:User=Depends(admin_user),db:Session=Depends(get_db)):
+def list_courses(search:str|None=None,language_id:UUID|None=None,category_id:UUID|None=None,level:str|None=None,status:str|None=None,sort:str=Query("updated",pattern="^(updated|title|duration)$"),page:int=Query(1,ge=1),page_size:int=Query(10,ge=1,le=50),user:User=Depends(admin_user),db:Session=Depends(get_db)):
     q=select(Course); count=select(func.count()).select_from(Course)
-    for stmt in [q,count]:
-        if search: stmt=stmt.where(Course.title.ilike(f"%{search}%"))
-    if search: q=q.where(Course.title.ilike(f"%{search}%")); count=count.where(Course.title.ilike(f"%{search}%"))
+    if search:
+        pattern=f"%{search.strip()}%"; condition=or_(Course.title.ilike(pattern),Course.display_title.ilike(pattern),Course.slug.ilike(pattern))
+        q=q.where(condition); count=count.where(condition)
     if language_id: q=q.where(Course.language_id==language_id); count=count.where(Course.language_id==language_id)
     if category_id: q=q.where(Course.category_id==category_id); count=count.where(Course.category_id==category_id)
     if level: q=q.where(Course.level==level); count=count.where(Course.level==level)
     if status: q=q.where(Course.status==status); count=count.where(Course.status==status)
-    total=db.scalar(count) or 0; ordering=Course.title.asc() if sort=="title" else Course.updated_at.desc(); rows=db.scalars(q.options(selectinload(Course.language),selectinload(Course.category)).order_by(ordering).offset((page-1)*page_size).limit(page_size)).all(); items=[]
+    total=db.scalar(count) or 0
+    ordering=Course.title.asc() if sort=="title" else Course.duration_minutes.asc() if sort=="duration" else Course.updated_at.desc()
+    rows=db.scalars(q.options(selectinload(Course.language),selectinload(Course.category)).order_by(ordering,Course.id).offset((page-1)*page_size).limit(page_size)).all()
+    ids=[row.id for row in rows]
+    module_counts=dict(db.execute(select(CourseModule.course_id,func.count(CourseModule.id)).where(CourseModule.course_id.in_(ids)).group_by(CourseModule.course_id)).all()) if ids else {}
+    lesson_counts=dict(db.execute(select(CourseModule.course_id,func.count(Lesson.id)).join(Lesson,Lesson.module_id==CourseModule.id).where(CourseModule.course_id.in_(ids)).group_by(CourseModule.course_id)).all()) if ids else {}
+    enrollment_counts=dict(db.execute(select(Enrollment.course_id,func.count(Enrollment.id)).where(Enrollment.course_id.in_(ids)).group_by(Enrollment.course_id)).all()) if ids else {}
+    asset_ids={asset_id for row in rows for asset_id in (row.card_logo_asset_id,row.card_cover_asset_id) if asset_id}
+    assets={asset.id:asset for asset in db.scalars(select(MediaAsset).where(MediaAsset.id.in_(asset_ids),MediaAsset.status=="active")).all()} if asset_ids else {}
+    items=[]
     for row in rows:
-        value=course_out(row); value.update({"category_name":row.category.name if row.category else "","language_name":row.language.name if row.language else "","module_count":db.scalar(select(func.count(CourseModule.id)).where(CourseModule.course_id==row.id)) or 0,"lesson_count":db.scalar(select(func.count(Lesson.id)).join(CourseModule).where(CourseModule.course_id==row.id)) or 0}); items.append(value)
+        value=course_out(row); logo=assets.get(row.card_logo_asset_id); cover=assets.get(row.card_cover_asset_id)
+        value.update({"category_name":row.category.name if row.category else "","language_name":row.language.name if row.language else "","module_count":module_counts.get(row.id,0),"lesson_count":lesson_counts.get(row.id,0),"enrollment_count":enrollment_counts.get(row.id,0),"card_logo_url":admin_media_url(logo),"card_cover_url":admin_media_url(cover) or row.thumbnail,"rating_average":None,"rating_count":0})
+        items.append(value)
     return {"items":items,"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
 @router.get("/search")
 def admin_global_search(q: str = Query(..., min_length=2, max_length=120), user: User = Depends(admin_user), db: Session = Depends(get_db)):
