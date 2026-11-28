@@ -6,6 +6,7 @@ import { Archive, ArrowDown, ArrowLeft, ArrowUp, BookOpen, Copy, ExternalLink, G
 import { apiErrorMessage } from "@/components/api-errors";
 import { CourseCoverUpload } from "@/components/course-cover-upload";
 import { Button, ErrorState, Panel, StatusBadge } from "@/components/ui";
+import { CourseEditorNav } from "@/components/course-editor-nav";
 
 type Option = { id: string; name: string; slug: string };
 type Lesson = { id: string; title: string; slug: string; description: string; position: number; status: string; content_en: string; content_mm?: string | null; duration_minutes: number; content_version?: number };
@@ -83,6 +84,7 @@ export function CourseEditor({ courseId }: { courseId?: string }) {
 
   return (
     <section className="space-y-6">
+      {courseId && <CourseEditorNav courseId={courseId} />}
       <div className="flex flex-wrap items-start justify-between gap-4"><div><Link href="/courses" className="inline-flex items-center gap-2 text-sm text-primary"><ArrowLeft size={15} /> Courses</Link><p className="mt-5 text-xs font-semibold uppercase tracking-[.18em] text-primary">Course builder</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">{isNew ? "Create course" : form.title || "Edit course"}</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-muted">Build a complete course, organise its curriculum, and publish only validated content.</p></div>{courseId && <div className="flex flex-wrap gap-2"><Link href={`/courses/${courseId}/preview`} className="inline-flex items-center gap-2 rounded-xl border border-line px-3 py-2.5 text-sm text-muted hover:bg-surface-hover"><ExternalLink size={16} /> Preview draft</Link><Button variant="secondary" onClick={duplicateCourse}><Copy size={16} /> Duplicate</Button><Button variant="danger" onClick={archiveCourse}><Archive size={16} /> Archive</Button>{course?.published ? <Button variant="secondary" disabled={busy} onClick={() => publish("return")}>Unpublish</Button> : <Button disabled={busy} onClick={() => publish("publish")}><Send size={16} /> Publish</Button>}</div>}</div>
       {error && <ErrorState message={error} />}{message && <p role="status" className="rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-primary">{message}</p>}
       <form onSubmit={saveCourse} className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">

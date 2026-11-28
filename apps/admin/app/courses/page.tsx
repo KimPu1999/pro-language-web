@@ -1,5 +1,5 @@
-import { CourseList } from "@/components/course-list";
+import { CourseListAdvanced } from "@/components/course-list-advanced";
 
 export default function AdminCoursesPage() {
-  return <CourseList />;
+  return <CourseListAdvanced />;
 }

@@ -144,7 +144,7 @@ def public_records(db, settings):
 def public_homepage(db):
     settings=homepage_value(db,HOMEPAGE_PUBLISHED_KEY)
     return {**settings.model_dump(mode="json"),**public_records(db,settings)}
-def course_out(course): return {"id":course.id,"title":course.title,"slug":course.slug,"short_description":course.short_description or "","description":course.description,"target_audience":course.target_audience or "","technologies":course.technologies or "","seo_title":course.seo_title or "","seo_description":course.seo_description or "","language_id":course.language_id,"category_id":course.category_id,"level":course.level,"thumbnail":course.thumbnail,"estimated_duration":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"published":course.published,"outcomes":course.outcomes,"requirements":course.requirements,"display_title":course.display_title or course.title,"technology_name":course.technology_name or "","card_short_description":course.card_short_description or course.short_description or "","card_image_alt":course.card_image_alt or course.title,"card_logo_asset_id":course.card_logo_asset_id,"card_cover_asset_id":course.card_cover_asset_id,"show_rating":course.show_rating,"is_featured":course.is_featured,"card_sort_order":course.card_sort_order}
+def course_out(course): return {"id":course.id,"title":course.title,"slug":course.slug,"short_description":course.short_description or "","description":course.description,"target_audience":course.target_audience or "","technologies":course.technologies or "","seo_title":course.seo_title or "","seo_description":course.seo_description or "","language_id":course.language_id,"category_id":course.category_id,"level":course.level,"thumbnail":course.thumbnail,"estimated_duration":course.duration_minutes,"status":course.status or ("published" if course.published else "draft"),"published":course.published,"outcomes":course.outcomes,"requirements":course.requirements,"display_title":course.display_title or course.title,"technology_name":course.technology_name or "","card_short_description":course.card_short_description or course.short_description or "","card_image_alt":course.card_image_alt or course.title,"card_logo_asset_id":course.card_logo_asset_id,"card_cover_asset_id":course.card_cover_asset_id,"show_rating":course.show_rating,"is_featured":course.is_featured,"card_sort_order":course.card_sort_order,"updated_at":course.updated_at}
 def load_course(db, course_id): return db.scalar(select(Course).options(selectinload(Course.modules).selectinload(CourseModule.lessons).selectinload(Lesson.code_examples)).where(Course.id==course_id))
 def can_edit(course, user, db):
     if user.role in ADMIN: return True
@@ -697,15 +697,26 @@ def archive_category(category_id:UUID,user:User=Depends(full_admin),_:None=Depen
     if not row: raise HTTPException(404,"Category not found")
     row.status="archived"; audit(db,user,"category_archived","category",row.id); db.commit(); return row
 @router.get("/courses",response_model=AdminPageOut)
-def list_courses(search:str|None=None,language_id:UUID|None=None,level:str|None=None,status:str|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100),user:User=Depends(admin_user),db:Session=Depends(get_db)):
+def list_courses(search:str|None=None,language_id:UUID|None=None,category_id:UUID|None=None,level:str|None=None,status:str|None=None,sort:str=Query("updated",pattern="^(updated|title)$"),page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100),user:User=Depends(admin_user),db:Session=Depends(get_db)):
     q=select(Course); count=select(func.count()).select_from(Course)
     for stmt in [q,count]:
         if search: stmt=stmt.where(Course.title.ilike(f"%{search}%"))
     if search: q=q.where(Course.title.ilike(f"%{search}%")); count=count.where(Course.title.ilike(f"%{search}%"))
     if language_id: q=q.where(Course.language_id==language_id); count=count.where(Course.language_id==language_id)
+    if category_id: q=q.where(Course.category_id==category_id); count=count.where(Course.category_id==category_id)
     if level: q=q.where(Course.level==level); count=count.where(Course.level==level)
     if status: q=q.where(Course.status==status); count=count.where(Course.status==status)
-    total=db.scalar(count) or 0; rows=db.scalars(q.order_by(Course.updated_at.desc()).offset((page-1)*page_size).limit(page_size)).all(); return {"items":[course_out(x) for x in rows],"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+    total=db.scalar(count) or 0; ordering=Course.title.asc() if sort=="title" else Course.updated_at.desc(); rows=db.scalars(q.options(selectinload(Course.language),selectinload(Course.category)).order_by(ordering).offset((page-1)*page_size).limit(page_size)).all(); items=[]
+    for row in rows:
+        value=course_out(row); value.update({"category_name":row.category.name if row.category else "","language_name":row.language.name if row.language else "","module_count":db.scalar(select(func.count(CourseModule.id)).where(CourseModule.course_id==row.id)) or 0,"lesson_count":db.scalar(select(func.count(Lesson.id)).join(CourseModule).where(CourseModule.course_id==row.id)) or 0}); items.append(value)
+    return {"items":items,"page":page,"page_size":page_size,"total":total,"pages":math.ceil(total/page_size) if total else 0}
+@router.get("/courses/overview")
+def courses_overview(user:User=Depends(admin_user),db:Session=Depends(get_db)):
+    courses=db.scalars(select(Course).order_by(Course.updated_at.desc())).all()
+    lesson_counts=dict(db.execute(select(CourseModule.course_id,func.count(Lesson.id)).join(Lesson,Lesson.module_id==CourseModule.id).group_by(CourseModule.course_id)).all())
+    module_counts=dict(db.execute(select(CourseModule.course_id,func.count(CourseModule.id)).group_by(CourseModule.course_id)).all())
+    missing=[row for row in courses if not lesson_counts.get(row.id) or db.scalar(select(func.count(Lesson.id)).join(CourseModule).where(CourseModule.course_id==row.id,func.length(func.trim(Lesson.content_en))>0)) != lesson_counts.get(row.id)]
+    return {"total_courses":len(courses),"published_courses":sum(row.published for row in courses),"draft_courses":sum(row.status=="draft" for row in courses),"in_review_courses":sum(row.status=="in_review" for row in courses),"archived_courses":sum(row.status=="archived" for row in courses),"total_lessons":sum(lesson_counts.values()),"missing_content":len(missing),"recent_updates":[course_out(row) for row in courses[:8]],"pending_publications":[course_out(row) for row in courses if row.status=="in_review"][:8],"incomplete_courses":[{**course_out(row),"module_count":module_counts.get(row.id,0),"lesson_count":lesson_counts.get(row.id,0)} for row in missing[:8]]}
 @router.get("/lessons")
 def list_lessons(search: str|None=None, status: str|None=None, page: int=Query(1,ge=1), page_size: int=Query(20,ge=1,le=100), user: User=Depends(admin_user), db: Session=Depends(get_db)):
     query=select(Lesson, CourseModule, Course).join(CourseModule, Lesson.module_id==CourseModule.id).join(Course, CourseModule.course_id==Course.id)
